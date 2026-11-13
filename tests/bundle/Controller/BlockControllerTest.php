@@ -27,6 +27,7 @@ use Masilia\Contracts\IbexaBlocks\BreadcrumbProvider;
 use Masilia\Contracts\IbexaBlocks\FieldRenderer;
 use Masilia\Contracts\IbexaBlocks\LinkProvider;
 use Masilia\IbexaBlocks\Block\ViewState;
+use Masilia\IbexaBlocks\Conventions;
 use Masilia\IbexaBlocks\Tests\bundle\Content\Fixtures;
 use Masilia\IbexaBlocks\Value\Link;
 use PHPUnit\Framework\TestCase;
@@ -84,7 +85,7 @@ final class BlockControllerTest extends TestCase
             $byType['grid'][] = ['id' => $id, 'viewTypes' => [], 'priority' => 0];
         }
 
-        return new BlockController($factory, $blocks, new BlockProviders($locator, $byType), $flatten);
+        return new BlockController($factory, $blocks, new BlockProviders($locator, $byType), new Conventions(), $flatten);
     }
 
     private function view(string $type, string $viewType = 'blocks', array $parameters = []): ContentView
@@ -148,7 +149,7 @@ final class BlockControllerTest extends TestCase
     public function testAContentTheThemeDoesNotShowSaysWhereToSayIt(): void
     {
         $this->expectException(NotFoundHttpException::class);
-        $this->expectExceptionMessage('No theme says how to show a "unknown" in the "blocks" view. Add it under views.blocks.unknown in the theme.yaml of a theme of the design (looked in: standard).');
+        $this->expectExceptionMessage('No theme shows a "unknown" in the "blocks" view. Add the template blocks/unknown.twig to a theme of the design (looked in: standard).');
 
         $this->controller()->view($this->view('unknown'));
     }

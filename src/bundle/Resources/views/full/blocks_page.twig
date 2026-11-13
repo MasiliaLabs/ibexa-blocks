@@ -1,0 +1,16 @@
+{#
+ A page made of blocks: each block of the field of the page that holds them, in its own view (so each is cached and tagged
+ by itself). It serves every content type that has that field and no template of its own in full/ (conventions.blocks_field).
+ A theme that wants another page writes full/<type>.twig, and extends this one to change only what is around the blocks.
+#}
+{% extends "@ibexadesign/layout.twig" %}
+
+{% block content %}
+    {% block blocks %}
+        {{ render_blocks(fields[blocks_field], {
+            'breadcrumb': breadcrumb,
+            'current_location_id': location.id,
+            'parentSubtree': location.pathString
+        }) }}
+    {% endblock %}
+{% endblock %}

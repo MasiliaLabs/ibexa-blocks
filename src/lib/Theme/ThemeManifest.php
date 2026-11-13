@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace Masilia\IbexaBlocks\Theme;
 
 /**
- * What a theme says about itself in its theme.yaml: for each view type ("blocks", "block_item", "line"), for each content type,
- * the template and the image variations. A theme only says what it provides: what it does not say comes from the next theme of
- * the design (the chain of the design engine), so a theme that changes two blocks lists two blocks.
+ * What a theme says about itself in its theme.yaml: its assets, favicons, fonts and layout. It does not have to list its
+ * templates: they are found by their name (blocks/<type>.twig, cards/<type>.twig, line/<type>.twig, full/<type>.twig, see
+ * BlockRegistry), and what a theme does not write comes from the next theme of the design (the chain of the design engine).
+ * `views` is still read, for the exception: a template that is not named after its content type, or image variations
+ * (until a template asks for them itself). What a manifest names wins over the convention.
  *
  *     name: my_site            # optional, the folder name when absent
  *     assets: { directory: assets/themes/my_site, entry: my_site, styles: [fa-icons], extra: [admin-toolbar.js] }

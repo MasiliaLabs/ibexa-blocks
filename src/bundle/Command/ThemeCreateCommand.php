@@ -14,7 +14,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
-#[AsCommand(name: 'masilia:blocks:theme:create', description: 'Create a theme that extends another: its manifest, a layout on the base layout, and its asset sources.')]
+#[AsCommand(name: 'masilia:blocks:theme:create', description: 'Create a theme that extends another: its manifest (assets), a layout on the base layout, and its asset sources; templates are found by name, nothing to list.')]
 final class ThemeCreateCommand extends Command
 {
     public function __construct(
@@ -71,9 +71,6 @@ final class ThemeCreateCommand extends Command
             '# favicons: build/images/' . $name . '/icons',
             '# fonts:',
             '#   - https://fonts.googleapis.com/css2?family=Inter&display=swap',
-            '# views:',
-            '#   blocks:',
-            '#     hero_banner: blocks/hero_banner.twig      # a block this theme shows with a template of its own',
             '',
         ];
 
@@ -97,6 +94,7 @@ final class ThemeCreateCommand extends Command
         $io->listing([
             sprintf('Add the theme to a design: ibexa_design_engine.design_list.%s: [%s, %s] (and the design of a siteaccess group: ibexa.system.<group>.design: %s).', $name, $name, $parent, $name),
             'Put its favicons in assets/images/' . $name . '/icons and uncomment favicons in its theme.yaml.',
+            'Write what differs in its templates, named after the content type: blocks/<type>.twig, cards/<type>.twig, line/<type>.twig, full/<type>.twig (a file of the same name in this theme replaces the one of the theme it extends).',
             'Build the assets: yarn encore dev (the entries are found from the theme.yaml files).',
             sprintf('Check it: bin/console masilia:blocks:theme:check %s', $name),
         ]);

@@ -72,8 +72,26 @@ final class ThemeToolsTest extends TestCase
         self::assertStringContainsString('error site assets: assets/themes/site/scss/main.scss does not exist, the entry "site" cannot be built.', $text);
         self::assertStringContainsString('notice site layout.twig does not extend the base layout', $text);
         self::assertStringNotContainsString('standard layout.twig', $text);
-        self::assertStringContainsString('notice standard blocks/dead.twig is referred to by no theme.yaml', $text);
+        self::assertStringContainsString('notice standard blocks/dead.twig is named after no content type', $text);
         self::assertStringNotContainsString('blocks/cta.twig is referred', $text);
+    }
+
+    public function testATemplateNamedAfterAContentTypeIsFoundByTheConventionAndAUselessManifestLineIsSaid(): void
+    {
+        $this->standardTheme();
+        $this->write('templates/themes/standard/blocks/map.twig', 'map');
+        $this->write('templates/themes/standard/theme.yaml', "assets: { entry: standard }\nviews:\n  blocks:\n    hero: blocks/hero.twig\n    cta: { template: blocks/cta.twig, variations: { image: banner } }\n");
+
+        $issues = (new ThemeChecker($this->registry(), $this->project))->check(['standard'], ['hero', 'cta', 'map', 'gone'], ['hero', 'cta', 'map', 'gone']);
+        $text = implode("\n", array_map(static fn (array $i): string => $i['level'] . ' ' . $i['message'], $issues));
+
+        self::assertStringNotContainsString('block type "map"', $text, 'blocks/map.twig is found by its name');
+        self::assertStringContainsString('error The block type "gone" is shown by no theme of the design', $text);
+        self::assertStringContainsString('Add blocks/gone.twig to a theme.', $text);
+        self::assertStringContainsString('notice views.blocks.hero: "blocks/hero.twig" is the template the convention finds without it', $text);
+        self::assertStringNotContainsString('views.blocks.cta: "blocks/cta.twig" is the template the convention', $text, 'a line with variations says more than the convention');
+        self::assertStringNotContainsString('blocks/map.twig is named after no content type', $text);
+        self::assertStringContainsString('blocks/dead.twig is named after no content type', $text);
     }
 
     public function testAFileAProviderOrAConfigNamesIsNotDeadAndAWildcardShowsEveryBlockType(): void
@@ -118,6 +136,7 @@ final class ThemeToolsTest extends TestCase
         self::assertStringContainsString("@use '../../standard/scss/main';", (string) file_get_contents($this->project . '/assets/themes/blog/scss/main.scss'));
         self::assertStringContainsString("import '../../standard/js/main.js';", (string) file_get_contents($this->project . '/assets/themes/blog/js/main.js'));
         self::assertStringContainsString('ibexa_design_engine.design_list.blog: [blog, standard]', $command->getDisplay());
+        self::assertStringNotContainsString('views', $manifest, 'templates are found by name: the manifest lists none');
 
         // The theme it made is valid and its assets are found.
         $issues = (new ThemeChecker($this->registry(), $this->project))->check(['blog', 'standard'], ['hero']);

@@ -62,6 +62,13 @@ final class ThemeCheckCommand extends Command
         } catch (NotFoundException) {
             $io->warning(sprintf('There is no group of content types "%s": the block types are not checked.', $this->conventions->blockGroup));
         }
+        $contentTypes = [];
+        foreach ($this->types->loadContentTypeGroups() as $group) {
+            foreach ($this->types->loadContentTypes($group) as $type) {
+                $contentTypes[$type->identifier] = true;
+            }
+        }
+        $contentTypes = array_keys($contentTypes);
 
         $errors = $notices = 0;
         foreach ($designs as $design) {
@@ -71,7 +78,7 @@ final class ThemeCheckCommand extends Command
                 return Command::FAILURE;
             }
             $chain = array_values(array_unique([$design, ...$this->designs[$design]]));
-            $issues = $this->checker->check($chain, $blockTypes);
+            $issues = $this->checker->check($chain, $blockTypes, $contentTypes);
             $io->section(sprintf('%s (%s)', $design, implode(' > ', $chain)));
             if ($issues === []) {
                 $io->writeln(' <info>ok</info>');

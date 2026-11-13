@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 namespace Masilia\Bundle\IbexaBlocks\Theme;
 
+use Masilia\Bundle\IbexaBlocks\Block\BlockRegistry;
 use Masilia\IbexaBlocks\Theme\InvalidThemeManifest;
 
 /**
  * What is wrong, or only worth knowing, about the themes of a design: a block type no theme shows, a template a manifest names
- * that is not there, assets with no source, a layout that copies the base one, files no one refers to. It reads the files of the
+ * that is not there or that the convention finds anyway, assets with no source, a layout that copies the base one, files no one refers to. It reads the files of the
  * themes and the manifests; it changes nothing.
  */
 final readonly class ThemeChecker
@@ -26,11 +27,12 @@ final readonly class ThemeChecker
 
     /**
      * @param list<string> $chain      The themes of the design, the first wins
-     * @param list<string> $blockTypes The content types that are blocks (what "blocks" must show)
+     * @param list<string> $blockTypes   The content types that are blocks (what "blocks" must show)
+     * @param list<string> $contentTypes Every content type of the site: a template named after one is found by the convention
      *
      * @return list<array{level: string, theme: string|null, message: string}>
      */
-    public function check(array $chain, array $blockTypes): array
+    public function check(array $chain, array $blockTypes, array $contentTypes = []): array
     {
         $issues = [];
         $add = static function (string $level, ?string $theme, string $message) use (&$issues): void {
@@ -52,6 +54,9 @@ final readonly class ThemeChecker
             foreach ($manifest?->views ?? [] as $viewType => $types) {
                 foreach ($types as $type => $definition) {
                     $referenced[$definition->template] = true;
+                    if ($definition->variations === [] && $definition->params === [] && $definition->template === sprintf('%s/%s.twig', BlockRegistry::folders($viewType)[0], $type)) {
+                        $add(self::NOTICE, $theme, sprintf('views.%s.%s: "%s" is the template the convention finds without it, the line can go.', $viewType, $type, $definition->template));
+                    }
                     if ($this->find($chain, $definition->template) === null) {
                         // Only a notice: a theme names a view for every design that builds on it, and one whose themes lack the file only
                         // matters if its pages hold that content type.
@@ -63,12 +68,12 @@ final readonly class ThemeChecker
 
         // What must be shown: every block type has a template in the "blocks" view of some theme of the design.
         foreach ($blockTypes as $type) {
-            $shown = false;
+            $shown = $this->find($chain, sprintf('%s/%s.twig', BlockRegistry::folders('blocks')[0], $type)) !== null;
             foreach ($manifests as $manifest) {
                 $shown = $shown || $manifest?->view('blocks', $type) !== null || $manifest?->view('blocks', '*') !== null;
             }
             if (!$shown) {
-                $add(self::ERROR, null, sprintf('The block type "%s" is shown by no theme of the design: a page that holds one answers 404.', $type));
+                $add(self::ERROR, null, sprintf('The block type "%s" is shown by no theme of the design: a page that holds one answers 404. Add blocks/%1$s.twig to a theme.', $type));
             }
         }
 
@@ -96,14 +101,16 @@ final readonly class ThemeChecker
             }
         }
 
-        // Files that nothing refers to.
+        // Files that nothing refers to: not named by a theme.yaml, not the template of a content type, not included by a template.
         $mentions = $this->mentions($chain);
         foreach ($chain as $theme) {
-            foreach (['blocks', 'cards', 'line'] as $folder) {
+            foreach (['blocks', 'cards', 'line', 'embed', 'full'] as $folder) {
                 foreach ($this->directoryFiles($theme, $folder) as $relative) {
-                    if (!isset($referenced[$relative]) && !str_contains($mentions, $relative)) {
-                        $add(self::NOTICE, $theme, sprintf('%s is referred to by no theme.yaml and by no template or provider (dead, or included by a name built at run time).', $relative));
+                    $name = basename($relative, '.twig');
+                    if (isset($referenced[$relative]) || str_contains($mentions, $relative) || $name === '_default' || in_array($name, $contentTypes, true)) {
+                        continue;
                     }
+                    $add(self::NOTICE, $theme, sprintf('%s is named after no content type, and no theme.yaml, template or provider refers to it (dead, a typo in the name, or included by a name built at run time).', $relative));
                 }
             }
         }

@@ -13,7 +13,7 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpKernel\Controller\ControllerReference;
 
 /**
- * Shows a content in the view types of a page of blocks ("blocks", "block_item", "line") when a theme says how, and the project
+ * Shows a content in the view types of a page of blocks ("blocks", "block_item", "line") when a theme says how or has a template named for it, and the project
  * has not configured that view itself. It is a view provider of lower priority than the project's own content_view rules, so
  * a view the project writes by hand still wins (a block with a controller of its own, say).
  */
@@ -36,7 +36,7 @@ final readonly class BlockViewProvider implements ViewProvider
         }
 
         $content = $view->getContent();
-        if ($content === null || $this->registry->find($view->getViewType(), $content->getContentType()->identifier) === null) {
+        if ($content === null || $this->registry->findFor($view->getViewType(), $content->getContentType()) === null) {
             return null;
         }
 
