@@ -22,11 +22,11 @@ final class LinkTest extends TestCase
         self::assertSame('x', $link->getExtra('missing', 'x'));
     }
 
-    public function testATextPrintsEscapedWithItsLineBreaksAndKeepsTheRawText(): void
+    public function testATextPrintsWithItsLineBreaksAndKeepsTheRawText(): void
     {
         $text = new Text("One <b>\nTwo");
 
-        self::assertSame("One &lt;b&gt;<br />\nTwo", (string) $text);
+        self::assertSame("One <b><br />\nTwo", (string) $text, 'Twig escapes what is printed: the text is not escaped twice');
         self::assertSame("One <b>\nTwo", $text->rawText);
     }
 }

@@ -1,0 +1,61 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Masilia\IbexaBlocks\Tests\lib;
+
+use Masilia\IbexaBlocks\Theme\InvalidThemeManifest;
+use Masilia\IbexaBlocks\Theme\ThemeManifest;
+use Masilia\IbexaBlocks\Theme\ViewDefinition;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\TestCase;
+
+final class ThemeManifestTest extends TestCase
+{
+    public function testAThemeSaysWhatItProvidesPerViewTypeAndContentType(): void
+    {
+        $manifest = ThemeManifest::fromArray('fossil_exit', ['views' => [
+            'blocks' => [
+                'hero_banner' => ['template' => 'blocks/hero_banner.twig', 'variations' => ['background_image' => 'banner_hero']],
+                'richtext' => 'blocks/richtext.twig',
+            ],
+            'block_item' => ['card_item' => ['template' => 'cards/card_item.twig', 'params' => ['compact' => true]]],
+        ]]);
+
+        self::assertSame('fossil_exit', $manifest->name);
+        self::assertEquals(new ViewDefinition('blocks/hero_banner.twig', ['background_image' => 'banner_hero']), $manifest->view('blocks', 'hero_banner'));
+        self::assertEquals(new ViewDefinition('blocks/richtext.twig'), $manifest->view('blocks', 'richtext'), 'a template alone is enough');
+        self::assertSame(['compact' => true], $manifest->view('block_item', 'card_item')->params);
+        self::assertNull($manifest->view('blocks', 'nope'));
+        self::assertNull($manifest->view('line', 'hero_banner'), 'a view type of its own');
+    }
+
+    public function testAThemeThatSaysNothingIsValid(): void
+    {
+        self::assertSame([], ThemeManifest::fromArray('mattcch', [])->views);
+    }
+
+    /**
+     * @return iterable<string, array{0: array<string, mixed>, 1: string}>
+     */
+    public static function invalid(): iterable
+    {
+        yield 'a key that is a typo' => [['view' => []], 'unknown key "view"'];
+        yield 'view types that are not a map' => [['views' => ['blocks' => 'x']], 'views.blocks must be a map'];
+        yield 'a definition with no template' => [['views' => ['blocks' => ['a' => ['variations' => []]]]], 'views.blocks.a needs a template'];
+        yield 'a key of a definition that is a typo' => [['views' => ['blocks' => ['a' => ['template' => 'a.twig', 'variation' => []]]]], 'unknown key "variation"'];
+        yield 'a twig namespace' => [['views' => ['blocks' => ['a' => '@ibexadesign/a.twig']]], 'must be relative to the templates of the theme'];
+        yield 'an absolute path' => [['views' => ['blocks' => ['a' => '/var/a.twig']]], 'must be relative'];
+        yield 'a variation that is not a name' => [['views' => ['blocks' => ['a' => ['template' => 'a.twig', 'variations' => ['image' => ['x']]]]]], 'the variation of "image"'];
+        yield 'a definition that is a number' => [['views' => ['blocks' => ['a' => 5]]], 'must be a template or a map'];
+    }
+
+    #[DataProvider('invalid')]
+    public function testWhatTheMechanismCannotUseIsRefusedWithWhatToFix(array $data, string $message): void
+    {
+        $this->expectException(InvalidThemeManifest::class);
+        $this->expectExceptionMessage($message);
+
+        ThemeManifest::fromArray('t', $data);
+    }
+}

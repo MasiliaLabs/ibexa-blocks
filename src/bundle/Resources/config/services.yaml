@@ -21,6 +21,24 @@ services:
         arguments:
             $logger: '@logger'
 
+    # Themes and the blocks they show.
+    Masilia\Bundle\IbexaBlocks\Theme\:
+        resource: '../../Theme/'
+    Masilia\Bundle\IbexaBlocks\Block\:
+        resource: '../../Block/'
+        exclude: '../../Block/ResolvedView.php'
+    Masilia\Bundle\IbexaBlocks\Controller\:
+        resource: '../../Controller/'
+        tags: ['controller.service_arguments']
+    # Below the project's own content_view rules (priority 10) and above Ibexa's defaults (-1).
+    Masilia\Bundle\IbexaBlocks\View\BlockViewProvider:
+        tags:
+            - { name: ibexa.view.provider, type: 'Ibexa\Core\MVC\Symfony\View\ContentView', priority: 5 }
+    Masilia\Bundle\IbexaBlocks\Templating\BlocksExtension: ~
+    Masilia\Bundle\IbexaBlocks\Templating\BlocksRuntime:
+        arguments:
+            $fragments: '@fragment.handler'
+
     # What the content model asks of the rest of the application. Replace an alias to change how links, breadcrumbs, admin
     # meta or cache tags are made.
     Masilia\Bundle\IbexaBlocks\Site\:

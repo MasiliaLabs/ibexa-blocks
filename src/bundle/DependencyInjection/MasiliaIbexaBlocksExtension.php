@@ -26,6 +26,9 @@ final class MasiliaIbexaBlocksExtension extends Extension
         $config = $this->processConfiguration(new Configuration(), $configs);
 
         $container->setParameter('masilia_blocks.conventions', $config['conventions']);
+        $container->setParameter('masilia_blocks.blocks.view_types', $config['blocks']['view_types']);
+        $container->setParameter('masilia_blocks.themes.directories', $config['themes']['directories']);
+        $container->setParameter('masilia_blocks.blocks.flatten_fields', $config['blocks']['flatten_fields']);
         $container->setParameter('masilia_blocks.fields.unknown_type', $config['fields']['unknown_type']);
         $container->setParameter('masilia_blocks.fields.ignored_types', $config['fields']['ignored_types']);
         $container->setParameter('masilia_blocks.fields.summary_types', $config['fields']['summary_types']);
