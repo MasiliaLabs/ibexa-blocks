@@ -10,6 +10,10 @@ namespace Masilia\IbexaBlocks\Theme;
  * the design (the chain of the design engine), so a theme that changes two blocks lists two blocks.
  *
  *     name: fossil_exit            # optional, the folder name when absent
+ *     assets: { directory: assets/themes/fuelexit, entry: fuelexit, styles: [fa-icons], extra: [admin-toolbar.js] }
+ *     favicons: build/images/fossil_exit/icons   # android-chrome-192x192.png, favicon-32x32.png, favicon-16x16.png, favicon.ico, site.webmanifest
+ *     fonts: [https://fonts.googleapis.com/css2?family=Inter&display=swap]
+ *     layout: { notifications: false }
  *     views:
  *         blocks:
  *             hero_banner: { template: blocks/hero_banner.twig, variations: { background_image: banner_hero } }
@@ -22,15 +26,24 @@ namespace Masilia\IbexaBlocks\Theme;
  */
 final readonly class ThemeManifest
 {
-    private const KNOWN_KEYS = ['name', 'views'];
+    private const KNOWN_KEYS = ['name', 'views', 'assets', 'favicons', 'fonts', 'layout'];
+    private const KNOWN_ASSET_KEYS = ['directory', 'entry', 'styles', 'extra'];
+    private const KNOWN_LAYOUT_KEYS = ['notifications'];
     private const KNOWN_VIEW_KEYS = ['template', 'variations', 'params'];
 
     /**
      * @param array<string, array<string, ViewDefinition>> $views View type => content type => definition
      */
+    /**
+     * @param list<string> $fonts Stylesheets of web fonts the layout links
+     */
     public function __construct(
         public string $name,
         public array $views = [],
+        public ?ThemeAssets $assets = null,
+        public ?string $favicons = null,
+        public array $fonts = [],
+        public ?bool $notifications = null,
     ) {
     }
 
@@ -55,7 +68,42 @@ final readonly class ThemeManifest
             }
         }
 
-        return new self((string) ($data['name'] ?? $theme), $views);
+        $layout = (array) ($data['layout'] ?? []);
+        foreach (array_diff(array_keys($layout), self::KNOWN_LAYOUT_KEYS) as $unknown) {
+            throw new InvalidThemeManifest(sprintf('Theme "%s": unknown key layout.%s (known: %s).', $theme, $unknown, implode(', ', self::KNOWN_LAYOUT_KEYS)));
+        }
+        $fonts = (array) ($data['fonts'] ?? []);
+        foreach ($fonts as $font) {
+            if (!is_string($font) || !str_starts_with($font, 'https://')) {
+                throw new InvalidThemeManifest(sprintf('Theme "%s": every font must be the https URL of a stylesheet.', $theme));
+            }
+        }
+
+        return new self(
+            (string) ($data['name'] ?? $theme),
+            $views,
+            isset($data['assets']) ? self::assets($theme, $data['assets']) : null,
+            isset($data['favicons']) ? trim((string) $data['favicons'], '/') : null,
+            array_values($fonts),
+            isset($layout['notifications']) ? (bool) $layout['notifications'] : null,
+        );
+    }
+
+    private static function assets(string $theme, mixed $data): ThemeAssets
+    {
+        if (!is_array($data)) {
+            throw new InvalidThemeManifest(sprintf('Theme "%s": assets must be a map.', $theme));
+        }
+        foreach (array_diff(array_keys($data), self::KNOWN_ASSET_KEYS) as $unknown) {
+            throw new InvalidThemeManifest(sprintf('Theme "%s": unknown key assets.%s (known: %s).', $theme, $unknown, implode(', ', self::KNOWN_ASSET_KEYS)));
+        }
+        $directory = trim((string) ($data['directory'] ?? 'assets/themes/' . $theme), '/');
+        $entry = (string) ($data['entry'] ?? $theme);
+        if (preg_match('/^[A-Za-z0-9_-]+$/', $entry) !== 1 || str_contains($directory, '..')) {
+            throw new InvalidThemeManifest(sprintf('Theme "%s": assets.entry must be a plain name and assets.directory must stay in the project.', $theme));
+        }
+
+        return new ThemeAssets($directory, $entry, array_values(array_map('strval', (array) ($data['styles'] ?? []))), array_values(array_map('strval', (array) ($data['extra'] ?? []))));
     }
 
     public function view(string $viewType, string $contentType): ?ViewDefinition

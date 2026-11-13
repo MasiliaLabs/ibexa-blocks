@@ -37,6 +37,7 @@ final class MasiliaIbexaBlocksExtension extends Extension
         $container->setParameter('masilia_blocks.search', $config['search']);
         $container->setParameter('masilia_blocks.forms', $config['forms']);
         $container->setParameter('masilia_blocks.themes.directories', $config['themes']['directories']);
+        $container->setParameter('masilia_blocks.blocks.handled_by_project', $config['blocks']['handled_by_project']);
         $container->setParameter('masilia_blocks.blocks.flatten_fields', $config['blocks']['flatten_fields']);
         $container->setParameter('masilia_blocks.fields.unknown_type', $config['fields']['unknown_type']);
         $container->setParameter('masilia_blocks.fields.ignored_types', $config['fields']['ignored_types']);

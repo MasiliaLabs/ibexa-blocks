@@ -30,6 +30,12 @@ final class ThemeRegistry
     ) {
     }
 
+    /** @return list<string> */
+    public function directories(): array
+    {
+        return $this->directories;
+    }
+
     /** The manifest of a theme; null for a theme that has none (it then only overrides templates, which needs nothing said). */
     public function manifest(string $theme): ?ThemeManifest
     {

@@ -14,6 +14,8 @@ final class BlocksExtension extends AbstractExtension
     {
         return [
             new TwigFunction('render_blocks', [BlocksRuntime::class, 'render'], ['is_safe' => ['html']]),
+            new TwigFunction('theme_layout', [BlocksRuntime::class, 'layout']),
+            new TwigFunction('editorial_toolbox', [BlocksRuntime::class, 'toolbox'], ['is_safe' => ['html']]),
         ];
     }
 }

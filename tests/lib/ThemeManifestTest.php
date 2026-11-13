@@ -58,4 +58,47 @@ final class ThemeManifestTest extends TestCase
 
         ThemeManifest::fromArray('t', $data);
     }
+
+    public function testAThemeSaysWhatItsLayoutNeeds(): void
+    {
+        $manifest = ThemeManifest::fromArray('fossil_exit', [
+            'assets' => ['directory' => 'assets/themes/fuelexit/', 'entry' => 'fuelexit', 'styles' => ['fa-icons'], 'extra' => ['admin-toolbar.js']],
+            'favicons' => 'build/images/fossil_exit/icons/',
+            'fonts' => ['https://fonts.googleapis.com/css2?family=Inter&display=swap'],
+            'layout' => ['notifications' => false],
+        ]);
+
+        self::assertSame('assets/themes/fuelexit', $manifest->assets->directory);
+        self::assertSame('fuelexit.css', $manifest->assets->entry . '.css');
+        self::assertSame('assets/themes/fuelexit/scss/main.scss', $manifest->assets->stylesheetSource());
+        self::assertSame('assets/themes/fuelexit/js/main.js', $manifest->assets->scriptSource());
+        self::assertSame(['fa-icons'], $manifest->assets->styles);
+        self::assertSame('build/images/fossil_exit/icons', $manifest->favicons);
+        self::assertFalse($manifest->notifications);
+        self::assertSame('standard', ThemeManifest::fromArray('t', ['assets' => ['entry' => 'standard']])->assets->entry);
+        self::assertSame('assets/themes/t', ThemeManifest::fromArray('t', ['assets' => []])->assets->directory, 'the folder and the entry default to the name of the theme');
+        self::assertNull(ThemeManifest::fromArray('t', [])->notifications, 'a theme that says nothing leaves it to the next one');
+    }
+
+    /**
+     * @return iterable<string, array{0: array<string, mixed>, 1: string}>
+     */
+    public static function invalidLayout(): iterable
+    {
+        yield 'a typo in assets' => [['assets' => ['dir' => 'x']], 'unknown key assets.dir'];
+        yield 'an entry that is a path' => [['assets' => ['entry' => '../x']], 'assets.entry must be a plain name'];
+        yield 'a directory that leaves the project' => [['assets' => ['directory' => '../../etc']], 'must stay in the project'];
+        yield 'a font that is not https' => [['fonts' => ['http://x.org/a.css']], 'https URL'];
+        yield 'a typo in layout' => [['layout' => ['notification' => true]], 'unknown key layout.notification'];
+        yield 'assets that are not a map' => [['assets' => 'x'], 'assets must be a map'];
+    }
+
+    #[DataProvider('invalidLayout')]
+    public function testWhatTheLayoutCannotUseIsRefused(array $data, string $message): void
+    {
+        $this->expectException(InvalidThemeManifest::class);
+        $this->expectExceptionMessage($message);
+
+        ThemeManifest::fromArray('t', $data);
+    }
 }

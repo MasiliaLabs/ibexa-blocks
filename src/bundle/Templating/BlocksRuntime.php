@@ -6,14 +6,43 @@ namespace Masilia\Bundle\IbexaBlocks\Templating;
 
 use Masilia\Bundle\IbexaBlocks\Content\RenderableContent;
 use Symfony\Component\HttpKernel\Controller\ControllerReference;
+use Masilia\Bundle\IbexaBlocks\Theme\ThemeSettings;
 use Symfony\Component\HttpKernel\Fragment\FragmentHandler;
+use Twig\Environment;
 use Twig\Extension\RuntimeExtensionInterface;
 
 /** Shows the blocks of a page, each by its own view (so each is cached and tagged by itself). */
 final readonly class BlocksRuntime implements RuntimeExtensionInterface
 {
-    public function __construct(private FragmentHandler $fragments)
+    public function __construct(
+        private FragmentHandler $fragments,
+        private ThemeSettings $settings,
+        private Environment $twig,
+    ) {
+    }
+
+    /**
+     * What the themes of the design say about the layout: "assets" (entry, styles, extra), "favicons", "fonts", "notifications".
+     */
+    public function layout(string $name): mixed
     {
+        return match ($name) {
+            'assets' => $this->settings->assets(),
+            'favicons' => $this->settings->favicons(),
+            'fonts' => $this->settings->fonts(),
+            'notifications' => $this->settings->notifications(),
+            default => throw new \InvalidArgumentException(sprintf('The layout has no "%s" (known: assets, favicons, fonts, notifications).', $name)),
+        };
+    }
+
+    /** The in-context editing toolbar, when the toolbox is installed and someone is signed in; nothing otherwise. */
+    public function toolbox(): string
+    {
+        if (!$this->twig->getFunction('masilia_editorial_toolbox')) {
+            return '';
+        }
+
+        return $this->twig->createTemplate('{% if app.user %}{{ masilia_editorial_toolbox() }}{% endif %}')->render();
     }
 
     /**

@@ -1,0 +1,88 @@
+{#
+ The base layout of a site. A theme's layout.twig extends it and says only what differs: the head, the content, the modals…
+ What changes from one theme to the next (the assets it builds, its favicons, its fonts) is read from the theme.yaml of the
+ themes of the design, so a new theme does not copy this file.
+
+ Blocks: seo_metas, head_extra, stylesheets, toolbox, header, content, footer, modals, javascripts.
+#}
+{% set assets = theme_layout('assets') %}
+{% set favicons = theme_layout('favicons') %}
+<!doctype html>
+<html lang="{{ app.request.locale|replace({'_': '-'}) }}" dir="{{ app.request.locale starts with 'ar' ? 'rtl' : 'ltr' }}">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% block seo_metas %}
+        {% if favicons %}
+            <link rel="apple-touch-icon" sizes="180x180" href="{{ asset(favicons ~ '/android-chrome-192x192.png') }}">
+            <link rel="icon" type="image/png" sizes="32x32" href="{{ asset(favicons ~ '/favicon-32x32.png') }}">
+            <link rel="icon" type="image/png" sizes="16x16" href="{{ asset(favicons ~ '/favicon-16x16.png') }}">
+            <link rel="manifest" href="{{ asset(favicons ~ '/site.webmanifest') }}">
+            <link rel="shortcut icon" href="{{ asset(favicons ~ '/favicon.ico') }}">
+            <link rel="icon" type="image/x-icon" href="{{ asset(favicons ~ '/favicon.ico') }}">
+        {% endif %}
+
+        {% set fonts = theme_layout('fonts') %}
+        {% if fonts %}
+            <link rel="preconnect" href="https://fonts.googleapis.com">
+            <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+            {% for font in fonts %}
+                <link href="{{ font }}" rel="stylesheet">
+            {% endfor %}
+        {% endif %}
+
+        {% include "@NovaeZSEO/seometas_head.html.twig" ignore missing %}
+    {% endblock %}
+
+    {% block head_extra %}{% endblock %}
+
+    {% block stylesheets %}
+        {% if assets %}
+            {% for style in assets.styles %}
+                {{ encore_entry_link_tags(style) }}
+            {% endfor %}
+            {{ encore_entry_link_tags(assets.entry ~ '.css') }}
+            {{ encore_entry_link_tags(assets.entry ~ '.js') }}
+            {% for extra in assets.extra %}
+                {{ encore_entry_link_tags(extra) }}
+            {% endfor %}
+        {% endif %}
+    {% endblock %}
+</head>
+<body>
+    {% block toolbox %}{{ editorial_toolbox() }}{% endblock %}
+
+    {% block header %}
+        {{ render_esi(controller('Masilia\\Bundle\\IbexaBlocks\\Controller\\LayoutController::header', {
+            'currentLocationId': location.id ?? ibexa.rootLocation.id,
+            'currentUri': ibexa.requestedUriString}))
+        }}
+    {% endblock %}
+
+    <main id="main-content" {% if admin_meta is defined and admin_meta %}data-admin="{{ admin_meta|json_encode }}"{% endif %}>
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    {% block footer %}
+        {{ render_esi(controller('Masilia\\Bundle\\IbexaBlocks\\Controller\\LayoutController::footer')) }}
+    {% endblock %}
+
+    {% block modals %}
+        {% include "@ibexadesign/components/subscribe-popup.twig" ignore missing %}
+        {% include "@ibexadesign/components/search-popup.twig" ignore missing %}
+        {% include "@ibexadesign/components/cookie-consent.twig" ignore missing %}
+        {% if theme_layout('notifications') %}
+            {{ render_esi(controller('Masilia\\Bundle\\IbexaBlocks\\Controller\\LayoutController::notifications')) }}
+        {% endif %}
+    {% endblock %}
+
+    {% block javascripts %}
+        {% if assets %}
+            {{ encore_entry_script_tags(assets.entry ~ '.js') }}
+            {% for extra in assets.extra %}
+                {{ encore_entry_script_tags(extra) }}
+            {% endfor %}
+        {% endif %}
+    {% endblock %}
+</body>
+</html>

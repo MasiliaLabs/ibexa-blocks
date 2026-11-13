@@ -44,6 +44,13 @@ services:
     Masilia\Bundle\IbexaBlocks\Block\:
         resource: '../../Block/'
         exclude: '../../Block/ResolvedView.php'
+    Masilia\Bundle\IbexaBlocks\Command\:
+        resource: '../../Command/'
+    Masilia\Bundle\IbexaBlocks\Theme\ThemeChecker:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
+            $referenceDirs: ['%kernel.project_dir%/src', '%kernel.project_dir%/config/packages']
+
     Masilia\Bundle\IbexaBlocks\Controller\:
         resource: '../../Controller/'
         tags: ['controller.service_arguments']
