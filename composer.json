@@ -3,7 +3,13 @@
     "description": "Front-office rendering of pages made of blocks for Ibexa DXP: a content model for templates, field renderers, themes that extend each other, and the pieces every theme shares",
     "type": "ibexa-bundle",
     "license": "proprietary",
-    "keywords": ["ibexa", "symfony", "blocks", "theme", "twig"],
+    "keywords": [
+        "ibexa",
+        "symfony",
+        "blocks",
+        "theme",
+        "twig"
+    ],
     "require": {
         "php": ">=8.3",
         "ibexa/core": "^5.0",
@@ -21,7 +27,13 @@
         "ibexa/rich-text": "Renders rich text fields",
         "ibexa/fieldtype-matrix": "Matrix fields",
         "masilia/editorial-toolbox": "In-context editing: the page and its blocks are marked for it",
-        "masilia/ibexa-ai-craft": "The assistant builds pages with the blocks of the theme and reads the conventions of this package"
+        "masilia/ibexa-ai-craft": "The assistant builds pages with the blocks of the theme and reads the conventions of this package",
+        "doctrine/orm": "The newsletter subscribers (masilia_ibexa_blocks.newsletter)",
+        "doctrine/doctrine-migrations-bundle": "The migration of the newsletter table",
+        "symfony/form": "Contact forms made from a matrix of questions",
+        "symfony/validator": "Contact forms made from a matrix of questions",
+        "symfony/mailer": "Contact forms, form submissions and the newsletter",
+        "gregwar/captcha-bundle": "A captcha on the contact forms"
     },
     "autoload": {
         "psr-4": {
@@ -37,7 +49,7 @@
     },
     "extra": {
         "branch-alias": {
-            "dev-main": "0.1.x-dev"
+            "dev-main": "0.2.x-dev"
         }
     },
     "scripts": {
