@@ -130,4 +130,28 @@ final class ThemesTest extends TestCase
         self::assertSame(['items', 'low'], array_map(static fn ($p) => $p->name, $providers->for('grid', 'block_item')));
         self::assertSame([], $providers->for('other', 'blocks'));
     }
+
+    public function testTheBlocksADesignShowsAreTheTemplatesAndTheManifestsOfItsChain(): void
+    {
+        $this->theme('standard', "views:\n  blocks:\n    hero: blocks/hero_x.twig\n    '*': blocks/any.twig\n");
+        mkdir($this->dir . '/standard/blocks');
+        file_put_contents($this->dir . '/standard/blocks/cta.twig', '');
+        $this->theme('fossil_exit', '');
+        mkdir($this->dir . '/fossil_exit/blocks');
+        file_put_contents($this->dir . '/fossil_exit/blocks/map.twig', '');
+        file_put_contents($this->dir . '/fossil_exit/blocks/hero.twig', '');
+
+        $config = $this->createMock(\Ibexa\Contracts\Core\SiteAccess\ConfigResolverInterface::class);
+        $config->method('getParameter')->willReturnCallback(static fn (string $name, $namespace = null, $scope = null): string => $scope === 'fossil_exit_fr' ? 'fossil_exit' : 'standard');
+        $shown = new \Masilia\Bundle\IbexaBlocks\Theme\ThemeShownBlocks(new ThemeRegistry([$this->dir]), $config, ['fossil_exit' => ['fossil_exit', 'standard'], 'standard' => ['standard']]);
+
+        self::assertSame(['cta', 'hero', 'map'], $shown->forSiteaccess('fossil_exit_fr'));
+        self::assertSame(['cta', 'hero'], $shown->forSiteaccess('site'), 'a design of its own themes only');
+
+        foreach (['/standard/blocks/cta.twig', '/fossil_exit/blocks/map.twig', '/fossil_exit/blocks/hero.twig'] as $file) {
+            unlink($this->dir . $file);
+        }
+        rmdir($this->dir . '/standard/blocks');
+        rmdir($this->dir . '/fossil_exit/blocks');
+    }
 }
