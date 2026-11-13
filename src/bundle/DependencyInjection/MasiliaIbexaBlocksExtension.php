@@ -11,6 +11,7 @@ use Masilia\Bundle\IbexaBlocks\Block\Provider\AllPostsParameters;
 use Masilia\Bundle\IbexaBlocks\Block\Provider\AutoItemsParameters;
 use Masilia\Bundle\IbexaBlocks\Block\Provider\FeaturedParameters;
 use Masilia\Bundle\IbexaBlocks\Content\Renderer\RichtextRenderer;
+use Masilia\Bundle\IbexaBlocks\Form\ContactFormParameters;
 use Masilia\Bundle\IbexaBlocks\MasiliaIbexaBlocksBundle;
 use Masilia\Bundle\IbexaBlocks\Search\LatestContents;
 use Masilia\Bundle\IbexaBlocks\Search\SearchService;
@@ -110,5 +111,13 @@ final class MasiliaIbexaBlocksExtension extends Extension
         $featured = $lists['featured'];
         $provide(FeaturedParameters::class, [array_diff_key($featured, ['types' => 1])], $featured['types'], 0);
         $provide(AllPostsParameters::class, [new Reference(SearchService::class), new Reference(UrlGeneratorInterface::class)], $lists['all_posts']['types'], 0);
+
+        // Contact forms: the provider builds the form from the block's matrix and mails the answers.
+        $contact = $config['forms']['contact']['content_types'];
+        if ($contact !== []) {
+            $container->setDefinition(ContactFormParameters::class, (new Definition(ContactFormParameters::class))
+                ->setAutowired(true)
+                ->addTag(MasiliaIbexaBlocksBundle::TAG_BLOCK_PARAMETERS, ['types' => implode(',', $contact), 'priority' => 0]));
+        }
     }
 }

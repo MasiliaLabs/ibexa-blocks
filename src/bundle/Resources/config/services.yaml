@@ -38,6 +38,12 @@ services:
         exclude: '../../Mail/FormDefinition.php'
     Masilia\Bundle\IbexaBlocks\Controller\FormSubmitController: ~
 
+    # Contact forms (a matrix of questions on the page): the settings, the builder; the provider is made by the extension.
+    Masilia\IbexaBlocks\Form\ContactSettings:
+        factory: ['Masilia\IbexaBlocks\Form\ContactSettings', 'fromSettings']
+        arguments: ['%masilia_blocks.forms%']
+    Masilia\Bundle\IbexaBlocks\Form\MatrixFormBuilder: ~
+
     # Themes and the blocks they show.
     Masilia\Bundle\IbexaBlocks\Theme\:
         resource: '../../Theme/'
