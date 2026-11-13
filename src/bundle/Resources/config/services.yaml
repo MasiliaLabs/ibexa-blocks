@@ -21,6 +21,23 @@ services:
         arguments:
             $logger: '@logger'
 
+    # The search of a site: what it may search is the settings', not the code's.
+    Masilia\IbexaBlocks\Search\SearchSettings:
+        factory: ['Masilia\IbexaBlocks\Search\SearchSettings', 'fromSettings']
+        arguments: ['%masilia_blocks.search%']
+    Masilia\Bundle\IbexaBlocks\Search\:
+        resource: '../../Search/'
+    Masilia\Bundle\IbexaBlocks\Controller\SearchController: ~
+
+    # Forms submitted by mail.
+    Masilia\IbexaBlocks\Form\FormSettings:
+        factory: ['Masilia\IbexaBlocks\Form\FormSettings', 'fromSettings']
+        arguments: ['%masilia_blocks.forms%']
+    Masilia\Bundle\IbexaBlocks\Mail\:
+        resource: '../../Mail/'
+        exclude: '../../Mail/FormDefinition.php'
+    Masilia\Bundle\IbexaBlocks\Controller\FormSubmitController: ~
+
     # Themes and the blocks they show.
     Masilia\Bundle\IbexaBlocks\Theme\:
         resource: '../../Theme/'

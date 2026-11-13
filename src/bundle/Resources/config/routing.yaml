@@ -1,0 +1,10 @@
+# Import it from the application's routes:
+#
+#     masilia_ibexa_blocks:
+#         resource: '@MasiliaIbexaBlocksBundle/Resources/config/routing.yaml'
+masilia_ibexa_blocks_search:
+    resource: '../../Controller/SearchController.php'
+    type: attribute
+masilia_ibexa_blocks_forms:
+    resource: '../../Controller/FormSubmitController.php'
+    type: attribute
