@@ -7,7 +7,13 @@ namespace Masilia\Bundle\IbexaBlocks\DependencyInjection;
 use Ibexa\Bundle\Core\DependencyInjection\Configuration\SiteAccessAware\ConfigurationProcessor;
 use Ibexa\Contracts\FieldTypeRichText\RichText\Converter;
 use Ibexa\HttpCache\Handler\TagHandler;
+use Masilia\Bundle\IbexaBlocks\Block\Provider\AllPostsParameters;
+use Masilia\Bundle\IbexaBlocks\Block\Provider\AutoItemsParameters;
+use Masilia\Bundle\IbexaBlocks\Block\Provider\FeaturedParameters;
 use Masilia\Bundle\IbexaBlocks\Content\Renderer\RichtextRenderer;
+use Masilia\Bundle\IbexaBlocks\MasiliaIbexaBlocksBundle;
+use Masilia\Bundle\IbexaBlocks\Search\LatestContents;
+use Masilia\Bundle\IbexaBlocks\Search\SearchService;
 use Masilia\Bundle\IbexaBlocks\Site\IbexaCacheTagger;
 use Masilia\Bundle\IbexaBlocks\Site\NovactiveMenuProvider;
 use Masilia\Bundle\IbexaBlocks\Site\ToolboxAdminMetaProvider;
@@ -18,6 +24,9 @@ use Novactive\EzMenuManager\Service\MenuBuilder;
 use Masilia\Contracts\IbexaBlocks\CacheTagger;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\Definition;
+use Symfony\Component\DependencyInjection\Reference;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\DependencyInjection\Extension\Extension;
 use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
 
@@ -47,6 +56,8 @@ final class MasiliaIbexaBlocksExtension extends Extension
         $loader->load('default_settings.yaml');
         $loader->load('services.yaml');
 
+        $this->registerLists($container, $config);
+
         // The settings that change from one site to the next: read with the ConfigResolver, in the "masilia_ibexa_blocks" namespace.
         $processor = new ConfigurationProcessor($container, 'masilia_ibexa_blocks');
         $processor->mapSetting('layout_remote_id', $config);
@@ -73,5 +84,31 @@ final class MasiliaIbexaBlocksExtension extends Extension
         if (!interface_exists(Converter::class)) {
             $container->removeDefinition(RichtextRenderer::class);
         }
+    }
+
+    /**
+     * The blocks that list contents are on for the block types the project names: the providers are made here, with the field
+     * names of the settings, instead of being found by an attribute that could not know them.
+     *
+     * @param array<string, mixed> $config
+     */
+    private function registerLists(ContainerBuilder $container, array $config): void
+    {
+        $lists = $config['blocks']['lists'];
+        $provide = static function (string $class, array $arguments, array $types, int $priority) use ($container): void {
+            if ($types === []) {
+                return;
+            }
+            $container->setDefinition($class, (new Definition($class, $arguments))->addTag(MasiliaIbexaBlocksBundle::TAG_BLOCK_PARAMETERS, [
+                'types' => implode(',', $types),
+                'priority' => $priority,
+            ]));
+        };
+
+        $auto = $lists['auto_items'];
+        $provide(AutoItemsParameters::class, [new Reference(LatestContents::class), ['items_field' => $config['conventions']['items_field']] + array_diff_key($auto, ['types' => 1])], $auto['types'], 10);
+        $featured = $lists['featured'];
+        $provide(FeaturedParameters::class, [array_diff_key($featured, ['types' => 1])], $featured['types'], 0);
+        $provide(AllPostsParameters::class, [new Reference(SearchService::class), new Reference(UrlGeneratorInterface::class)], $lists['all_posts']['types'], 0);
     }
 }

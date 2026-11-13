@@ -43,7 +43,10 @@ services:
         resource: '../../Theme/'
     Masilia\Bundle\IbexaBlocks\Block\:
         resource: '../../Block/'
-        exclude: '../../Block/ResolvedView.php'
+        exclude:
+            - '../../Block/ResolvedView.php'
+            # Made by the extension, from the settings of the lists.
+            - '../../Block/Provider/'
     Masilia\Bundle\IbexaBlocks\Command\:
         resource: '../../Command/'
     Masilia\Bundle\IbexaBlocks\Theme\ThemeChecker:

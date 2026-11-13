@@ -19,7 +19,7 @@ use Masilia\IbexaBlocks\Search\SearchSettings;
  * The latest contents of a type on the site, newest first by the field the settings name for the type (the date of an article,
  * of an event, the name of a team member): what a grid or a slider that fills itself shows.
  */
-final readonly class LatestContents
+final readonly class LatestContents implements ContentLister
 {
     public function __construct(
         private IbexaSearchService $search,
