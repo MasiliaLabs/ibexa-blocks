@@ -9,9 +9,9 @@ namespace Masilia\IbexaBlocks\Theme;
  * the template and the image variations. A theme only says what it provides: what it does not say comes from the next theme of
  * the design (the chain of the design engine), so a theme that changes two blocks lists two blocks.
  *
- *     name: fossil_exit            # optional, the folder name when absent
- *     assets: { directory: assets/themes/fuelexit, entry: fuelexit, styles: [fa-icons], extra: [admin-toolbar.js] }
- *     favicons: build/images/fossil_exit/icons   # android-chrome-192x192.png, favicon-32x32.png, favicon-16x16.png, favicon.ico, site.webmanifest
+ *     name: my_site            # optional, the folder name when absent
+ *     assets: { directory: assets/themes/my_site, entry: my_site, styles: [fa-icons], extra: [admin-toolbar.js] }
+ *     favicons: build/images/my_site/icons   # android-chrome-192x192.png, favicon-32x32.png, favicon-16x16.png, favicon.ico, site.webmanifest
  *     fonts: [https://fonts.googleapis.com/css2?family=Inter&display=swap]
  *     layout: { notifications: false }
  *     views:

@@ -11,8 +11,8 @@ namespace Masilia\IbexaBlocks\Theme;
 final readonly class ThemeAssets
 {
     /**
-     * @param string       $directory Relative to the project ("assets/themes/mattcch")
-     * @param string       $entry     The name the entries are built under ("mattcch": mattcch.css and mattcch.js)
+     * @param string       $directory Relative to the project ("assets/themes/my_theme")
+     * @param string       $entry     The name the entries are built under ("my_theme": my_theme.css and my_theme.js)
      * @param list<string> $styles    Entries every page of the theme includes before its own (an icon font, say)
      * @param list<string> $extra     Entries included after its own, as stylesheet and as script (the editing toolbox)
      */
