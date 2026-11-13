@@ -1,0 +1,7 @@
+# The routes of the newsletter (masilia_ibexa_blocks.newsletter.enabled). Import it from the application's routes:
+#
+#     masilia_ibexa_blocks_newsletter:
+#         resource: '@MasiliaIbexaBlocksBundle/Resources/config/routing_newsletter.yaml'
+masilia_ibexa_blocks_newsletter:
+    resource: '../../Controller/SubscriptionController.php'
+    type: attribute

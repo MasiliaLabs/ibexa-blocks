@@ -29,10 +29,36 @@ use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\DependencyInjection\Extension\Extension;
+use Symfony\Component\DependencyInjection\Extension\PrependExtensionInterface;
 use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
 
-final class MasiliaIbexaBlocksExtension extends Extension
+final class MasiliaIbexaBlocksExtension extends Extension implements PrependExtensionInterface
 {
+    /** The subscribers table and its entity belong to the bundle, next to the project's own: mapped, and migrated, when the newsletter is on. */
+    public function prepend(ContainerBuilder $container): void
+    {
+        $enabled = false;
+        foreach ($container->getExtensionConfig($this->getAlias()) as $config) {
+            $enabled = (bool) ($config['newsletter']['enabled'] ?? $enabled);
+        }
+        if (!$enabled || !$container->hasExtension('doctrine')) {
+            return;
+        }
+
+        $container->prependExtensionConfig('doctrine', ['orm' => ['mappings' => ['MasiliaIbexaBlocks' => [
+            'type' => 'attribute',
+            'is_bundle' => false,
+            'dir' => __DIR__ . '/../Entity',
+            'prefix' => 'Masilia\\Bundle\\IbexaBlocks\\Entity',
+            'alias' => 'MasiliaIbexaBlocks',
+        ]]]]);
+        if ($container->hasExtension('doctrine_migrations')) {
+            $container->prependExtensionConfig('doctrine_migrations', ['migrations_paths' => [
+                'Masilia\\Bundle\\IbexaBlocks\\Migrations' => __DIR__ . '/../Migrations',
+            ]]);
+        }
+    }
+
     public function getAlias(): string
     {
         return 'masilia_ibexa_blocks';
@@ -56,6 +82,10 @@ final class MasiliaIbexaBlocksExtension extends Extension
         $loader = new YamlFileLoader($container, new FileLocator(__DIR__ . '/../Resources/config'));
         $loader->load('default_settings.yaml');
         $loader->load('services.yaml');
+        if ($config['newsletter']['enabled']) {
+            $container->setParameter('masilia_blocks.newsletter', ['from_address' => $config['newsletter']['from_address'] ?? $config['forms']['from_address']] + $config['newsletter']);
+            $loader->load('newsletter.yaml');
+        }
 
         $this->registerLists($container, $config);
 

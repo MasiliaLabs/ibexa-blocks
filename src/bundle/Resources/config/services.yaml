@@ -62,6 +62,7 @@ services:
 
     Masilia\Bundle\IbexaBlocks\Controller\:
         resource: '../../Controller/'
+        exclude: '../../Controller/SubscriptionController.php'
         tags: ['controller.service_arguments']
     # Below the project's own content_view rules (priority 10) and above Ibexa's defaults (-1).
     Masilia\Bundle\IbexaBlocks\View\BlockViewProvider:
