@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Masilia\Bundle\IbexaBlocks\Content;
 
 use Ibexa\Contracts\Core\Repository\Values\Content\Content;
+use Masilia\IbexaBlocks\Value\ImageSet;
 
 /**
  * The fields of a content as a template reads them: `content.fields.title`, `content.fields.image('card')`.
@@ -60,8 +61,8 @@ final class ContentFields implements \ArrayAccess, \IteratorAggregate, \Countabl
     }
 
     /**
-     * Every field, rendered. A value that needs an argument (an image takes a variation) is called with the variation
-     * named for its field in $variations, "original" when there is none.
+     * Every field, rendered. An image is given at the variation named for its field in $variations (an image the caller wants
+     * fixed, for a search or a theme that still lists them); without one it stays an ImageSet, and the template asks.
      *
      * @param array<string, string> $variations Field identifier => variation
      *
@@ -72,18 +73,26 @@ final class ContentFields implements \ArrayAccess, \IteratorAggregate, \Countabl
         $values = [];
         foreach ($this->identifiers as $identifier) {
             $value = $this->get($identifier);
-            $values[$identifier] = $value instanceof \Closure ? $value($variations[$identifier] ?? 'original') : $value;
+            $values[$identifier] = match (true) {
+                $value instanceof ImageSet && isset($variations[$identifier]) => $value->at($variations[$identifier]),
+                $value instanceof \Closure => $value($variations[$identifier] ?? 'original'),
+                default => $value,
+            };
         }
 
         return $values;
     }
 
-    /** `content.fields.image('card')` in a template: a field that is a closure is called with the arguments. */
+    /** `content.fields.image('card')` in a template: the image at that variation (a closure field is called with the arguments). */
     public function __call(string $name, array $arguments): mixed
     {
         $value = $this->get($name);
 
-        return $value instanceof \Closure ? $value(...$arguments) : null;
+        return match (true) {
+            $value instanceof ImageSet => $value->at(...$arguments),
+            $value instanceof \Closure => $value(...$arguments),
+            default => null,
+        };
     }
 
     public function offsetExists(mixed $offset): bool

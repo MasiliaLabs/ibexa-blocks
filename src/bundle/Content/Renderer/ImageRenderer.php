@@ -14,10 +14,11 @@ use Masilia\Bundle\IbexaBlocks\Content\FieldRendererRegistry;
 use Masilia\Contracts\IbexaBlocks\AsFieldRenderer;
 use Masilia\Contracts\IbexaBlocks\FieldRenderer;
 use Masilia\IbexaBlocks\Value\Image;
+use Masilia\IbexaBlocks\Value\ImageSet;
 
 /**
- * An image: null when empty, else a closure that gives the image at the variation a template asks for
- * (`fields.image('card')`, "original" by default). An image asset is followed to the image of the asset.
+ * An image: null when empty, else an ImageSet that gives the image at the variation a template asks for
+ * (`image.at('card')`; `image.uri` is the original). An image asset is followed to the image of the asset.
  */
 #[AsFieldRenderer(['ibexa_image', 'ibexa_imageasset'])]
 final readonly class ImageRenderer implements FieldRenderer
@@ -42,7 +43,7 @@ final readonly class ImageRenderer implements FieldRenderer
             $identifier = 'image';
         }
 
-        return function (string $variation = 'original') use ($content, $identifier): ?Image {
+        return new ImageSet(function (string $variation) use ($content, $identifier): ?Image {
             if ($this->fields->isFieldEmpty($content, $identifier)) {
                 return null;
             }
@@ -50,6 +51,6 @@ final readonly class ImageRenderer implements FieldRenderer
             $variationUri = $this->images->getImageVariation($field, $content->getVersionInfo(), $variation)?->uri ?: '';
 
             return new Image($variationUri, $field->value->alternativeText, $this->registry->render($content, 'caption'));
-        };
+        });
     }
 }

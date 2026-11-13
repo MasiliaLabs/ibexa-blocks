@@ -84,4 +84,24 @@ final class ContentFieldsTest extends TestCase
         $this->expectException(\LogicException::class);
         $fields['title'] = 'x';
     }
+
+    public function testAnImageSetIsFixedAtTheVariationOfAManifestOrLeftToTheTemplate(): void
+    {
+        $set = new \Masilia\IbexaBlocks\Value\ImageSet(static fn (string $variation) => new \Masilia\IbexaBlocks\Value\Image('/img/' . $variation));
+        $renderer = new class($set) implements FieldRenderer {
+            public function __construct(private object $set) {}
+
+            public function render(Content $content, string $identifier, FieldDefinition $definition): mixed
+            {
+                return $identifier === 'image' ? $this->set : 'value';
+            }
+        };
+        $content = $this->content($this->type('page', ['title' => ['type' => 'ibexa_string'], 'image' => ['type' => 'ibexa_image']]));
+        $registry = new FieldRendererRegistry(new ServiceLocator(['ibexa_string' => fn () => $renderer, 'ibexa_image' => fn () => $renderer]));
+        $fields = ContentFields::of(static fn () => $content, $registry);
+
+        self::assertSame($set, $fields->all()['image'], 'the template asks for its variation');
+        self::assertSame('/img/hero', $fields->all(['image' => 'hero'])['image']->uri, 'a manifest still fixes it');
+        self::assertSame('/img/card', $fields->image('card')->uri, 'fields.image(\'card\') keeps working');
+    }
 }
