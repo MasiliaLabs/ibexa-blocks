@@ -1,0 +1,49 @@
+{
+    "name": "masilia/ibexa-blocks",
+    "description": "Front-office rendering of pages made of blocks for Ibexa DXP: a content model for templates, field renderers, themes that extend each other, and the pieces every theme shares",
+    "type": "ibexa-bundle",
+    "license": "proprietary",
+    "keywords": ["ibexa", "symfony", "blocks", "theme", "twig"],
+    "require": {
+        "php": ">=8.3",
+        "ibexa/core": "^5.0",
+        "psr/log": "^3.0",
+        "symfony/config": "^7.4",
+        "symfony/dependency-injection": "^7.4",
+        "symfony/http-kernel": "^7.4",
+        "symfony/routing": "^7.4",
+        "symfony/yaml": "^7.4"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^11.5"
+    },
+    "suggest": {
+        "ibexa/rich-text": "Renders rich text fields",
+        "ibexa/fieldtype-matrix": "Matrix fields",
+        "masilia/editorial-toolbox": "In-context editing: the page and its blocks are marked for it",
+        "masilia/ibexa-ai-craft": "The assistant builds pages with the blocks of the theme and reads the conventions of this package"
+    },
+    "autoload": {
+        "psr-4": {
+            "Masilia\\IbexaBlocks\\": "src/lib/",
+            "Masilia\\Contracts\\IbexaBlocks\\": "src/contracts/",
+            "Masilia\\Bundle\\IbexaBlocks\\": "src/bundle/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Masilia\\IbexaBlocks\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-main": "0.1.x-dev"
+        }
+    },
+    "scripts": {
+        "test": "phpunit"
+    },
+    "config": {
+        "sort-packages": true
+    }
+}

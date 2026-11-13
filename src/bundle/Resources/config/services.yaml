@@ -1,0 +1,36 @@
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+        public: false
+
+    Masilia\IbexaBlocks\Conventions:
+        factory: ['Masilia\IbexaBlocks\Conventions', 'fromSettings']
+        arguments: ['%masilia_blocks.conventions%']
+
+    # The content model of the templates.
+    Masilia\Bundle\IbexaBlocks\Content\:
+        resource: '../../Content/'
+        exclude:
+            - '../../Content/ContentFields.php'
+            - '../../Content/RenderableContent.php'
+            - '../../Content/UnsupportedFieldType.php'
+
+    # The renderers get their locator from FieldRendererPass: they are built when their field type is first read.
+    Masilia\Bundle\IbexaBlocks\Content\FieldRendererRegistry:
+        arguments:
+            $logger: '@logger'
+
+    # What the content model asks of the rest of the application. Replace an alias to change how links, breadcrumbs, admin
+    # meta or cache tags are made.
+    Masilia\Bundle\IbexaBlocks\Site\:
+        resource: '../../Site/'
+
+    Masilia\Contracts\IbexaBlocks\LinkProvider:
+        alias: Masilia\Bundle\IbexaBlocks\Site\UrlAliasLinkProvider
+    Masilia\Contracts\IbexaBlocks\BreadcrumbProvider:
+        alias: Masilia\Bundle\IbexaBlocks\Site\LocationBreadcrumbProvider
+    Masilia\Contracts\IbexaBlocks\AdminMetaProvider:
+        alias: Masilia\Bundle\IbexaBlocks\Site\NullAdminMetaProvider
+    Masilia\Contracts\IbexaBlocks\CacheTagger:
+        alias: Masilia\Bundle\IbexaBlocks\Site\NullCacheTagger
