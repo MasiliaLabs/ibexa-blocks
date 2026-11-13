@@ -29,8 +29,10 @@ final readonly class UrlAliasLinkProvider implements LinkProvider
         );
     }
 
-    public function urlForLocation(int $locationId): string
+    public function urlForLocation(int $locationId, ?string $siteaccess = null): string
     {
-        return $this->router->generate(UrlAliasRouter::URL_ALIAS_ROUTE_NAME, ['locationId' => $locationId], UrlGeneratorInterface::ABSOLUTE_PATH);
+        $parameters = ['locationId' => $locationId] + ($siteaccess !== null ? ['siteaccess' => $siteaccess] : []);
+
+        return $this->router->generate(UrlAliasRouter::URL_ALIAS_ROUTE_NAME, $parameters, UrlGeneratorInterface::ABSOLUTE_PATH);
     }
 }

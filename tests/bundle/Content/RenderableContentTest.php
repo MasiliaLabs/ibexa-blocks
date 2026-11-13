@@ -33,7 +33,7 @@ final class RenderableContentTest extends TestCase
         $links = new class($this->linksMade) implements LinkProvider {
             public function __construct(private int &$made) {}
             public function forLocation(Location $location): Link { ++$this->made; return new Link('/p/' . $location->getId(), 'Name', ['identifier' => 'page']); }
-            public function urlForLocation(int $locationId): string { return '/p/' . $locationId; }
+            public function urlForLocation(int $locationId, ?string $siteaccess = null): string { return '/p/' . $locationId; }
         };
         $breadcrumbs = new class($this->trailsMade) implements BreadcrumbProvider {
             public function __construct(private int &$made) {}

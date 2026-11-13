@@ -101,6 +101,18 @@ final class ThemesTest extends TestCase
         self::assertSame(['fossil_exit', 'mattcch_light', 'standard'], $blocks->searched());
     }
 
+    public function testAnyOtherContentIsTheLastResortAndNeverBeatsAType(): void
+    {
+        $this->theme('standard', "views:\n  full:\n    page: page.twig\n    '*': error.twig\n");
+        $this->theme('fossil_exit', "views:\n  full:\n    article: post_fossil.twig\n");
+        $blocks = new BlockRegistry(new ThemeRegistry([$this->dir]), $this->chain('fossil_exit', ['fossil_exit' => ['fossil_exit', 'standard']]));
+
+        self::assertSame('page.twig', $blocks->find('full', 'page')->definition->template);
+        self::assertSame('post_fossil.twig', $blocks->find('full', 'article')->definition->template);
+        self::assertSame(['standard', 'error.twig'], [$blocks->find('full', 'folder')->theme, $blocks->find('full', 'folder')->definition->template], 'a theme that names article does not hide the standard fallback');
+        self::assertNull($blocks->find('blocks', 'folder'), 'each view type has its own fallback');
+    }
+
     public function testProvidersRunByPriorityAndOnlyInTheirViewTypes(): void
     {
         $make = static fn (string $name): BlockViewParameters => new class($name) implements BlockViewParameters {

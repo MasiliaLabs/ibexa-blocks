@@ -43,7 +43,12 @@ services:
     # meta or cache tags are made.
     Masilia\Bundle\IbexaBlocks\Site\:
         resource: '../../Site/'
+    Masilia\Bundle\IbexaBlocks\Site\LayoutProvider:
+        arguments:
+            $config: '@ibexa.config.resolver'
 
+    Masilia\Contracts\IbexaBlocks\MenuProvider:
+        alias: Masilia\Bundle\IbexaBlocks\Site\NullMenuProvider
     Masilia\Contracts\IbexaBlocks\LinkProvider:
         alias: Masilia\Bundle\IbexaBlocks\Site\UrlAliasLinkProvider
     Masilia\Contracts\IbexaBlocks\BreadcrumbProvider:

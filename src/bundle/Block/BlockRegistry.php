@@ -16,12 +16,21 @@ final readonly class BlockRegistry
     ) {
     }
 
+    /** The content type that stands for every type no theme names: `*` ("any other content"). */
+    public const ANY = '*';
+
+    /**
+     * A content type a theme names wins, in the first theme of the design that names it; else the "any other content" view of
+     * the first theme that has one (a page for what no template is written for).
+     */
     public function find(string $viewType, string $contentType): ?ResolvedView
     {
-        foreach ($this->design->themes() as $theme) {
-            $definition = $this->themes->manifest($theme)?->view($viewType, $contentType);
-            if ($definition !== null) {
-                return new ResolvedView($definition, $theme);
+        foreach ([$contentType, self::ANY] as $type) {
+            foreach ($this->design->themes() as $theme) {
+                $definition = $this->themes->manifest($theme)?->view($viewType, $type);
+                if ($definition !== null) {
+                    return new ResolvedView($definition, $theme);
+                }
             }
         }
 

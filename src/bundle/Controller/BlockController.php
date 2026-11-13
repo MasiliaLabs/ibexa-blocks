@@ -13,10 +13,11 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
- * Shows a block, an item of a block, or any content in one of the view types of a page of blocks, for every content type:
+ * Shows a block, an item of a block, a page, or any content in one of the view types a theme names, for every content type:
  * the theme says which template and which image variations (theme.yaml), the providers add what a kind of block needs.
  *
- * The template gets `block` (the content, renderable) and `fields` (its fields, rendered). With
+ * The template gets `block` (the content, renderable) and `fields` (its fields, rendered); a full view also gets `breadcrumb`,
+ * `link` and `admin_meta`. With
  * masilia_ibexa_blocks.blocks.flatten_fields the fields are also variables of their own.
  */
 final readonly class BlockController
@@ -59,9 +60,13 @@ final readonly class BlockController
             $parameters = array_merge($parameters, $provider->parameters($block, array_merge($fields, $parameters), $state));
         }
 
+        // A page also knows where it is (its breadcrumb) and what the editing toolbox needs; a block does not need them.
+        $page = $viewType === 'full' ? ['breadcrumb' => $block->breadcrumb(), 'link' => $block->link(), 'admin_meta' => $block->adminMeta()] : [];
+
         $view->addParameters(array_merge(
             $this->flattenFields ? $fields : [],
             $parameters,
+            $page,
             ['block' => $block, 'fields' => $fields, 'item_link' => $block->link()],
         ));
         $view->setTemplateIdentifier('@ibexadesign/' . ltrim($state->template() ?? $resolved->definition->template, '/'));

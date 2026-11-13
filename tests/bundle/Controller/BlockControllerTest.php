@@ -67,7 +67,7 @@ final class BlockControllerTest extends TestCase
         $registry = new FieldRendererRegistry(new ServiceLocator(['ibexa_string' => fn () => $renderer, 'ibexa_image' => fn () => $renderer]));
         $links = new class() implements LinkProvider {
             public function forLocation(Location $location): Link { return new Link('/block', 'Block'); }
-            public function urlForLocation(int $locationId): string { return '/block'; }
+            public function urlForLocation(int $locationId, ?string $siteaccess = null): string { return '/block'; }
         };
         $trail = new class() implements BreadcrumbProvider {
             public function forLocation(Location $location): array { return []; }

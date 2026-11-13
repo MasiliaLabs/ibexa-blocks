@@ -1,0 +1,6 @@
+parameters:
+    masilia_ibexa_blocks.default.layout_remote_id: ~
+    masilia_ibexa_blocks.default.layout_menus:
+        header: main
+        footer: menu_footer
+        footer_bottom: menu_footer_bottom

@@ -4,15 +4,31 @@ declare(strict_types=1);
 
 namespace Masilia\Bundle\IbexaBlocks\DependencyInjection;
 
+use Ibexa\Bundle\Core\DependencyInjection\Configuration\SiteAccessAware;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
-use Symfony\Component\Config\Definition\ConfigurationInterface;
 
-final class Configuration implements ConfigurationInterface
+final class Configuration extends SiteAccessAware\Configuration
 {
     public function getConfigTreeBuilder(): TreeBuilder
     {
         $tree = new TreeBuilder('masilia_ibexa_blocks');
-        $tree->getRootNode()
+        $root = $tree->getRootNode();
+
+        // What changes from one site to the next (under `system`: a siteaccess or a siteaccess group).
+        $this->generateScopeBaseNode($root)
+            ->scalarNode('layout_remote_id')
+                ->info('The remote id of the content that holds the layout of the site (logo, menus text, footer): one per site')
+            ->end()
+            ->arrayNode('layout_menus')
+                ->info('The type of menu of each part of the layout (the menu manager\'s types)')
+                ->children()
+                    ->scalarNode('header')->end()
+                    ->scalarNode('footer')->end()
+                    ->scalarNode('footer_bottom')->end()
+                ->end()
+            ->end();
+
+        $root
             ->children()
                 ->arrayNode('conventions')
                     ->info('How the sites of this project are built. The defaults are the Masilia way.')

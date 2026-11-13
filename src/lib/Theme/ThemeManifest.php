@@ -16,6 +16,9 @@ namespace Masilia\IbexaBlocks\Theme;
  *             richtext: blocks/richtext.twig            # shorthand: just the template
  *         block_item:
  *             card_item: cards/card_item.twig
+ *         full:
+ *             page: page.twig
+ *             '*': error.twig           # any other content: what a theme shows for the rest
  */
 final readonly class ThemeManifest
 {

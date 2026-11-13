@@ -12,5 +12,6 @@ interface LinkProvider
 {
     public function forLocation(Location $location): Link;
 
-    public function urlForLocation(int $locationId): string;
+    /** @param string|null $siteaccess The siteaccess the link goes to, when it is not the current one (the same page in another language) */
+    public function urlForLocation(int $locationId, ?string $siteaccess = null): string;
 }
