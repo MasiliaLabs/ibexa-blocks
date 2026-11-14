@@ -23,6 +23,16 @@ final readonly class DoctrineSubscriberStore implements SubscriberStore
         return $this->em->getRepository(Subscriber::class)->findOneBy(['confirmationToken' => $token]);
     }
 
+    public function count(): int
+    {
+        return $this->em->getRepository(Subscriber::class)->count([]);
+    }
+
+    public function latest(int $limit): array
+    {
+        return array_values($this->em->getRepository(Subscriber::class)->findBy([], ['createdAt' => 'DESC', 'id' => 'DESC'], max(1, $limit)));
+    }
+
     public function add(Subscriber $subscriber): void
     {
         $this->em->persist($subscriber);

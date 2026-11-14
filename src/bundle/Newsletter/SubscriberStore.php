@@ -13,6 +13,11 @@ interface SubscriberStore
 
     public function byToken(string $token): ?Subscriber;
 
+    public function count(): int;
+
+    /** @return list<Subscriber> The latest first */
+    public function latest(int $limit): array;
+
     /** Keeps a new subscriber. */
     public function add(Subscriber $subscriber): void;
 

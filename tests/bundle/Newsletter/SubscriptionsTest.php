@@ -45,6 +45,10 @@ final class SubscriptionsTest extends TestCase
                 return null;
             }
 
+            public function count(): int { return count($this->subscribers); }
+
+            public function latest(int $limit): array { return array_slice(array_reverse(array_values($this->subscribers)), 0, $limit); }
+
             public function add(Subscriber $subscriber): void { $this->subscribers[$subscriber->getEmail()] = $subscriber; }
 
             public function save(): void { ++$this->saves; }

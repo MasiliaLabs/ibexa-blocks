@@ -49,6 +49,10 @@ services:
         resource: '../../Theme/'
     # For the assistant (masilia/ibexa-ai-craft): which blocks a siteaccess can show.
     Masilia\Contracts\IbexaBlocks\ShownBlocks: '@Masilia\Bundle\IbexaBlocks\Theme\ThemeShownBlocks'
+    Masilia\Contracts\IbexaBlocks\ShownViews: '@Masilia\Bundle\IbexaBlocks\Theme\ThemeShownBlocks'
+    Masilia\Contracts\IbexaBlocks\Themes: '@Masilia\Bundle\IbexaBlocks\Theme\ThemeCatalog'
+    Masilia\Contracts\IbexaBlocks\ListPreview: '@Masilia\Bundle\IbexaBlocks\Search\ListedContents'
+    Masilia\Bundle\IbexaBlocks\Search\ContentLister: '@Masilia\Bundle\IbexaBlocks\Search\LatestContents'
     Masilia\Bundle\IbexaBlocks\Block\:
         resource: '../../Block/'
         exclude:

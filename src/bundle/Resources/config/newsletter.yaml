@@ -13,6 +13,8 @@ services:
         resource: '../../Newsletter/'
         exclude: '../../Newsletter/SubscriptionResult.php'
     Masilia\Bundle\IbexaBlocks\Newsletter\SubscriberStore: '@Masilia\Bundle\IbexaBlocks\Newsletter\DoctrineSubscriberStore'
+    # For the assistant (masilia/ibexa-ai-craft).
+    Masilia\Contracts\IbexaBlocks\Subscribers: '@Masilia\Bundle\IbexaBlocks\Newsletter\StoredSubscribers'
 
     Masilia\Bundle\IbexaBlocks\Controller\SubscriptionController:
         tags: ['controller.service_arguments']

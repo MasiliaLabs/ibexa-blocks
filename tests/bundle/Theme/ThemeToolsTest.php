@@ -10,6 +10,7 @@ use Masilia\Bundle\IbexaBlocks\Command\ThemesCommand;
 use Masilia\Bundle\IbexaBlocks\Theme\DesignChain;
 use Masilia\Bundle\IbexaBlocks\Theme\ThemeChecker;
 use Masilia\Bundle\IbexaBlocks\Theme\ThemeRegistry;
+use Masilia\Bundle\IbexaBlocks\Theme\ThemeScaffold;
 use Masilia\Bundle\IbexaBlocks\Theme\ThemeSettings;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Tester\CommandTester;
@@ -126,7 +127,7 @@ final class ThemeToolsTest extends TestCase
     public function testANewThemeExtendsAnotherWithItsManifestLayoutAndAssets(): void
     {
         $this->standardTheme();
-        $command = new CommandTester(new ThemeCreateCommand($this->registry(), $this->project));
+        $command = new CommandTester(new ThemeCreateCommand(new ThemeScaffold($this->registry(), $this->project)));
 
         self::assertSame(0, $command->execute(['name' => 'blog']));
 
@@ -146,7 +147,7 @@ final class ThemeToolsTest extends TestCase
     public function testANewThemeNeverOverwritesAndNeedsAParentAndAGoodName(): void
     {
         $this->standardTheme();
-        $create = fn (array $input) => (new CommandTester(new ThemeCreateCommand($this->registry(), $this->project)));
+        $create = fn (array $input) => (new CommandTester(new ThemeCreateCommand(new ThemeScaffold($this->registry(), $this->project))));
 
         $tester = $create([]);
         self::assertSame(2, $tester->execute(['name' => 'Bad Name']));
