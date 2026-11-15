@@ -26,4 +26,13 @@ final class ConventionsTest extends TestCase
         self::assertSame(['Pages'], $conventions->contentGroups);
         self::assertSame('items', $conventions->itemsField, 'what is not set keeps its default');
     }
+
+    public function testTheItemsFieldOfABlockTypeThatCallsItDifferentlyIsSetPerType(): void
+    {
+        $conventions = Conventions::fromSettings(['items_field_by_type' => ['info_cards' => 'cards']]);
+
+        self::assertSame('cards', $conventions->itemsFieldFor('info_cards'));
+        self::assertSame('items', $conventions->itemsFieldFor('grid_cards'), 'the other types keep the project convention');
+        self::assertSame('items', (new Conventions())->itemsFieldFor('info_cards'), 'nothing set: the convention');
+    }
 }

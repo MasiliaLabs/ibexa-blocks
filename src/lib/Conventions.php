@@ -15,6 +15,7 @@ final readonly class Conventions
      * @param string       $pageType      The content type of a page
      * @param string       $blocksField   The field of a page that holds its blocks (a list of relations)
      * @param string       $itemsField    The field of a block that holds its child items
+     * @param array<string, string> $itemsFieldByType The field that holds the child items of the block types that do not call it $itemsField ("info_cards" => "cards")
      * @param string       $blockGroup    The group of content types that are blocks
      * @param list<string> $contentGroups The groups of the other content types the site is made of
      */
@@ -24,7 +25,14 @@ final readonly class Conventions
         public string $itemsField = 'items',
         public string $blockGroup = 'Blocks',
         public array $contentGroups = ['Content', 'Block items', 'Media', 'Taxonomies', 'Configurations'],
+        public array $itemsFieldByType = [],
     ) {
+    }
+
+    /** The field that holds the child items of a block of this type */
+    public function itemsFieldFor(string $blockType): string
+    {
+        return $this->itemsFieldByType[$blockType] ?? $this->itemsField;
     }
 
     /**
@@ -40,6 +48,7 @@ final readonly class Conventions
             itemsField: (string) ($settings['items_field'] ?? $defaults->itemsField),
             blockGroup: (string) ($settings['block_group'] ?? $defaults->blockGroup),
             contentGroups: array_values(array_map('strval', (array) ($settings['content_groups'] ?? $defaults->contentGroups))),
+            itemsFieldByType: array_map('strval', (array) ($settings['items_field_by_type'] ?? $defaults->itemsFieldByType)),
         );
     }
 }

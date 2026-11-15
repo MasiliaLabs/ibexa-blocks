@@ -137,7 +137,7 @@ final class MasiliaIbexaBlocksExtension extends Extension implements PrependExte
         };
 
         $auto = $lists['auto_items'];
-        $provide(AutoItemsParameters::class, [new Reference(LatestContents::class), ['items_field' => $config['conventions']['items_field']] + array_diff_key($auto, ['types' => 1])], $auto['types'], 10);
+        $provide(AutoItemsParameters::class, [new Reference(LatestContents::class), ['items_field' => $config['conventions']['items_field'], 'items_field_by_type' => $config['conventions']['items_field_by_type']] + array_diff_key($auto, ['types' => 1])], $auto['types'], 10);
         $featured = $lists['featured'];
         $provide(FeaturedParameters::class, [array_diff_key($featured, ['types' => 1])], $featured['types'], 0);
         $provide(AllPostsParameters::class, [new Reference(SearchService::class), new Reference(UrlGeneratorInterface::class)], $lists['all_posts']['types'], 0);
