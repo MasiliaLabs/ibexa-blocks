@@ -13,27 +13,34 @@
     "require": {
         "php": ">=8.3",
         "ibexa/core": "^5.0",
+        "psr/container": "^1.1 || ^2.0",
         "psr/log": "^3.0",
         "symfony/config": "^7.4",
+        "symfony/console": "^7.4",
         "symfony/dependency-injection": "^7.4",
+        "symfony/http-foundation": "^7.4",
         "symfony/http-kernel": "^7.4",
         "symfony/routing": "^7.4",
-        "symfony/yaml": "^7.4"
+        "symfony/yaml": "^7.4",
+        "twig/twig": "^3.0"
     },
     "require-dev": {
         "phpunit/phpunit": "^11.5"
     },
     "suggest": {
-        "ibexa/rich-text": "Renders rich text fields",
+        "doctrine/doctrine-migrations-bundle": "The migration of the newsletter table",
+        "doctrine/orm": "The newsletter subscribers (masilia_ibexa_blocks.newsletter)",
+        "gregwar/captcha-bundle": "A captcha on the contact forms",
         "ibexa/fieldtype-matrix": "Matrix fields",
+        "ibexa/rich-text": "Renders rich text fields",
         "masilia/editorial-toolbox": "In-context editing: the page and its blocks are marked for it",
         "masilia/ibexa-ai-craft": "The assistant builds pages with the blocks of the theme and reads the conventions of this package",
-        "doctrine/orm": "The newsletter subscribers (masilia_ibexa_blocks.newsletter)",
-        "doctrine/doctrine-migrations-bundle": "The migration of the newsletter table",
+        "masilia/ibexa-sites": "Sets the layout, name, email and address of each site from its registry",
+        "novactive/ezmenumanagerbundle": "Menus managed in the admin (NovactiveMenuProvider)",
         "symfony/form": "Contact forms made from a matrix of questions",
-        "symfony/validator": "Contact forms made from a matrix of questions",
         "symfony/mailer": "Contact forms, form submissions and the newsletter",
-        "gregwar/captcha-bundle": "A captcha on the contact forms"
+        "symfony/mime": "Emails of the contact forms and the newsletter",
+        "symfony/validator": "Contact forms made from a matrix of questions"
     },
     "autoload": {
         "psr-4": {
