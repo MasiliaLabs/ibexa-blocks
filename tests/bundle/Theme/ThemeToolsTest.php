@@ -47,7 +47,7 @@ final class ThemeToolsTest extends TestCase
 
     private function standardTheme(): void
     {
-        $this->write('templates/themes/standard/theme.yaml', "assets: { entry: standard, styles: [fa-icons], extra: [admin-toolbar.js] }\nfavicons: build/images/imal/icons\nviews:\n  blocks:\n    hero: blocks/hero.twig\n    cta: blocks/cta.twig\n    ghost: blocks/ghost.twig\n");
+        $this->write('templates/themes/standard/theme.yaml', "assets: { entry: standard, styles: [fa-icons], extra: [admin-toolbar.js] }\nfavicons: build/images/brand/icons\nviews:\n  blocks:\n    hero: blocks/hero.twig\n    cta: blocks/cta.twig\n    ghost: blocks/ghost.twig\n");
         $this->write('templates/themes/standard/blocks/hero.twig', 'hero');
         $this->write('templates/themes/standard/blocks/cta.twig', 'cta');
         $this->write('templates/themes/standard/blocks/dead.twig', 'dead');
@@ -159,14 +159,14 @@ final class ThemeToolsTest extends TestCase
     public function testTheFirstThemeOfTheChainThatSaysAThingWins(): void
     {
         $this->standardTheme();
-        $this->write('templates/themes/fossil/theme.yaml', "favicons: build/images/fossil/icons\nlayout: { notifications: false }\nfonts: ['https://fonts.googleapis.com/css2?family=X']\n");
+        $this->write('templates/themes/acme/theme.yaml', "favicons: build/images/acme/icons\nlayout: { notifications: false }\nfonts: ['https://fonts.googleapis.com/css2?family=X']\n");
         $config = $this->createMock(ConfigResolverInterface::class);
-        $config->method('getParameter')->willReturn('fossil');
-        $settings = new ThemeSettings($this->registry(), new DesignChain($config, ['fossil' => ['fossil', 'standard']]));
+        $config->method('getParameter')->willReturn('acme');
+        $settings = new ThemeSettings($this->registry(), new DesignChain($config, ['acme' => ['acme', 'standard']]));
 
-        self::assertSame('build/images/fossil/icons', $settings->favicons());
+        self::assertSame('build/images/acme/icons', $settings->favicons());
         self::assertFalse($settings->notifications());
         self::assertSame(['https://fonts.googleapis.com/css2?family=X'], $settings->fonts());
-        self::assertSame('standard', $settings->assets()->entry, 'what fossil does not say comes from standard');
+        self::assertSame('standard', $settings->assets()->entry, 'what acme does not say comes from standard');
     }
 }

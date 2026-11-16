@@ -10,7 +10,7 @@ final readonly class NewsletterSettings
     /**
      * @param string|null $fromAddress          The address the confirmation mail is sent from
      * @param string      $subject              The subject of the confirmation mail
-     * @param string      $listName             What the visitor subscribed to ("the IMAL newsletter"), in the confirmation page
+     * @param string      $listName             What the visitor subscribed to ("the Acme newsletter"), in the confirmation page
      * @param string      $confirmationTemplate The confirmation mail, relative to the templates of the theme
      * @param string      $statusTemplate       The page shown after a click on a link of the mail
      */

@@ -14,7 +14,7 @@ final class ThemeManifestTest extends TestCase
 {
     public function testAThemeSaysWhatItProvidesPerViewTypeAndContentType(): void
     {
-        $manifest = ThemeManifest::fromArray('fossil_exit', ['views' => [
+        $manifest = ThemeManifest::fromArray('acme', ['views' => [
             'blocks' => [
                 'hero_banner' => ['template' => 'blocks/hero_banner.twig', 'variations' => ['background_image' => 'banner_hero']],
                 'richtext' => 'blocks/richtext.twig',
@@ -22,7 +22,7 @@ final class ThemeManifestTest extends TestCase
             'block_item' => ['card_item' => ['template' => 'cards/card_item.twig', 'params' => ['compact' => true]]],
         ]]);
 
-        self::assertSame('fossil_exit', $manifest->name);
+        self::assertSame('acme', $manifest->name);
         self::assertEquals(new ViewDefinition('blocks/hero_banner.twig', ['background_image' => 'banner_hero']), $manifest->view('blocks', 'hero_banner'));
         self::assertEquals(new ViewDefinition('blocks/richtext.twig'), $manifest->view('blocks', 'richtext'), 'a template alone is enough');
         self::assertSame(['compact' => true], $manifest->view('block_item', 'card_item')->params);
@@ -32,7 +32,7 @@ final class ThemeManifestTest extends TestCase
 
     public function testAThemeThatSaysNothingIsValid(): void
     {
-        self::assertSame([], ThemeManifest::fromArray('mattcch', [])->views);
+        self::assertSame([], ThemeManifest::fromArray('partner', [])->views);
     }
 
     /**
@@ -61,9 +61,9 @@ final class ThemeManifestTest extends TestCase
 
     public function testAThemeSaysWhatItsLayoutNeeds(): void
     {
-        $manifest = ThemeManifest::fromArray('fossil_exit', [
+        $manifest = ThemeManifest::fromArray('acme', [
             'assets' => ['directory' => 'assets/themes/fuelexit/', 'entry' => 'fuelexit', 'styles' => ['fa-icons'], 'extra' => ['admin-toolbar.js']],
-            'favicons' => 'build/images/fossil_exit/icons/',
+            'favicons' => 'build/images/acme/icons/',
             'fonts' => ['https://fonts.googleapis.com/css2?family=Inter&display=swap'],
             'layout' => ['notifications' => false],
         ]);
@@ -73,7 +73,7 @@ final class ThemeManifestTest extends TestCase
         self::assertSame('assets/themes/fuelexit/scss/main.scss', $manifest->assets->stylesheetSource());
         self::assertSame('assets/themes/fuelexit/js/main.js', $manifest->assets->scriptSource());
         self::assertSame(['fa-icons'], $manifest->assets->styles);
-        self::assertSame('build/images/fossil_exit/icons', $manifest->favicons);
+        self::assertSame('build/images/acme/icons', $manifest->favicons);
         self::assertFalse($manifest->notifications);
         self::assertSame('standard', ThemeManifest::fromArray('t', ['assets' => ['entry' => 'standard']])->assets->entry);
         self::assertSame('assets/themes/t', ThemeManifest::fromArray('t', ['assets' => []])->assets->directory, 'the folder and the entry default to the name of the theme');

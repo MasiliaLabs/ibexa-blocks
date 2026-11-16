@@ -53,9 +53,9 @@ final class ThemesTest extends TestCase
 
     public function testTheChainIsTheDesignThenItsThemesWithoutDoubles(): void
     {
-        $chain = $this->chain('fossil_exit', ['fossil_exit' => ['fossil_exit', 'mattcch_light', 'standard']]);
+        $chain = $this->chain('acme', ['acme' => ['acme', 'partner_light', 'standard']]);
 
-        self::assertSame(['fossil_exit', 'mattcch_light', 'standard'], $chain->themes());
+        self::assertSame(['acme', 'partner_light', 'standard'], $chain->themes());
         self::assertSame(['unknown'], $this->chain('unknown', [])->themes());
     }
 
@@ -66,7 +66,7 @@ final class ThemesTest extends TestCase
 
         self::assertSame(['standard'], $registry->names());
         self::assertSame($registry->manifest('standard'), $registry->manifest('standard'));
-        self::assertNull($registry->manifest('mattcch'));
+        self::assertNull($registry->manifest('partner'));
     }
 
     public function testBrokenYamlAndWrongManifestsSaySoWithTheFile(): void
@@ -90,25 +90,25 @@ final class ThemesTest extends TestCase
     public function testTheFirstThemeOfTheDesignThatSaysItWinsAndTheOthersFillTheGaps(): void
     {
         $this->theme('standard', "views:\n  blocks:\n    hero: blocks/hero.twig\n    cta: blocks/cta.twig\n");
-        $this->theme('fossil_exit', "views:\n  blocks:\n    hero: { template: blocks/hero_fossil.twig, variations: { image: banner } }\n");
-        $blocks = new BlockRegistry(new ThemeRegistry([$this->dir]), $this->chain('fossil_exit', ['fossil_exit' => ['fossil_exit', 'mattcch_light', 'standard']]));
+        $this->theme('acme', "views:\n  blocks:\n    hero: { template: blocks/hero_acme.twig, variations: { image: banner } }\n");
+        $blocks = new BlockRegistry(new ThemeRegistry([$this->dir]), $this->chain('acme', ['acme' => ['acme', 'partner_light', 'standard']]));
 
         $hero = $blocks->find('blocks', 'hero');
-        self::assertSame(['fossil_exit', 'blocks/hero_fossil.twig', ['image' => 'banner']], [$hero->theme, $hero->definition->template, $hero->definition->variations]);
+        self::assertSame(['acme', 'blocks/hero_acme.twig', ['image' => 'banner']], [$hero->theme, $hero->definition->template, $hero->definition->variations]);
         $cta = $blocks->find('blocks', 'cta');
         self::assertSame(['standard', 'blocks/cta.twig'], [$cta->theme, $cta->definition->template], 'what the theme does not say comes from the next one');
         self::assertNull($blocks->find('blocks', 'nope'));
-        self::assertSame(['fossil_exit', 'mattcch_light', 'standard'], $blocks->searched());
+        self::assertSame(['acme', 'partner_light', 'standard'], $blocks->searched());
     }
 
     public function testAnyOtherContentIsTheLastResortAndNeverBeatsAType(): void
     {
         $this->theme('standard', "views:\n  full:\n    page: page.twig\n    '*': error.twig\n");
-        $this->theme('fossil_exit', "views:\n  full:\n    article: post_fossil.twig\n");
-        $blocks = new BlockRegistry(new ThemeRegistry([$this->dir]), $this->chain('fossil_exit', ['fossil_exit' => ['fossil_exit', 'standard']]));
+        $this->theme('acme', "views:\n  full:\n    article: post_acme.twig\n");
+        $blocks = new BlockRegistry(new ThemeRegistry([$this->dir]), $this->chain('acme', ['acme' => ['acme', 'standard']]));
 
         self::assertSame('page.twig', $blocks->find('full', 'page')->definition->template);
-        self::assertSame('post_fossil.twig', $blocks->find('full', 'article')->definition->template);
+        self::assertSame('post_acme.twig', $blocks->find('full', 'article')->definition->template);
         self::assertSame(['standard', 'error.twig'], [$blocks->find('full', 'folder')->theme, $blocks->find('full', 'folder')->definition->template], 'a theme that names article does not hide the standard fallback');
         self::assertNull($blocks->find('blocks', 'folder'), 'each view type has its own fallback');
     }
@@ -136,22 +136,22 @@ final class ThemesTest extends TestCase
         $this->theme('standard', "views:\n  blocks:\n    hero: blocks/hero_x.twig\n    '*': blocks/any.twig\n");
         mkdir($this->dir . '/standard/blocks');
         file_put_contents($this->dir . '/standard/blocks/cta.twig', '');
-        $this->theme('fossil_exit', '');
-        mkdir($this->dir . '/fossil_exit/blocks');
-        file_put_contents($this->dir . '/fossil_exit/blocks/map.twig', '');
-        file_put_contents($this->dir . '/fossil_exit/blocks/hero.twig', '');
+        $this->theme('acme', '');
+        mkdir($this->dir . '/acme/blocks');
+        file_put_contents($this->dir . '/acme/blocks/map.twig', '');
+        file_put_contents($this->dir . '/acme/blocks/hero.twig', '');
 
         $config = $this->createMock(\Ibexa\Contracts\Core\SiteAccess\ConfigResolverInterface::class);
-        $config->method('getParameter')->willReturnCallback(static fn (string $name, $namespace = null, $scope = null): string => $scope === 'fossil_exit_fr' ? 'fossil_exit' : 'standard');
-        $shown = new \Masilia\Bundle\IbexaBlocks\Theme\ThemeShownBlocks(new ThemeRegistry([$this->dir]), $config, ['fossil_exit' => ['fossil_exit', 'standard'], 'standard' => ['standard']]);
+        $config->method('getParameter')->willReturnCallback(static fn (string $name, $namespace = null, $scope = null): string => $scope === 'acme_fr' ? 'acme' : 'standard');
+        $shown = new \Masilia\Bundle\IbexaBlocks\Theme\ThemeShownBlocks(new ThemeRegistry([$this->dir]), $config, ['acme' => ['acme', 'standard'], 'standard' => ['standard']]);
 
-        self::assertSame(['cta', 'hero', 'map'], $shown->forSiteaccess('fossil_exit_fr'));
+        self::assertSame(['cta', 'hero', 'map'], $shown->forSiteaccess('acme_fr'));
         self::assertSame(['cta', 'hero'], $shown->forSiteaccess('site'), 'a design of its own themes only');
 
-        foreach (['/standard/blocks/cta.twig', '/fossil_exit/blocks/map.twig', '/fossil_exit/blocks/hero.twig'] as $file) {
+        foreach (['/standard/blocks/cta.twig', '/acme/blocks/map.twig', '/acme/blocks/hero.twig'] as $file) {
             unlink($this->dir . $file);
         }
         rmdir($this->dir . '/standard/blocks');
-        rmdir($this->dir . '/fossil_exit/blocks');
+        rmdir($this->dir . '/acme/blocks');
     }
 }
