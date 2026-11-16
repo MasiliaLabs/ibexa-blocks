@@ -1,8 +1,6 @@
 {
     "name": "masilia/ibexa-blocks",
     "description": "Front-office rendering of pages made of blocks for Ibexa DXP: a content model for templates, field renderers, themes that extend each other, and the pieces every theme shares",
-    "type": "ibexa-bundle",
-    "license": "proprietary",
     "keywords": [
         "ibexa",
         "symfony",
@@ -10,6 +8,20 @@
         "theme",
         "twig"
     ],
+    "homepage": "https://github.com/MasiliaLabs/ibexa-blocks",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "MasiliaLabs",
+            "homepage": "https://github.com/MasiliaLabs"
+        }
+    ],
+    "support": {
+        "issues": "https://github.com/MasiliaLabs/ibexa-blocks/issues",
+        "source": "https://github.com/MasiliaLabs/ibexa-blocks",
+        "security": "https://github.com/MasiliaLabs/ibexa-blocks/security/policy"
+    },
+    "type": "ibexa-bundle",
     "require": {
         "php": ">=8.3",
         "ibexa/core": "^5.0",
