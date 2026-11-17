@@ -4,6 +4,8 @@ All notable changes to `masilia/ibexa-blocks` are documented here. The format fo
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-11-17
+
 ### Added
 - `items_field_by_type`: the field that holds the child items of the block types that do not call it `items` (for example `info_cards: cards`).
 
@@ -33,7 +35,8 @@ First release.
 - Search and forms by mail, driven by configuration.
 - Themes as a mechanism: base layout, theme tooling, asset discovery.
 
-[Unreleased]: https://github.com/MasiliaLabs/ibexa-blocks/compare/0.3.0...HEAD
+[Unreleased]: https://github.com/MasiliaLabs/ibexa-blocks/compare/0.4.0...HEAD
+[0.4.0]: https://github.com/MasiliaLabs/ibexa-blocks/compare/0.3.0...0.4.0
 [0.3.0]: https://github.com/MasiliaLabs/ibexa-blocks/compare/0.2.0...0.3.0
 [0.2.0]: https://github.com/MasiliaLabs/ibexa-blocks/compare/0.1.0...0.2.0
 [0.1.0]: https://github.com/MasiliaLabs/ibexa-blocks/releases/tag/0.1.0
