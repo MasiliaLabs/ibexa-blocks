@@ -1,0 +1,35 @@
+---
+name: masilia-ibexa-blocks
+description: Work with masilia/ibexa-blocks, the front-office engine of Ibexa 5 sites made of blocks - content model (page, home_page, layout_config, site, block types), themes (assets + Twig templates named after content types, standalone or inherited through the design engine), block lists, forms, search, newsletter, site creation. Use whenever the user builds or changes a theme, adds or edits a block type or its template, sets up page/home blocks, creates a site (tree, layout, home, design), uses `masilia:blocks:*` commands or Kaliop migrations for blocks, or mentions masilia/ibexa-blocks, blocks_field, items_field, layout_remote_id, even if the package is not named.
+---
+
+# masilia/ibexa-blocks
+
+A page holds an ordered list of block contents; each block is rendered by a Twig template named after its content type. A theme is **assets plus templates**, nothing else. Content types are **global to the repository** (not per siteaccess): all sites share the same block types; a theme only decides how they look.
+
+## Install (blank project)
+`composer require masilia/ibexa-blocks` (+ `masilia/ibexa-sites` recommended); enable `MasiliaIbexaBlocksBundle`; import `@MasiliaIbexaBlocksBundle/Resources/config/routing.yaml` **before** Ibexa's routes (it has its own `/search`); newsletter: `routing_newsletter.yaml` and `doctrine:migrations:migrate`.
+
+## Conventions (config `masilia_ibexa_blocks.conventions`)
+`page_type` (page), `home_type` (home_page), `site_type` (site), `blocks_field` (blocks), `block_group` (Blocks), `items_field` (items), `items_field_by_type` (e.g. `info_cards: cards`). Wrong names are the first cause of "blocks do not show". The layout of a site comes from `masilia/ibexa-sites` (`Site::layoutRemoteId`), else `masilia_ibexa_blocks.system.<group>.layout_remote_id`.
+
+## 1. The content model (two ways, both valid)
+- **Kaliop migrations** (what the IMAL host does): define block types, `page`/`home_page` and their `selectionContentTypes` in migrations. Then no `model:install` is needed; keep the convention names above. The restricted lists of `page.blocks`/`home_page.blocks` are yours to manage there.
+- **`masilia:blocks:model:install [--dry-run] [--no-socle] [--only=type]`**: creates the socle (`layout_config`, `site`, `home_page`, `page`) and the types in `config/content_model/*.yaml` (identifier, group, names, name_pattern, fields with Ibexa 5 field types such as `ibexa_string`, `allowed_on: [page, home_page]`). It only creates and completes; it never changes or removes an existing type or field. **Always `--dry-run` first**: on a project that already has these types it would add the socle fields they lack. Group `Blocks` = a block; other groups = content (article, event...) shown by `full/<type>.twig`.
+- `allowed_on` places a block on the blocks field of those types, only when that field restricts types; a block without it is left where it is. `masilia:blocks:model:sync-blocks` re-applies this on an existing project.
+
+## 2. A theme per site
+`masilia:blocks:theme:create <name> [--extends=standard | --standalone]` writes `templates/themes/<name>/theme.yaml`, `layout.twig`, and `assets/themes/<name>/scss|js`. Templates are found by name: `blocks/<type>.twig`, `cards/`, `line/`, `full/`; a theme writes only what differs from the next theme of its design. The **design list stays yours** (YAML): `ibexa_design_engine.design_list.<name>: [<name>, standard]` (or `[<name>]`). `masilia:blocks:theme:check <design>` reports blocks without template, asset problems, dead files, a theme in no design. `masilia:blocks:themes --json` gives Encore the entries; then `yarn encore dev`.
+
+## 3. Create the site
+`masilia:blocks:site:create "Name" --domain=… --design=<design> --language=eng-GB [--host --parent --media-parent --dry-run]`: creates the tree (site container, layout, home page, media folder, stable remote ids, rerunnable) and, with `ibexa-sites`, registers the site as a **draft** (root = home page, layout, design, one siteaccess per language); the registry is asked first, so a refused site writes no content. Without ibexa-sites it prints the siteaccess YAML. `masilia:blocks:site:init` does the tree only. **Never activates**: the user does (`/sites` or `masilia:sites:set-status <id> active`), because that serves the hosts.
+
+## After changes
+`cache:clear` and `cache:pool:clear cache.redis cache.app`; PHP-FPM reload if PHP files changed; rebuild assets for theme changes. Templates read optional values safely (a missing field must not 500 the page).
+
+## Pitfalls
+- New block type without a template in the design chain: the block silently shows nothing; run `theme:check`.
+- Block types whose child field is not `items` need `items_field_by_type`.
+- A standalone theme needs every template; an inherited one inherits.
+- Do not generate `design_list` or edit the user's YAML silently; print the line to add.
+Release and maintenance of the package follow the `masilia-package-release` skill.

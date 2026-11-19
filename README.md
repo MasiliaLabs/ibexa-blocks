@@ -184,6 +184,20 @@ composer install
 vendor/bin/phpunit
 ```
 
+## AI agent skill
+
+This package ships a skill for AI coding agents (Claude Code and other agents that read `SKILL.md` skills): how to install, configure, operate and troubleshoot `masilia/ibexa-blocks`. It lives in [`skills/masilia-ibexa-blocks`](skills/masilia-ibexa-blocks/SKILL.md) and comes with the package.
+
+```bash
+# For the project (committed with it): from the installed package
+mkdir -p .claude/skills && cp -r vendor/masilia/ibexa-blocks/skills/masilia-ibexa-blocks .claude/skills/
+
+# For all your projects: global
+mkdir -p ~/.claude/skills && cp -r vendor/masilia/ibexa-blocks/skills/masilia-ibexa-blocks ~/.claude/skills/
+```
+
+Restart the agent (or reload its skills) to pick it up. Update the copy after `composer update`.
+
 ## The Masilia packages
 
 | Package | What it does |
