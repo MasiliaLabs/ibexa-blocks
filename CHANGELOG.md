@@ -4,6 +4,8 @@ All notable changes to `masilia/ibexa-blocks` are documented here. The format fo
 
 ## [Unreleased]
 
+## [0.5.3] - 2026-11-19
+
 ### Added
 - Docs: a *With Symfony Flex* section in the README and in the skill: the Masilia recipes (`MasiliaLabs/recipes`) enable the bundle and write its route and config files on `composer require`.
 
@@ -65,7 +67,8 @@ First release.
 - Search and forms by mail, driven by configuration.
 - Themes as a mechanism: base layout, theme tooling, asset discovery.
 
-[Unreleased]: https://github.com/MasiliaLabs/ibexa-blocks/compare/0.5.2...HEAD
+[Unreleased]: https://github.com/MasiliaLabs/ibexa-blocks/compare/0.5.3...HEAD
+[0.5.3]: https://github.com/MasiliaLabs/ibexa-blocks/compare/0.5.2...0.5.3
 [0.5.2]: https://github.com/MasiliaLabs/ibexa-blocks/compare/0.5.1...0.5.2
 [0.5.1]: https://github.com/MasiliaLabs/ibexa-blocks/compare/0.5.0...0.5.1
 [0.5.0]: https://github.com/MasiliaLabs/ibexa-blocks/compare/0.4.1...0.5.0
