@@ -4,6 +4,9 @@ All notable changes to `masilia/ibexa-blocks` are documented here. The format fo
 
 ## [Unreleased]
 
+### Changed
+- A block says where it can be placed with `allowed_on: [page, home_page]` in its definition. `model:install` and `model:sync-blocks` add it only to the blocks field of those types (when that field restricts the types), instead of adding every block of the group to `page` and `home_page` as 0.5.0 did. A block with no `allowed_on` is left where it is.
+
 ## [0.5.0] - 2026-11-19
 
 ### Added

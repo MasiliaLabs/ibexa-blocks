@@ -86,43 +86,26 @@ final readonly class ModelPlanner
      */
     private function selections(array $definitions): array
     {
-        // Every block there is, whoever made it: the ones of the repository and the ones about to be created.
-        $blocks = $this->blocksOfRepository();
+        // Where each block says it goes (allowed_on): a block that says nothing is left where it is.
+        $byOwner = [];
         foreach ($definitions as $definition) {
-            if ($definition->group === $this->conventions->blockGroup) {
-                $blocks[] = $definition->identifier;
+            foreach ($definition->allowedOn as $owner) {
+                $byOwner[$owner][] = $definition->identifier;
             }
         }
-        $blocks = array_values(array_unique($blocks));
         $selections = [];
-        foreach (array_unique([$this->conventions->pageType, $this->conventions->homeType]) as $owner) {
+        foreach ($byOwner as $owner => $blocks) {
             $current = $this->allowed($owner);
             if ($current === null || $current === []) {
                 continue; // no such type yet, or no restriction: every block is already allowed
             }
-            $add = array_values(array_diff($blocks, $current));
+            $add = array_values(array_diff(array_unique($blocks), $current));
             if ($add !== []) {
                 $selections[] = ['owner' => $owner, 'field' => $this->conventions->blocksField, 'add' => $add];
             }
         }
 
         return $selections;
-    }
-
-    /** @return list<string> The content types of the group of the blocks, in the repository */
-    private function blocksOfRepository(): array
-    {
-        try {
-            $group = $this->contentTypes->loadContentTypeGroupByIdentifier($this->conventions->blockGroup);
-        } catch (NotFoundException) {
-            return [];
-        }
-        $identifiers = [];
-        foreach ($this->contentTypes->loadContentTypes($group) as $type) {
-            $identifiers[] = $type->identifier;
-        }
-
-        return $identifiers;
     }
 
     /** @return list<string>|null The content types the blocks field of a type accepts; null when the type or the field is missing */

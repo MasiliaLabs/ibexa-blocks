@@ -12,13 +12,14 @@ namespace Masilia\Bundle\IbexaBlocks\Model;
  */
 final readonly class TypeDefinition
 {
-    private const KNOWN_KEYS = ['identifier', 'group', 'names', 'name_pattern', 'url_name_pattern', 'container', 'sort', 'always_available', 'fields'];
+    private const KNOWN_KEYS = ['identifier', 'group', 'names', 'name_pattern', 'url_name_pattern', 'container', 'sort', 'always_available', 'allowed_on', 'fields'];
     private const KNOWN_FIELD_KEYS = ['identifier', 'type', 'name', 'names', 'description', 'descriptions', 'required', 'searchable', 'translatable', 'category', 'position', 'settings', 'validator'];
     private const SORT_FIELDS = ['path', 'published', 'modified', 'section', 'depth', 'class_identifier', 'class_name', 'priority', 'name', 'node_id', 'content_id'];
 
     /**
      * @param array<string, string> $names The name by language code; the first one is the main language
      * @param list<FieldData>       $fields
+     * @param list<string>          $allowedOn The content types whose blocks field accepts this block (page, home_page...); empty: none is touched
      */
     public function __construct(
         public string $identifier,
@@ -32,6 +33,7 @@ final readonly class TypeDefinition
         public bool $alwaysAvailable,
         public array $fields,
         public string $source = '',
+        public array $allowedOn = [],
     ) {
     }
 
@@ -78,9 +80,17 @@ final readonly class TypeDefinition
             throw new InvalidModel(sprintf('%s: a content type needs at least one field.', $source));
         }
 
+        $allowedOn = [];
+        foreach ((array) ($data['allowed_on'] ?? []) as $owner) {
+            if (!is_string($owner) || preg_match('/^[a-z][a-z0-9_]*$/', $owner) !== 1) {
+                throw new InvalidModel(sprintf('%s: "allowed_on" is a list of content type identifiers (page, home_page...).', $source));
+            }
+            $allowedOn[] = $owner;
+        }
+
         $pattern = (string) ($data['name_pattern'] ?? '<' . $fields[0]['identifier'] . '>');
 
-        return new self($identifier, $group, $names, $pattern, (string) ($data['url_name_pattern'] ?? $pattern), (bool) ($data['container'] ?? false), $sortField, $sortOrder, (bool) ($data['always_available'] ?? true), $fields, $source);
+        return new self($identifier, $group, $names, $pattern, (string) ($data['url_name_pattern'] ?? $pattern), (bool) ($data['container'] ?? false), $sortField, $sortOrder, (bool) ($data['always_available'] ?? true), $fields, $source, $allowedOn);
     }
 
     /**

@@ -136,6 +136,7 @@ Your blocks and content go in `config/content_model/*.yaml`, one file per type:
 ```yaml
 identifier: hero_banner
 group: Blocks          # the group of the blocks (conventions.block_group): a block
+allowed_on: [home_page]   # where it can be placed: the types whose blocks field accepts it (page, home_page, both...)
 names: { eng-GB: Hero banner }
 name_pattern: '<title>'
 fields:
@@ -148,10 +149,10 @@ Fields take `type` (an Ibexa field type identifier), `name`, `description`, `req
 ```bash
 php bin/console masilia:blocks:model:install --dry-run   # what would be created
 php bin/console masilia:blocks:model:install             # create it
-php bin/console masilia:blocks:model:sync-blocks         # an existing project: allow every block on the pages
+php bin/console masilia:blocks:model:sync-blocks         # an existing project: place the blocks where they say they go
 ```
 
-The command is safe to run again: it creates what is missing and adds the missing fields; it never changes or removes a type or a field that exists, and says so when a field differs from the definition. Field types that are not installed (SEO fields without Nova SEO, for instance) are skipped with a note. When the `blocks` field of `page` or `home_page` restricts the types it accepts, every type of the group of the blocks is added to it. The names follow the [conventions](#configuration) (`page_type`, `home_type`, `blocks_field`, `block_group`...).
+The command is safe to run again: it creates what is missing and adds the missing fields; it never changes or removes a type or a field that exists, and says so when a field differs from the definition. Field types that are not installed (SEO fields without Nova SEO, for instance) are skipped with a note. Some blocks are meant for the home page, others for the pages, others for both: a block says where it goes with `allowed_on`, and when the `blocks` field of that type restricts the types it accepts, the block is added to it. A block that says nothing is left where it is, and a type that does not restrict its blocks field accepts them all. Nothing is ever taken off a list. The names follow the [conventions](#configuration) (`page_type`, `home_type`, `blocks_field`, `block_group`...).
 
 ### 2. A theme per site
 

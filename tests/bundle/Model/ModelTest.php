@@ -70,18 +70,36 @@ final class ModelTest extends TestCase
         (new ModelSource([$one, $one]))->project();
     }
 
-    public function testEveryBlockOfTheRepositoryIsAllowedOnThePages(): void
+    public function testABlockIsAllowedOnlyWhereItSaysItGoes(): void
     {
-        $existing = ['page' => $this->contentType('page', ['blocks' => 'ibexa_object_relation_list'], ['selectionContentTypes' => ['hero']])];
-        $plan = $this->planner($existing, ['Blocks'], [], ['cta', 'hero'])->plan([]);
+        $existing = [
+            'page' => $this->contentType('page', ['blocks' => 'ibexa_object_relation_list'], ['selectionContentTypes' => ['hero']]),
+            'home_page' => $this->contentType('home_page', ['blocks' => 'ibexa_object_relation_list'], ['selectionContentTypes' => ['hero']]),
+        ];
+        $definitions = [
+            $this->type('cta', 'Blocks', ['title'], [], ['page', 'home_page']),
+            $this->type('stats', 'Blocks', ['title'], [], ['home_page']),
+            $this->type('quote', 'Blocks', ['title']),
+        ];
 
-        $this->assertSame([['owner' => 'page', 'field' => 'blocks', 'add' => ['cta']]], $plan->selections);
+        $plan = $this->planner($existing, ['Blocks'], [])->plan($definitions);
+
+        $this->assertSame([
+            ['owner' => 'page', 'field' => 'blocks', 'add' => ['cta']],
+            ['owner' => 'home_page', 'field' => 'blocks', 'add' => ['cta', 'stats']],
+        ], $plan->selections, 'quote says nothing: it is left out');
+    }
+
+    public function testAllowedOnMustBeAListOfTypeIdentifiers(): void
+    {
+        $this->expectException(InvalidModel::class);
+        TypeDefinition::fromArray(['identifier' => 'a', 'group' => 'G', 'names' => ['eng-GB' => 'A'], 'allowed_on' => ['Home Page'], 'fields' => [['identifier' => 'f', 'type' => 'ibexa_string']]], 'a.yaml');
     }
 
     public function testThePlanCreatesWhatIsMissingAndLeavesWhatExists(): void
     {
         $definitions = [
-            $this->type('hero', 'Blocks', ['title', 'image']),
+            $this->type('hero', 'Blocks', ['title', 'image'], [], ['page']),
             $this->type('page', 'Content', ['title', 'blocks', 'extra']),
             $this->type('site', 'Content', ['title']),
         ];
@@ -102,25 +120,6 @@ final class ModelTest extends TestCase
         $this->assertSame('conform', $actions['site'][0]);
         $this->assertSame([['owner' => 'page', 'field' => 'blocks', 'add' => ['hero']]], $plan->selections);
         $this->assertFalse($plan->isEmpty());
-    }
-
-    public function testBlocksAreAllowedOnTheHomePageToo(): void
-    {
-        $existing = [
-            'page' => $this->contentType('page', ['blocks' => 'ibexa_object_relation_list'], ['selectionContentTypes' => ['hero']]),
-            'home_page' => $this->contentType('home_page', ['blocks' => 'ibexa_object_relation_list'], ['selectionContentTypes' => ['paragraph']]),
-        ];
-        $plan = $this->planner($existing, ['Blocks'], ['ibexa_string'])->plan([$this->type('hero', 'Blocks', ['title'])]);
-
-        $this->assertSame([['owner' => 'home_page', 'field' => 'blocks', 'add' => ['hero']]], $plan->selections);
-    }
-
-    public function testEveryBlockOfTheRepositoryIsAllowedOnTheHomePageToo(): void
-    {
-        $existing = ['home_page' => $this->contentType('home_page', ['blocks' => 'ibexa_object_relation_list'], ['selectionContentTypes' => ['hero']])];
-        $plan = $this->planner($existing, ['Blocks'], [], ['cta', 'hero'])->plan([]);
-
-        $this->assertSame([['owner' => 'home_page', 'field' => 'blocks', 'add' => ['cta']]], $plan->selections);
     }
 
     public function testAnOpenBlocksFieldIsNotRestricted(): void
@@ -149,10 +148,10 @@ final class ModelTest extends TestCase
     }
 
     /** @param list<string> $fields @param array<string, string> $types */
-    private function type(string $identifier, string $group, array $fields, array $types = []): TypeDefinition
+    private function type(string $identifier, string $group, array $fields, array $types = [], array $allowedOn = []): TypeDefinition
     {
         return TypeDefinition::fromArray([
-            'identifier' => $identifier, 'group' => $group, 'names' => ['eng-GB' => $identifier],
+            'identifier' => $identifier, 'group' => $group, 'names' => ['eng-GB' => $identifier], 'allowed_on' => $allowedOn,
             'fields' => array_map(static fn (string $f): array => ['identifier' => $f, 'type' => $types[$f] ?? 'ibexa_string'], $fields),
         ], $identifier . '.yaml');
     }
