@@ -112,13 +112,12 @@ final class ThemeCheckCommand extends Command
     {
         $issues = [];
         foreach ($chain as $theme) {
+            if (!$this->models->declares($theme)) {
+                continue; // nothing declared: the theme only has templates and assets
+            }
             try {
                 $definitions = $this->models->theme($theme);
             } catch (InvalidModel $e) {
-                // A theme without a manifest is only an override of templates: nothing declared, nothing to say.
-                if (str_contains($e->getMessage(), 'does not exist')) {
-                    continue;
-                }
                 $issues[] = ['level' => ThemeChecker::ERROR, 'theme' => $theme, 'message' => $e->getMessage()];
                 continue;
             }

@@ -32,6 +32,18 @@ final readonly class ModelSource
         return $this->read($this->socleDirectory);
     }
 
+    /** Whether the theme has a content_types/ folder */
+    public function declares(string $theme): bool
+    {
+        foreach ($this->themes->directories() as $directory) {
+            if (is_dir(sprintf('%s/%s/%s', rtrim($directory, '/'), $theme, self::THEME_FOLDER))) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     /**
      * @return list<TypeDefinition>
      *

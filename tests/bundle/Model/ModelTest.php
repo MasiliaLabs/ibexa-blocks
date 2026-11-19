@@ -96,6 +96,17 @@ final class ModelTest extends TestCase
         $this->assertFalse($plan->isEmpty());
     }
 
+    public function testBlocksAreAllowedOnTheHomePageToo(): void
+    {
+        $existing = [
+            'page' => $this->contentType('page', ['blocks' => 'ibexa_object_relation_list'], ['selectionContentTypes' => ['hero']]),
+            'home_page' => $this->contentType('home_page', ['blocks' => 'ibexa_object_relation_list'], ['selectionContentTypes' => ['paragraph']]),
+        ];
+        $plan = $this->planner($existing, ['Blocks'], ['ibexa_string'])->plan([$this->type('hero', 'Blocks', ['title'])]);
+
+        $this->assertSame([['owner' => 'home_page', 'field' => 'blocks', 'add' => ['hero']]], $plan->selections);
+    }
+
     public function testAnOpenBlocksFieldIsNotRestricted(): void
     {
         $existing = ['page' => $this->contentType('page', ['title' => 'ibexa_string', 'blocks' => 'ibexa_object_relation_list'], ['selectionContentTypes' => []])];

@@ -105,6 +105,8 @@ final readonly class ModelInstaller
         $draft = $this->contentTypes->createContentTypeDraft($this->contentTypes->loadContentTypeByIdentifier($owner));
         $definition = $draft->getFieldDefinition($field);
         if ($definition === null) {
+            $this->contentTypes->deleteContentType($draft); // nothing to change: do not leave a draft that blocks the next run
+
             return;
         }
         $update = $this->contentTypes->newFieldDefinitionUpdateStruct();

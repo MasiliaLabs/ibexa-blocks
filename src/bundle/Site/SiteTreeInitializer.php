@@ -104,7 +104,11 @@ final readonly class SiteTreeInitializer
         return $result;
     }
 
-    /** @param array<string, mixed> $fields @return array{0: int, 1: int} */
+    /**
+     * @param array<string, mixed> $fields
+     *
+     * @return array{0: int, 1: int}
+     */
     private function create(string $type, string $remoteId, int $parentLocationId, array $fields, string $language): array
     {
         $contents = $this->repository->getContentService();
@@ -122,7 +126,9 @@ final readonly class SiteTreeInitializer
         return [(int) $content->contentInfo->id, (int) $locationId];
     }
 
-    /** @return array{0: int, 1: int}|null The content id and the main location id of the content that has this remote id */
+    /**
+     * @return array{0: int, 1: int}|null The content id and the main location id of the content that has this remote id
+     */
     private function existing(string $remoteId): ?array
     {
         try {
