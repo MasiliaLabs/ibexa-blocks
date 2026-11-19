@@ -56,6 +56,7 @@ final readonly class ThemeScaffold
         $files = [
             $themeDir . '/theme.yaml' => implode("\n", $yaml),
             $themeDir . '/layout.twig' => "{# The base layout is the package's; this theme says what differs in its theme.yaml. #}\n{% extends \"@MasiliaIbexaBlocks/layout.twig\" %}\n",
+            $themeDir . '/content_types/hero_banner.yaml.example' => $this->contentTypeExample(),
             $this->projectDir . '/' . $assetsDirectory . '/scss/main.scss' => $this->stylesheet($parentAssets?->directory, $assetsDirectory),
             $this->projectDir . '/' . $assetsDirectory . '/js/main.js' => $this->script($parentAssets?->directory, $assetsDirectory),
         ];
@@ -70,11 +71,31 @@ final readonly class ThemeScaffold
 
         return ['files' => $written, 'next' => [
             sprintf('Add the theme to a design: ibexa_design_engine.design_list.%s: [%s, %s] (and the design of a siteaccess group: ibexa.system.<group>.design: %s).', $name, $name, $parent, $name),
+            'Declare its content types (blocks, block items, its own content) in content_types/*.yaml (see hero_banner.yaml.example, rename it), then: bin/console masilia:blocks:model:install --theme=' . $name,
             'Put its favicons in assets/images/' . $name . '/icons and uncomment favicons in its theme.yaml.',
             'Write what differs in its templates, named after the content type: blocks/<type>.twig, cards/<type>.twig, line/<type>.twig, full/<type>.twig (a file of the same name in this theme replaces the one of the theme it extends).',
             'Build the assets: yarn encore dev (the entries are found from the theme.yaml files).',
             sprintf('Check it: bin/console masilia:blocks:theme:check %s', $name),
         ]];
+    }
+
+    private function contentTypeExample(): string
+    {
+        return <<<'YAML'
+# A content type of the theme. Rename this file to hero_banner.yaml, then run:
+#   bin/console masilia:blocks:model:install --theme=<theme>
+# A type of the group "Blocks" is a block: it is allowed on the pages and shown by blocks/<identifier>.twig.
+# A type of another group (Content...) is content of your own: shown by full/<identifier>.twig and line/<identifier>.twig.
+identifier: hero_banner
+group: Blocks
+names: { eng-GB: Hero banner }
+name_pattern: '<title>'
+fields:
+  - { identifier: title, type: ibexa_string, name: Title, required: true, position: 10 }
+  - { identifier: text, type: ibexa_richtext, name: Text, position: 20 }
+  - { identifier: image, type: ibexa_image, name: Image, translatable: false, position: 30 }
+
+YAML;
     }
 
     private function stylesheet(?string $parentDirectory, string $directory): string

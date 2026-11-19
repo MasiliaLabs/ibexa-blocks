@@ -8,6 +8,9 @@ use Ibexa\Contracts\Core\Repository\ContentTypeService;
 use Ibexa\Contracts\Core\Repository\Exceptions\NotFoundException;
 use Ibexa\Contracts\Core\Repository\PermissionResolver;
 use Ibexa\Core\Repository\Values\User\UserReference;
+use Masilia\Bundle\IbexaBlocks\Model\InvalidModel;
+use Masilia\Bundle\IbexaBlocks\Model\ModelPlanner;
+use Masilia\Bundle\IbexaBlocks\Model\ModelSource;
 use Masilia\Bundle\IbexaBlocks\Theme\ThemeChecker;
 use Masilia\IbexaBlocks\Conventions;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -30,6 +33,8 @@ final class ThemeCheckCommand extends Command
         private readonly ContentTypeService $types,
         private readonly PermissionResolver $permissions,
         private readonly Conventions $conventions,
+        private readonly ModelSource $models,
+        private readonly ModelPlanner $planner,
         #[Autowire('%ibexa.design.list%')]
         private readonly array $designs,
         #[Autowire('%masilia_blocks.blocks.handled_by_project%')]
@@ -78,7 +83,7 @@ final class ThemeCheckCommand extends Command
                 return Command::FAILURE;
             }
             $chain = array_values(array_unique([$design, ...$this->designs[$design]]));
-            $issues = $this->checker->check($chain, $blockTypes, $contentTypes);
+            $issues = [...$this->checker->check($chain, $blockTypes, $contentTypes), ...$this->modelIssues($chain)];
             $io->section(sprintf('%s (%s)', $design, implode(' > ', $chain)));
             if ($issues === []) {
                 $io->writeln(' <info>ok</info>');
@@ -94,5 +99,39 @@ final class ThemeCheckCommand extends Command
         $io->writeln(sprintf('%d error(s), %d notice(s).', $errors, $notices));
 
         return $errors > 0 || ($input->getOption('strict') && $notices > 0) ? Command::FAILURE : Command::SUCCESS;
+    }
+
+    /**
+     * The content types a theme declares (content_types/) that the repository does not have yet, or not in full.
+     *
+     * @param list<string> $chain
+     *
+     * @return list<array{level: string, theme: string|null, message: string}>
+     */
+    private function modelIssues(array $chain): array
+    {
+        $issues = [];
+        foreach ($chain as $theme) {
+            try {
+                $definitions = $this->models->theme($theme);
+            } catch (InvalidModel $e) {
+                // A theme without a manifest is only an override of templates: nothing declared, nothing to say.
+                if (str_contains($e->getMessage(), 'does not exist')) {
+                    continue;
+                }
+                $issues[] = ['level' => ThemeChecker::ERROR, 'theme' => $theme, 'message' => $e->getMessage()];
+                continue;
+            }
+            if ($definitions === []) {
+                continue;
+            }
+            foreach ($this->planner->plan($definitions)->types as $item) {
+                if ($item['action'] !== 'conform') {
+                    $issues[] = ['level' => ThemeChecker::NOTICE, 'theme' => $theme, 'message' => sprintf('content type "%s" is declared in content_types/ but %s: run masilia:blocks:model:install --theme=%s', $item['type']->identifier, $item['action'] === 'create' ? 'does not exist yet' : 'lacks ' . implode(', ', $item['add']), $theme)];
+                }
+            }
+        }
+
+        return $issues;
     }
 }

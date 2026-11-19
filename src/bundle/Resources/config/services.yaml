@@ -59,6 +59,13 @@ services:
             - '../../Block/ResolvedView.php'
             # Made by the extension, from the settings of the lists.
             - '../../Block/Provider/'
+    # The content model: the socle of the package and the content_types/ of the themes.
+    Masilia\Bundle\IbexaBlocks\Model\:
+        resource: '../../Model/'
+        exclude:
+            - '../../Model/InvalidModel.php'
+            - '../../Model/TypeDefinition.php'
+            - '../../Model/ModelPlan.php'
     Masilia\Bundle\IbexaBlocks\Command\:
         resource: '../../Command/'
     Masilia\Bundle\IbexaBlocks\Theme\ThemeChecker:

@@ -4,6 +4,13 @@ All notable changes to `masilia/ibexa-blocks` are documented here. The format fo
 
 ## [Unreleased]
 
+### Added
+- The content model of a site comes with the package: `masilia:blocks:model:install` creates the groups and the content types `layout_config`, `site`, `home_page` and `page` (the socle), and the types a theme declares in its `content_types/` folder (blocks, block items, content of your own). It only creates and completes: a type or a field that exists is never changed or removed. `--dry-run` shows the plan; `--theme` (repeatable) adds a theme; `--no-socle` skips the socle.
+- The blocks a theme declares are allowed in the blocks field of `page` and `home_page` when those fields restrict the content types.
+- `masilia:blocks:site:init` starts the content tree of a site: container, layout, home page and a media folder, with stable remote ids so that running it again creates nothing twice.
+- `masilia:blocks:theme:create` writes an example in `content_types/`; `masilia:blocks:theme:check` reports the types a theme declares that the repository does not have yet.
+- Settings `conventions.home_type` (default `home_page`) and `conventions.site_type` (default `site`).
+
 ## [0.4.1] - 2026-11-19
 
 ### Fixed

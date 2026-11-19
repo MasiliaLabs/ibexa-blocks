@@ -1,0 +1,105 @@
+identifier: site
+group: Configurations
+names:
+  eng-GB: Site Configuration
+name_pattern: <title>
+url_name_pattern: <title>
+container: true
+sort:
+  field: name
+  order: ASC
+always_available: true
+fields:
+- identifier: title
+  type: ibexa_string
+  name: Title
+  description: Site name
+  required: true
+  searchable: true
+  translatable: true
+  category: content
+  position: 10
+  validator:
+    StringLengthValidator:
+      maxStringLength: 255
+      minStringLength: 1
+- identifier: domain
+  type: ibexa_string
+  name: Domain
+  description: Domain name
+  required: true
+  searchable: true
+  translatable: true
+  category: general
+  position: 20
+  validator:
+    StringLengthValidator:
+      maxStringLength: 100
+      minStringLength: 1
+- identifier: description
+  type: ibexa_text
+  name: Description
+  description: Site description
+  required: false
+  searchable: true
+  translatable: true
+  category: content
+  position: 30
+  settings:
+    textRows: 3
+- identifier: favicon
+  type: ibexa_image
+  name: Favicon
+  description: Site favicon (32x32 or 16x16 pixels)
+  required: false
+  searchable: false
+  translatable: false
+  category: branding
+  position: 40
+  validator:
+    FileSizeValidator:
+      maxFileSize: 1048576
+- identifier: google_analytics_id
+  type: ibexa_string
+  name: Google Analytics ID
+  description: Google Analytics tracking ID (e.g., G-XXXXXXXXXX)
+  required: false
+  searchable: false
+  translatable: false
+  category: analytics
+  position: 50
+  validator:
+    StringLengthValidator:
+      maxStringLength: 50
+      minStringLength: false
+- identifier: google_tag_manager_id
+  type: ibexa_string
+  name: Google Tag Manager ID
+  description: Google Tag Manager container ID (e.g., GTM-XXXXXXX)
+  required: false
+  searchable: false
+  translatable: false
+  category: analytics
+  position: 60
+  validator:
+    StringLengthValidator:
+      maxStringLength: 50
+      minStringLength: false
+- identifier: maintenance_mode
+  type: ibexa_boolean
+  name: Maintenance Mode
+  description: Enable maintenance mode for the site
+  required: false
+  searchable: false
+  translatable: false
+  category: system
+  position: 70
+- identifier: maintenance_message
+  type: ibexa_richtext
+  name: Maintenance Message
+  description: Message to display when site is in maintenance mode
+  required: false
+  searchable: false
+  translatable: true
+  category: system
+  position: 80

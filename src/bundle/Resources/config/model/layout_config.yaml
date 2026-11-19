@@ -1,0 +1,191 @@
+identifier: layout_config
+group: Configurations
+names:
+  eng-GB: Layout Configuration
+name_pattern: <bo_title>
+url_name_pattern: <bo_title>
+container: false
+sort:
+  field: name
+  order: ASC
+always_available: true
+fields:
+- identifier: bo_title
+  type: ibexa_string
+  name: BO Title
+  description: Title is used for admin concerns
+  required: true
+  searchable: true
+  translatable: true
+  category: back_office
+  position: 0
+- identifier: logo_text
+  type: ibexa_richtext
+  name: Logo Text
+  description: Logo text
+  required: true
+  searchable: true
+  translatable: true
+  category: back_office
+  position: 10
+- identifier: logo_image
+  type: ibexa_image
+  name: Logo Image
+  description: Logo image
+  required: false
+  searchable: false
+  translatable: false
+  category: header
+  position: 20
+  validator:
+    FileSizeValidator:
+      maxFileSize: 2097152
+- identifier: social_links
+  type: ibexa_matrix
+  name: Social Links
+  description: Header social media links used in mobile menu
+  required: false
+  searchable: false
+  translatable: false
+  category: header
+  position: 30
+  settings:
+    minimum_rows: 0
+    columns:
+    - identifier: icon
+      name: FontAwesome Icon Class
+    - identifier: url
+      name: Social Media URL
+    - identifier: aria_label
+      name: Aria Label
+- identifier: subscribe_button_text
+  type: ibexa_string
+  name: Subscribe Button Text
+  description: Text for subscribe button
+  required: false
+  searchable: false
+  translatable: true
+  category: header
+  position: 40
+  validator:
+    StringLengthValidator:
+      maxStringLength: 50
+      minStringLength: false
+- identifier: about_title
+  type: ibexa_string
+  name: About Section Title
+  description: Title for about section
+  required: false
+  searchable: true
+  translatable: true
+  category: footer
+  position: 50
+  validator:
+    StringLengthValidator:
+      maxStringLength: 100
+      minStringLength: false
+- identifier: about_description
+  type: ibexa_text
+  name: About Description
+  description: Description for about section
+  required: false
+  searchable: true
+  translatable: true
+  category: footer
+  position: 60
+  settings:
+    textRows: 4
+- identifier: about_social_links
+  type: ibexa_matrix
+  name: About Social Links
+  description: Social Media links in about section
+  required: false
+  searchable: false
+  translatable: false
+  category: footer
+  position: 70
+  settings:
+    minimum_rows: 0
+    columns:
+    - identifier: icon
+      name: FontAwesome Icon Class
+    - identifier: url
+      name: Social Media URL
+    - identifier: aria_label
+      name: Aria Label
+- identifier: newsletter_title
+  type: ibexa_string
+  name: Newsletter Section Title
+  description: Title for newsletter section
+  required: false
+  searchable: true
+  translatable: true
+  category: footer
+  position: 80
+  validator:
+    StringLengthValidator:
+      maxStringLength: 100
+      minStringLength: false
+- identifier: newsletter_description
+  type: ibexa_text
+  name: Newsletter Description
+  description: Description for newsletter section
+  required: false
+  searchable: true
+  translatable: true
+  category: footer
+  position: 90
+  settings:
+    textRows: 3
+- identifier: newsletter_placeholder
+  type: ibexa_string
+  name: Newsletter Input Placeholder
+  description: Placeholder text for email input
+  required: false
+  searchable: false
+  translatable: true
+  category: footer
+  position: 100
+  validator:
+    StringLengthValidator:
+      maxStringLength: 100
+      minStringLength: false
+- identifier: newsletter_button_text
+  type: ibexa_string
+  name: Newsletter Button Text
+  description: Text for subscribe button
+  required: false
+  searchable: false
+  translatable: true
+  category: footer
+  position: 110
+  validator:
+    StringLengthValidator:
+      maxStringLength: 50
+      minStringLength: false
+- identifier: newsletter_privacy_note
+  type: ibexa_string
+  name: Newsletter Privacy Note
+  description: Privacy note text for newsletter
+  required: false
+  searchable: false
+  translatable: true
+  category: footer
+  position: 120
+  validator:
+    StringLengthValidator:
+      maxStringLength: 200
+      minStringLength: false
+- identifier: copyright_text
+  type: ibexa_string
+  name: Copyright Text
+  description: Copyright notice text
+  required: false
+  searchable: false
+  translatable: true
+  category: footer
+  position: 130
+  validator:
+    StringLengthValidator:
+      maxStringLength: 255
+      minStringLength: false

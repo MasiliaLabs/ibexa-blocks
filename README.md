@@ -19,6 +19,7 @@ The **front office** of an Ibexa site whose pages are made of blocks. A page hol
 - **One controller** renders every page and block; behaviour that differs by block type is a *provider*, not an `if`.
 - **A content model for templates**: each field of a block becomes a Twig variable, with value objects for images (and their variations), files, links, text and coordinates.
 - **The site around the page**: layout configuration, menus, languages switcher and full views.
+- **The content model**: the socle of content types (layout, site, home page, page), the content types a theme declares, and the tree of a new site, by console commands.
 - **List blocks**: automatic items (the latest of a type), featured items and "all posts", driven by configuration.
 - **Search** (`/search` and JSON endpoints) with sorts, facets and popular searches.
 - **Forms by mail**: contact forms built from a matrix of questions, mailed to the recipients the block names.
@@ -114,6 +115,56 @@ fonts: ['https://fonts.googleapis.com/css2?family=Inter&display=swap']
 ```
 
 Templates are found by the name of their content type; `theme.yaml` only needs `views:` for an exception. `php bin/console masilia:blocks:theme:check <design>` tells you which block type has no template, and `masilia:blocks:themes --json` gives your Encore build the entries to compile.
+
+## Content model and building a theme
+
+The package ships the **socle** of the content a site is made of, so a new project needs no migration to start:
+
+| Content type | Group | What it is |
+| --- | --- | --- |
+| `layout_config` | Configurations | The layout of a site: logo, menus, social links, newsletter, footer |
+| `site` | Configurations | The container of a site: title, domain, description, analytics, maintenance |
+| `home_page` | Content | The home page: a title and its `blocks` |
+| `page` | Content | A page: a title, a description, its `blocks` and SEO fields |
+
+```bash
+php bin/console masilia:blocks:model:install --dry-run   # what would be created
+php bin/console masilia:blocks:model:install             # create it
+```
+
+The command is safe to run again: it creates what is missing and adds the missing fields; it never changes or removes a type or a field that exists, and says so when a field differs from the definition. Field types that are not installed (SEO fields without Nova SEO, for instance) are skipped with a note. The names of the types and fields follow the [conventions](#configuration) (`page_type`, `home_type`, `blocks_field`, `block_group`...).
+
+**Build a theme**, from nothing to a site:
+
+```bash
+# 1. The theme: manifest, layout, asset sources, and an example content type
+php bin/console masilia:blocks:theme:create acme --extends=standard
+
+# 2. Its content types: one YAML file per type in templates/themes/acme/content_types/
+#    group "Blocks" = a block, shown by blocks/<type>.twig and allowed on the pages
+#    any other group (Content...) = content of your own (article, event...), shown by full/<type>.twig and line/<type>.twig
+php bin/console masilia:blocks:model:install --theme=acme
+
+# 3. Its templates and styles (templates/themes/acme, assets/themes/acme), then the check
+php bin/console masilia:blocks:theme:check acme
+
+# 4. The tree of a site: container, layout, home page, media folder
+php bin/console masilia:blocks:site:init "Acme" --domain=acme.example.org
+```
+
+`site:init` prints the home page location and the remote id of the layout: declare them in [`masilia/ibexa-sites`](https://github.com/MasiliaLabs/ibexa-sites) (root and layout of the site) and activate it. A content type file looks like this:
+
+```yaml
+identifier: hero_banner
+group: Blocks
+names: { eng-GB: Hero banner }
+name_pattern: '<title>'
+fields:
+  - { identifier: title, type: ibexa_string, name: Title, required: true, position: 10 }
+  - { identifier: image, type: ibexa_image, name: Image, translatable: false, position: 30 }
+```
+
+Fields take `type` (an Ibexa field type identifier), `name`, `description`, `required`, `searchable`, `translatable`, `category`, `position`, `settings` and `validator`. When a block is added to a theme and the blocks field of `page` restricts the content types it accepts, the command adds the new block to that list.
 
 ## Tests
 

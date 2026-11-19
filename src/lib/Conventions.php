@@ -18,6 +18,8 @@ final readonly class Conventions
      * @param array<string, string> $itemsFieldByType The field that holds the child items of the block types that do not call it $itemsField ("info_cards" => "cards")
      * @param string       $blockGroup    The group of content types that are blocks
      * @param list<string> $contentGroups The groups of the other content types the site is made of
+     * @param string       $homeType      The content type of a home page (it holds blocks like a page)
+     * @param string       $siteType      The content type of the container of a site (its settings)
      */
     public function __construct(
         public string $pageType = 'page',
@@ -26,6 +28,8 @@ final readonly class Conventions
         public string $blockGroup = 'Blocks',
         public array $contentGroups = ['Content', 'Block items', 'Media', 'Taxonomies', 'Configurations'],
         public array $itemsFieldByType = [],
+        public string $homeType = 'home_page',
+        public string $siteType = 'site',
     ) {
     }
 
@@ -49,6 +53,8 @@ final readonly class Conventions
             blockGroup: (string) ($settings['block_group'] ?? $defaults->blockGroup),
             contentGroups: array_values(array_map('strval', (array) ($settings['content_groups'] ?? $defaults->contentGroups))),
             itemsFieldByType: array_map('strval', (array) ($settings['items_field_by_type'] ?? $defaults->itemsFieldByType)),
+            homeType: (string) ($settings['home_type'] ?? $defaults->homeType),
+            siteType: (string) ($settings['site_type'] ?? $defaults->siteType),
         );
     }
 }

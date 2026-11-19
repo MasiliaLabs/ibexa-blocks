@@ -1,0 +1,57 @@
+identifier: page
+group: Content
+names:
+  eng-GB: Page
+name_pattern: <title>
+url_name_pattern: <title>
+container: true
+sort:
+  field: name
+  order: ASC
+always_available: true
+fields:
+- identifier: title
+  type: ibexa_string
+  name: Title
+  description: Page title
+  required: true
+  searchable: true
+  translatable: true
+  category: content
+  position: 10
+  validator:
+    StringLengthValidator:
+      maxStringLength: 255
+      minStringLength: false
+- identifier: description
+  type: ibexa_text
+  name: Description
+  description: Page description for meta
+  required: false
+  searchable: true
+  translatable: true
+  category: content
+  position: 20
+  settings:
+    textRows: 3
+- identifier: blocks
+  type: ibexa_object_relation_list
+  name: Page Blocks
+  description: Page content blocks
+  required: false
+  searchable: false
+  translatable: true
+  category: content
+  position: 30
+  validator:
+    RelationListValueValidator:
+      selectionLimit: 20
+- identifier: metas
+  type: novaseometas
+  name: SEO Meta
+  description: SEO metadata
+  required: false
+  searchable: false
+  translatable: true
+  category: meta
+  position: 40
