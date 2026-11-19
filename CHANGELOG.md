@@ -4,6 +4,11 @@ All notable changes to `masilia/ibexa-blocks` are documented here. The format fo
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-11-19
+
+### Added
+- An agent skill, `skills/masilia-ibexa-blocks`, for AI coding agents that work with the package; the README says how to install it.
+
 ### Changed
 - A block says where it can be placed with `allowed_on: [page, home_page]` in its definition. `model:install` and `model:sync-blocks` add it only to the blocks field of those types (when that field restricts the types), instead of adding every block of the group to `page` and `home_page` as 0.5.0 did. A block with no `allowed_on` is left where it is.
 
@@ -52,7 +57,8 @@ First release.
 - Search and forms by mail, driven by configuration.
 - Themes as a mechanism: base layout, theme tooling, asset discovery.
 
-[Unreleased]: https://github.com/MasiliaLabs/ibexa-blocks/compare/0.5.0...HEAD
+[Unreleased]: https://github.com/MasiliaLabs/ibexa-blocks/compare/0.5.1...HEAD
+[0.5.1]: https://github.com/MasiliaLabs/ibexa-blocks/compare/0.5.0...0.5.1
 [0.5.0]: https://github.com/MasiliaLabs/ibexa-blocks/compare/0.4.1...0.5.0
 [0.4.1]: https://github.com/MasiliaLabs/ibexa-blocks/compare/0.4.0...0.4.1
 [0.4.0]: https://github.com/MasiliaLabs/ibexa-blocks/compare/0.3.0...0.4.0
