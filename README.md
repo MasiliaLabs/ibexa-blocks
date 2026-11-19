@@ -2,6 +2,7 @@
 
 [![CI](https://github.com/MasiliaLabs/ibexa-blocks/actions/workflows/ci.yml/badge.svg)](https://github.com/MasiliaLabs/ibexa-blocks/actions/workflows/ci.yml)
 [![Latest version](https://img.shields.io/packagist/v/masilia/ibexa-blocks.svg)](https://packagist.org/packages/masilia/ibexa-blocks)
+[![Downloads](https://img.shields.io/packagist/dt/masilia/ibexa-blocks.svg)](https://packagist.org/packages/masilia/ibexa-blocks/stats)
 [![PHP](https://img.shields.io/packagist/php-v/masilia/ibexa-blocks.svg)](https://packagist.org/packages/masilia/ibexa-blocks)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
