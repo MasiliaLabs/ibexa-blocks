@@ -66,6 +66,24 @@ composer require masilia/ibexa-blocks
    php bin/console doctrine:migrations:migrate
    ```
 
+### With Symfony Flex
+
+The Masilia recipes do the first steps for you. Add their endpoint once to the `composer.json` of your project, after the one of Ibexa:
+
+```json
+"extra": {
+    "symfony": {
+        "endpoint": [
+            "https://api.github.com/repos/ibexa/recipes/contents/index.json?ref=flex/main",
+            "https://api.github.com/repos/MasiliaLabs/recipes/contents/index.json?ref=flex/main",
+            "flex://defaults"
+        ]
+    }
+}
+```
+
+Then `composer require masilia/ibexa-blocks` enables the bundle and writes `config/routes/aa_masilia_ibexa_blocks.yaml` (loaded before Ibexa's routes) and `config/packages/masilia_ibexa_blocks.yaml`. What is left is yours: the content model, a theme and a site (`masilia:blocks:*`), and the newsletter routes if you use it. The manual steps above and below stay valid.
+
 ## Configuration
 
 ```yaml

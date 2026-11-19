@@ -10,6 +10,8 @@ A page holds an ordered list of block contents; each block is rendered by a Twig
 ## Install (blank project)
 `composer require masilia/ibexa-blocks` (+ `masilia/ibexa-sites` recommended); enable `MasiliaIbexaBlocksBundle`; import `@MasiliaIbexaBlocksBundle/Resources/config/routing.yaml` **before** Ibexa's routes (it has its own `/search`); newsletter: `routing_newsletter.yaml` and `doctrine:migrations:migrate`. Flex only enables the bundle: routes and config are written by hand (name the routes file so that it sorts first, e.g. `aa_masilia_blocks.yaml`). `model:install` prints `field "metas" skipped: ... novaseometas` when Nova SEO is absent: expected.
 
+With the Masilia recipes endpoint in the `composer.json` (`https://api.github.com/repos/MasiliaLabs/recipes/contents/index.json?ref=flex/main` in `extra.symfony.endpoint`, after Ibexa's), `composer require` already enables the bundle and writes the route and config files (see the README, section *With Symfony Flex*); then do what is left. Without the endpoint, do everything by hand.
+
 ## Conventions (config `masilia_ibexa_blocks.conventions`)
 `page_type` (page), `home_type` (home_page), `site_type` (site), `blocks_field` (blocks), `block_group` (Blocks), `items_field` (items), `items_field_by_type` (e.g. `info_cards: cards`). Wrong names are the first cause of "blocks do not show". The layout of a site comes from `masilia/ibexa-sites` (`Site::layoutRemoteId`), else `masilia_ibexa_blocks.system.<group>.layout_remote_id`.
 
