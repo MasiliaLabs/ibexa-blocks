@@ -4,6 +4,8 @@ All notable changes to `masilia/ibexa-blocks` are documented here. The format fo
 
 ## [Unreleased]
 
+## [0.5.2] - 2026-11-19
+
 ### Fixed
 - Docs: `model:install` says that the `metas` field is skipped, with a note, when Nova SEO is not installed; the skill says that Flex only enables the bundle (routes and config are written by hand).
 
@@ -60,7 +62,8 @@ First release.
 - Search and forms by mail, driven by configuration.
 - Themes as a mechanism: base layout, theme tooling, asset discovery.
 
-[Unreleased]: https://github.com/MasiliaLabs/ibexa-blocks/compare/0.5.1...HEAD
+[Unreleased]: https://github.com/MasiliaLabs/ibexa-blocks/compare/0.5.2...HEAD
+[0.5.2]: https://github.com/MasiliaLabs/ibexa-blocks/compare/0.5.1...0.5.2
 [0.5.1]: https://github.com/MasiliaLabs/ibexa-blocks/compare/0.5.0...0.5.1
 [0.5.0]: https://github.com/MasiliaLabs/ibexa-blocks/compare/0.4.1...0.5.0
 [0.4.1]: https://github.com/MasiliaLabs/ibexa-blocks/compare/0.4.0...0.4.1
