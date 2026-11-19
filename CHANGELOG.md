@@ -4,6 +4,9 @@ All notable changes to `masilia/ibexa-blocks` are documented here. The format fo
 
 ## [Unreleased]
 
+### Fixed
+- A list block that fills itself (grid, slider, preview) sorts by the field of its content type only when that field exists and can be searched; otherwise by the date of publication. A type without a `title` (a partner, for instance) no longer fails the page.
+
 ## [0.4.0] - 2026-11-17
 
 ### Added

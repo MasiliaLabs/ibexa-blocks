@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Masilia\Bundle\IbexaBlocks\Search;
 
+use Ibexa\Contracts\Core\Repository\ContentTypeService;
+use Ibexa\Contracts\Core\Repository\Exceptions\NotFoundException;
 use Ibexa\Contracts\Core\Repository\LocationService;
 use Ibexa\Contracts\Core\Repository\SearchService as IbexaSearchService;
 use Ibexa\Contracts\Core\Repository\Values\Content\LocationQuery;
@@ -27,6 +29,7 @@ final readonly class LatestContents implements ContentLister
         private ContentFactory $factory,
         private ConfigResolverInterface $config,
         private SearchSettings $settings,
+        private ContentTypeService $types,
     ) {
     }
 
@@ -44,7 +47,7 @@ final readonly class LatestContents implements ContentLister
                 new Criterion\Visibility(Criterion\Visibility::VISIBLE),
                 new Criterion\Subtree($root->pathString),
             ]),
-            'sortClauses' => [new SortClause\Field($contentType, $field, Query::SORT_DESC)],
+            'sortClauses' => [$this->sortClause($contentType, $field)],
             'limit' => $limit,
         ]));
 
@@ -55,5 +58,22 @@ final readonly class LatestContents implements ContentLister
         }
 
         return $items;
+    }
+
+    /**
+     * Newest first by the field the settings name, when the type has it and it can be searched; else by the date of publication, so
+     * that a type without that field (a partner has no "title") still lists instead of failing the whole page.
+     */
+    private function sortClause(string $contentType, string $field): SortClause
+    {
+        try {
+            $definition = $this->types->loadContentTypeByIdentifier($contentType)->getFieldDefinition($field);
+        } catch (NotFoundException) {
+            $definition = null;
+        }
+
+        return $definition !== null && $definition->isSearchable
+            ? new SortClause\Field($contentType, $field, Query::SORT_DESC)
+            : new SortClause\DatePublished(Query::SORT_DESC);
     }
 }
