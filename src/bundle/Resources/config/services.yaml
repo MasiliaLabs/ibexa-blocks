@@ -59,7 +59,7 @@ services:
             - '../../Block/ResolvedView.php'
             # Made by the extension, from the settings of the lists.
             - '../../Block/Provider/'
-    # The content model: the socle of the package and the content_types/ of the themes.
+    # The content model: the socle of the package and the definitions of the project.
     Masilia\Bundle\IbexaBlocks\Model\:
         resource: '../../Model/'
         exclude:

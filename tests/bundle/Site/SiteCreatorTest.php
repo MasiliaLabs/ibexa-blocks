@@ -71,20 +71,32 @@ final class SiteCreatorTest extends TestCase
         $this->assertSame($site, $result['site']);
     }
 
-    /** @param list<Problem> $problems */
-    private function registry(array $problems): object
+    public function testRunningItAgainOnARegisteredSiteChecksNothingAndKeepsIt(): void
     {
-        return new class($problems) implements SiteRegistry {
+        $registered = new Site('acme_group', 'Acme', SiteStatus::Draft, 22, 'acme', []);
+        $registry = $this->registry([new Problem('identifier', 'A site "acme_group" already exists.')], $registered);
+
+        $result = $this->creator($registry, true)->create('Acme', 'acme.org', 'acme', [], null, 2, null, false);
+
+        $this->assertSame([], $result['problems']);
+        $this->assertSame($registered, $result['site']);
+        $this->assertSame([], $registry->created);
+    }
+
+    /** @param list<Problem> $problems */
+    private function registry(array $problems, ?Site $existing = null): object
+    {
+        return new class($problems, $existing) implements SiteRegistry {
             /** @var list<Site> */
             public array $created = [];
 
             /** @param list<Problem> $problems */
-            public function __construct(private array $problems)
+            public function __construct(private array $problems, private ?Site $existing = null)
             {
             }
 
             public function list(): array { return []; }
-            public function find(string $identifier): ?Site { return null; }
+            public function find(string $identifier): ?Site { return $this->existing; }
             public function check(Site $site, bool $isNew): array { return $this->problems; }
             public function problems(Site $site, bool $isNew): array { return []; }
             public function create(Site $site): Site { return $this->created[] = $site; }

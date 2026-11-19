@@ -144,6 +144,29 @@ final class ThemeToolsTest extends TestCase
         self::assertSame([], array_filter($issues, static fn (array $i): bool => $i['level'] === 'error' && str_contains($i['message'], 'assets')));
     }
 
+    public function testAThemeInNoDesignIsReported(): void
+    {
+        $this->standardTheme();
+        $this->write('templates/themes/orphan/theme.yaml', "name: orphan\n");
+        $types = $this->createStub(\Ibexa\Contracts\Core\Repository\ContentTypeService::class);
+        $types->method('loadContentTypeGroupByIdentifier')->willReturn(new \Ibexa\Core\Repository\Values\ContentType\ContentTypeGroup(['identifier' => 'Blocks']));
+        $types->method('loadContentTypes')->willReturn([]);
+        $types->method('loadContentTypeGroups')->willReturn([]);
+        $command = new \Masilia\Bundle\IbexaBlocks\Command\ThemeCheckCommand(
+            new ThemeChecker($this->registry(), $this->project),
+            $types,
+            $this->createStub(\Ibexa\Contracts\Core\Repository\PermissionResolver::class),
+            new \Masilia\IbexaBlocks\Conventions(),
+            $this->registry(),
+            ['site' => ['standard'], 'standard' => []],
+        );
+
+        $tester = new CommandTester($command);
+        $tester->execute(['design' => 'site']);
+
+        self::assertStringContainsString('[orphan] the theme is in no design', $tester->getDisplay());
+    }
+
     public function testAStandaloneThemeBuildsOnNone(): void
     {
         $command = new CommandTester(new ThemeCreateCommand(new ThemeScaffold($this->registry(), $this->project)));

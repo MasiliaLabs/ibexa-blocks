@@ -43,8 +43,11 @@ final readonly class SiteCreator
         $contentLanguage = $languages[0];
         $problems = [];
 
+        // Run again on a site that is registered: the tree is checked (it creates nothing twice) and the site is left as it is.
+        $existing = $this->registry?->find($slug . '_group');
+
         // Before writing any content: what the registry already refuses (design, hosts, languages).
-        if ($this->registry !== null) {
+        if ($this->registry !== null && $existing === null) {
             // The root is not known yet (the home page does not exist): any location stands in for it.
             $problems = $this->check($this->toSite($this->draft($slug, $name, $design, $host, $languages, $parentLocationId ?? 2, null)));
             if ($problems !== []) {
@@ -68,8 +71,8 @@ final readonly class SiteCreator
         if ($dryRun || $home === null) {
             return ['tree' => $tree, 'registry' => true, 'site' => $site, 'problems' => [], 'config' => null];
         }
-        if ($this->registry->find($site->identifier) !== null) {
-            return ['tree' => $tree, 'registry' => true, 'site' => $this->registry->find($site->identifier), 'problems' => [], 'config' => null];
+        if ($existing !== null) {
+            return ['tree' => $tree, 'registry' => true, 'site' => $existing, 'problems' => [], 'config' => null];
         }
         $problems = $this->check($site);
         if ($problems !== []) {

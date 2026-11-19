@@ -6,7 +6,7 @@ namespace Masilia\Bundle\IbexaBlocks\Model;
 
 use RuntimeException;
 
-/** A content type definition (the socle or a theme's content_types/) that cannot be read. */
+/** A content type definition (the socle or the definitions of the project) that cannot be read. */
 final class InvalidModel extends RuntimeException
 {
 }
