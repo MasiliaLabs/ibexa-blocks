@@ -86,12 +86,14 @@ final readonly class ModelPlanner
      */
     private function selections(array $definitions): array
     {
-        $blocks = [];
+        // Every block there is, whoever made it: the ones of the repository and the ones about to be created.
+        $blocks = $this->blocksOfRepository();
         foreach ($definitions as $definition) {
             if ($definition->group === $this->conventions->blockGroup) {
                 $blocks[] = $definition->identifier;
             }
         }
+        $blocks = array_values(array_unique($blocks));
         $selections = [];
         foreach (array_unique([$this->conventions->pageType, $this->conventions->homeType]) as $owner) {
             $current = $this->allowed($owner);
@@ -105,6 +107,22 @@ final readonly class ModelPlanner
         }
 
         return $selections;
+    }
+
+    /** @return list<string> The content types of the group of the blocks, in the repository */
+    private function blocksOfRepository(): array
+    {
+        try {
+            $group = $this->contentTypes->loadContentTypeGroupByIdentifier($this->conventions->blockGroup);
+        } catch (NotFoundException) {
+            return [];
+        }
+        $identifiers = [];
+        foreach ($this->contentTypes->loadContentTypes($group) as $type) {
+            $identifiers[] = $type->identifier;
+        }
+
+        return $identifiers;
     }
 
     /** @return list<string>|null The content types the blocks field of a type accepts; null when the type or the field is missing */

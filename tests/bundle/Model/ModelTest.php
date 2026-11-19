@@ -16,7 +16,6 @@ use Masilia\Bundle\IbexaBlocks\Model\InvalidModel;
 use Masilia\Bundle\IbexaBlocks\Model\ModelPlanner;
 use Masilia\Bundle\IbexaBlocks\Model\ModelSource;
 use Masilia\Bundle\IbexaBlocks\Model\TypeDefinition;
-use Masilia\Bundle\IbexaBlocks\Theme\ThemeRegistry;
 use Masilia\IbexaBlocks\Conventions;
 use PHPUnit\Framework\TestCase;
 
@@ -24,7 +23,7 @@ final class ModelTest extends TestCase
 {
     public function testTheSocleIsValidAndComplete(): void
     {
-        $types = (new ModelSource(new ThemeRegistry([])))->socle();
+        $types = (new ModelSource())->socle();
 
         $this->assertSame(['home_page', 'layout_config', 'page', 'site'], array_map(static fn (TypeDefinition $t): string => $t->identifier, $types));
         foreach ($types as $type) {
@@ -57,17 +56,26 @@ final class ModelTest extends TestCase
         }
     }
 
-    public function testThemeTypesAreReadFromTheContentTypesFolder(): void
+    public function testTheTypesOfTheProjectAreReadFromItsDirectories(): void
     {
-        $dir = sys_get_temp_dir() . '/blocks-model-' . bin2hex(random_bytes(4));
-        mkdir($dir . '/demo/content_types', 0777, true);
-        file_put_contents($dir . '/demo/theme.yaml', "name: demo\n");
-        file_put_contents($dir . '/demo/content_types/hero.yaml', "identifier: hero\ngroup: Blocks\nnames: {eng-GB: Hero}\nfields:\n  - {identifier: title, type: ibexa_string}\n");
-        $source = new ModelSource(new ThemeRegistry([$dir]));
+        $one = sys_get_temp_dir() . '/blocks-model-' . bin2hex(random_bytes(4));
+        mkdir($one, 0777, true);
+        file_put_contents($one . '/hero.yaml', "identifier: hero\ngroup: Blocks\nnames: {eng-GB: Hero}\nfields:\n  - {identifier: title, type: ibexa_string}\n");
+        $source = new ModelSource([$one, $one . '/missing']);
 
-        $this->assertSame(['hero'], array_map(static fn (TypeDefinition $t): string => $t->identifier, $source->theme('demo')));
+        $this->assertSame(['hero'], array_map(static fn (TypeDefinition $t): string => $t->identifier, $source->project()));
+        $this->assertSame([], (new ModelSource([]))->project());
+
         $this->expectException(InvalidModel::class);
-        $source->theme('missing');
+        (new ModelSource([$one, $one]))->project();
+    }
+
+    public function testEveryBlockOfTheRepositoryIsAllowedOnThePages(): void
+    {
+        $existing = ['page' => $this->contentType('page', ['blocks' => 'ibexa_object_relation_list'], ['selectionContentTypes' => ['hero']])];
+        $plan = $this->planner($existing, ['Blocks'], [], ['cta', 'hero'])->plan([]);
+
+        $this->assertSame([['owner' => 'page', 'field' => 'blocks', 'add' => ['cta']]], $plan->selections);
     }
 
     public function testThePlanCreatesWhatIsMissingAndLeavesWhatExists(): void
@@ -156,12 +164,14 @@ final class ModelTest extends TestCase
      * @param array<string, ContentType> $existing
      * @param list<string>               $groups     The groups that exist
      * @param list<string>               $fieldTypes The field types that are installed
+     * @param list<string>               $repositoryBlocks The types of the group of blocks in the repository
      */
-    private function planner(array $existing, array $groups, array $fieldTypes): ModelPlanner
+    private function planner(array $existing, array $groups, array $fieldTypes, array $repositoryBlocks = []): ModelPlanner
     {
         $contentTypes = $this->createStub(ContentTypeService::class);
         $contentTypes->method('loadContentTypeByIdentifier')->willReturnCallback(static fn (string $id) => $existing[$id] ?? throw new NotFoundException('type', $id));
         $contentTypes->method('loadContentTypeGroupByIdentifier')->willReturnCallback(static fn (string $id) => in_array($id, $groups, true) ? new ContentTypeGroup() : throw new NotFoundException('group', $id));
+        $contentTypes->method('loadContentTypes')->willReturn(array_map(static fn (string $id) => new ContentType(['identifier' => $id]), $repositoryBlocks));
         $fieldTypeService = $this->createStub(FieldTypeService::class);
         $fieldTypeService->method('hasFieldType')->willReturnCallback(static fn (string $t): bool => in_array($t, $fieldTypes, true));
         $repository = $this->createStub(Repository::class);

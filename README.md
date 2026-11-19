@@ -19,7 +19,7 @@ The **front office** of an Ibexa site whose pages are made of blocks. A page hol
 - **One controller** renders every page and block; behaviour that differs by block type is a *provider*, not an `if`.
 - **A content model for templates**: each field of a block becomes a Twig variable, with value objects for images (and their variations), files, links, text and coordinates.
 - **The site around the page**: layout configuration, menus, languages switcher and full views.
-- **The content model**: the socle of content types (layout, site, home page, page), the content types a theme declares, and the tree of a new site, by console commands.
+- **The content model**: the socle of content types (layout, site, home page, page), the content types of the project, and the creation of a site (tree and registration), by console commands.
 - **List blocks**: automatic items (the latest of a type), featured items and "all posts", driven by configuration.
 - **Search** (`/search` and JSON endpoints) with sorts, facets and popular searches.
 - **Forms by mail**: contact forms built from a matrix of questions, mailed to the recipients the block names.
@@ -116,9 +116,13 @@ fonts: ['https://fonts.googleapis.com/css2?family=Inter&display=swap']
 
 Templates are found by the name of their content type; `theme.yaml` only needs `views:` for an exception. `php bin/console masilia:blocks:theme:check <design>` tells you which block type has no template, and `masilia:blocks:themes --json` gives your Encore build the entries to compile.
 
-## Content model and building a theme
+## Content model, themes and sites
 
-The package ships the **socle** of the content a site is made of, so a new project needs no migration to start:
+**Content types are global**: Ibexa has one set of types for the whole repository, not one per siteaccess. So the types (blocks, block items, your own content such as articles or events) are defined **once, at the level of the project**, and shared by all its sites; a **theme only brings templates and assets**. A library of blocks and a standard design are meant to come as a separate package; this package is the engine.
+
+### 1. The content model
+
+The package ships the **socle**:
 
 | Content type | Group | What it is |
 | --- | --- | --- |
@@ -127,36 +131,11 @@ The package ships the **socle** of the content a site is made of, so a new proje
 | `home_page` | Content | The home page: a title and its `blocks` |
 | `page` | Content | A page: a title, a description, its `blocks` and SEO fields |
 
-```bash
-php bin/console masilia:blocks:model:install --dry-run   # what would be created
-php bin/console masilia:blocks:model:install             # create it
-```
-
-The command is safe to run again: it creates what is missing and adds the missing fields; it never changes or removes a type or a field that exists, and says so when a field differs from the definition. Field types that are not installed (SEO fields without Nova SEO, for instance) are skipped with a note. The names of the types and fields follow the [conventions](#configuration) (`page_type`, `home_type`, `blocks_field`, `block_group`...).
-
-**Build a theme**, from nothing to a site:
-
-```bash
-# 1. The theme: manifest, layout, asset sources, and an example content type
-php bin/console masilia:blocks:theme:create acme --extends=standard
-
-# 2. Its content types: one YAML file per type in templates/themes/acme/content_types/
-#    group "Blocks" = a block, shown by blocks/<type>.twig and allowed on the pages
-#    any other group (Content...) = content of your own (article, event...), shown by full/<type>.twig and line/<type>.twig
-php bin/console masilia:blocks:model:install --theme=acme
-
-# 3. Its templates and styles (templates/themes/acme, assets/themes/acme), then the check
-php bin/console masilia:blocks:theme:check acme
-
-# 4. The tree of a site: container, layout, home page, media folder
-php bin/console masilia:blocks:site:init "Acme" --domain=acme.example.org
-```
-
-`site:init` prints the home page location and the remote id of the layout: declare them in [`masilia/ibexa-sites`](https://github.com/MasiliaLabs/ibexa-sites) (root and layout of the site) and activate it. A content type file looks like this:
+Your blocks and content go in `config/content_model/*.yaml`, one file per type:
 
 ```yaml
 identifier: hero_banner
-group: Blocks
+group: Blocks          # the group of the blocks (conventions.block_group): a block
 names: { eng-GB: Hero banner }
 name_pattern: '<title>'
 fields:
@@ -164,7 +143,38 @@ fields:
   - { identifier: image, type: ibexa_image, name: Image, translatable: false, position: 30 }
 ```
 
-Fields take `type` (an Ibexa field type identifier), `name`, `description`, `required`, `searchable`, `translatable`, `category`, `position`, `settings` and `validator`. When a block is added to a theme and the blocks field of `page` restricts the content types it accepts, the command adds the new block to that list.
+Fields take `type` (an Ibexa field type identifier), `name`, `description`, `required`, `searchable`, `translatable`, `category`, `position`, `settings` and `validator`. A type of another group (`Content`...) is content of your own, shown by `full/<type>.twig` and `line/<type>.twig`. More directories can be listed in `masilia_ibexa_blocks.model.directories` (a package adds its own by prepending that setting).
+
+```bash
+php bin/console masilia:blocks:model:install --dry-run   # what would be created
+php bin/console masilia:blocks:model:install             # create it
+php bin/console masilia:blocks:model:sync-blocks         # an existing project: allow every block on the pages
+```
+
+The command is safe to run again: it creates what is missing and adds the missing fields; it never changes or removes a type or a field that exists, and says so when a field differs from the definition. Field types that are not installed (SEO fields without Nova SEO, for instance) are skipped with a note. When the `blocks` field of `page` or `home_page` restricts the types it accepts, every type of the group of the blocks is added to it. The names follow the [conventions](#configuration) (`page_type`, `home_type`, `blocks_field`, `block_group`...).
+
+### 2. A theme per site
+
+A theme is assets plus templates, **standalone** or **inherited** through the design engine of Ibexa:
+
+```bash
+php bin/console masilia:blocks:theme:create acme --extends=standard   # only what differs from standard
+php bin/console masilia:blocks:theme:create solo --standalone         # all its templates and styles
+```
+
+Declare it in a design yourself (the list of designs stays yours), for instance `ibexa_design_engine.design_list.acme: [acme, standard]`, write the templates named after the content types (`blocks/<type>.twig`, `cards/`, `line/`, `full/`), and check it:
+
+```bash
+php bin/console masilia:blocks:theme:check acme     # missing templates, assets, dead files, a theme in no design
+```
+
+### 3. A site
+
+```bash
+php bin/console masilia:blocks:site:create "Acme" --domain=acme.example.org --design=acme --language=eng-GB
+```
+
+It creates the content tree (container, layout, home page, media folder: `site:init` does that part alone) and, when [`masilia/ibexa-sites`](https://github.com/MasiliaLabs/ibexa-sites) is installed, registers the site as a **draft** (root = the home page, the layout, the design, a siteaccess per language). The registry is asked first: a site it refuses (unknown design, a host already taken...) writes no content. Without `ibexa-sites` it prints the siteaccess configuration to adapt. It never activates a site, since that serves its hosts: do it from the admin or with `masilia:sites:set-status <id> active`.
 
 ## Tests
 

@@ -144,6 +144,18 @@ final class ThemeToolsTest extends TestCase
         self::assertSame([], array_filter($issues, static fn (array $i): bool => $i['level'] === 'error' && str_contains($i['message'], 'assets')));
     }
 
+    public function testAStandaloneThemeBuildsOnNone(): void
+    {
+        $command = new CommandTester(new ThemeCreateCommand(new ThemeScaffold($this->registry(), $this->project)));
+
+        self::assertSame(0, $command->execute(['name' => 'solo', '--standalone' => true]));
+
+        self::assertStringContainsString('standalone', (string) file_get_contents($this->project . '/templates/themes/solo/theme.yaml'));
+        self::assertStringNotContainsString('@use', (string) file_get_contents($this->project . '/assets/themes/solo/scss/main.scss'));
+        self::assertStringContainsString('ibexa_design_engine.design_list.solo: [solo]', $command->getDisplay());
+        self::assertSame(2, $command->execute(['name' => 'both', '--standalone' => true, '--extends' => 'standard']), 'one or the other');
+    }
+
     public function testANewThemeNeverOverwritesAndNeedsAParentAndAGoodName(): void
     {
         $this->standardTheme();

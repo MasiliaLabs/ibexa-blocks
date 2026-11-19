@@ -66,6 +66,9 @@ services:
             - '../../Model/InvalidModel.php'
             - '../../Model/TypeDefinition.php'
             - '../../Model/ModelPlan.php'
+    Masilia\Bundle\IbexaBlocks\Site\SiteCreator:
+        arguments:
+            $registry: '@?Masilia\Contracts\IbexaSites\SiteRegistry'
     Masilia\Bundle\IbexaBlocks\Command\:
         resource: '../../Command/'
     Masilia\Bundle\IbexaBlocks\Theme\ThemeChecker:

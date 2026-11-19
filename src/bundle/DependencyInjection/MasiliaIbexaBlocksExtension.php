@@ -72,6 +72,7 @@ final class MasiliaIbexaBlocksExtension extends Extension implements PrependExte
         $container->setParameter('masilia_blocks.blocks.view_types', $config['blocks']['view_types']);
         $container->setParameter('masilia_blocks.search', $config['search']);
         $container->setParameter('masilia_blocks.forms', $config['forms']);
+        $container->setParameter('masilia_blocks.model.directories', array_values(array_unique(['%kernel.project_dir%/config/content_model', ...$config['model']['directories']])));
         $container->setParameter('masilia_blocks.themes.directories', $config['themes']['directories']);
         $container->setParameter('masilia_blocks.blocks.handled_by_project', $config['blocks']['handled_by_project']);
         $container->setParameter('masilia_blocks.blocks.flatten_fields', $config['blocks']['flatten_fields']);

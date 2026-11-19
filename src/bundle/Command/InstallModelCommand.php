@@ -16,7 +16,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Throwable;
 
-#[AsCommand(name: 'masilia:blocks:model:install', description: 'Create the content types of the socle (layout, site, home page, page) and of the themes (blocks, items, own content), and allow the blocks of the themes on the pages. Never changes or removes what exists.')]
+#[AsCommand(name: 'masilia:blocks:model:install', description: 'Create the content types of the socle (layout, site, home page, page) and of the project (config/content_model), and allow every block on the pages. Never changes or removes what exists.')]
 final class InstallModelCommand extends Command
 {
     public function __construct(
@@ -30,8 +30,8 @@ final class InstallModelCommand extends Command
     protected function configure(): void
     {
         $this
-            ->addOption('theme', 't', InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY, 'A theme whose content_types/ folder is installed too (repeat it for the themes it extends)')
-            ->addOption('no-socle', null, InputOption::VALUE_NONE, 'Do not install the socle of the package, only the themes')
+            ->addOption('no-socle', null, InputOption::VALUE_NONE, 'Do not install the socle of the package, only the definitions of the project')
+            ->addOption('only', null, InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY, 'Install only this content type (repeat it)')
             ->addOption('dry-run', null, InputOption::VALUE_NONE, 'Show what would be done, write nothing');
     }
 
@@ -40,8 +40,10 @@ final class InstallModelCommand extends Command
         $io = new SymfonyStyle($input, $output);
         try {
             $definitions = $input->getOption('no-socle') ? [] : $this->source->socle();
-            foreach ((array) $input->getOption('theme') as $theme) {
-                array_push($definitions, ...$this->source->theme((string) $theme));
+            array_push($definitions, ...$this->source->project());
+            if ((array) $input->getOption('only') !== []) {
+                $only = array_map('strval', (array) $input->getOption('only'));
+                $definitions = array_values(array_filter($definitions, static fn ($d): bool => in_array($d->identifier, $only, true)));
             }
             $plan = $this->planner->plan($definitions);
         } catch (InvalidModel $e) {

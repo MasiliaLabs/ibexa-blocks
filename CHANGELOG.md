@@ -5,10 +5,10 @@ All notable changes to `masilia/ibexa-blocks` are documented here. The format fo
 ## [Unreleased]
 
 ### Added
-- The content model of a site comes with the package: `masilia:blocks:model:install` creates the groups and the content types `layout_config`, `site`, `home_page` and `page` (the socle), and the types a theme declares in its `content_types/` folder (blocks, block items, content of your own). It only creates and completes: a type or a field that exists is never changed or removed. `--dry-run` shows the plan; `--theme` (repeatable) adds a theme; `--no-socle` skips the socle.
-- The blocks a theme declares are allowed in the blocks field of `page` and `home_page` when those fields restrict the content types.
-- `masilia:blocks:site:init` starts the content tree of a site: container, layout, home page and a media folder, with stable remote ids so that running it again creates nothing twice.
-- `masilia:blocks:theme:create` writes an example in `content_types/`; `masilia:blocks:theme:check` reports the types a theme declares that the repository does not have yet.
+- The content model of a site comes with the package: `masilia:blocks:model:install` creates the groups and the content types `layout_config`, `site`, `home_page` and `page` (the socle), and the types the project defines as `*.yaml` files in `config/content_model/` (and in the directories of `masilia_ibexa_blocks.model.directories`, which a package can add by prepending the setting). It only creates and completes: a type or a field that exists is never changed or removed. Options: `--dry-run`, `--no-socle`, `--only`.
+- Every content type of the group of the blocks is allowed in the blocks field of `page` and `home_page` when those fields restrict the types (`model:install`, and `masilia:blocks:model:sync-blocks` alone for an existing project).
+- `masilia:blocks:site:init` starts the content tree of a site (container, layout, home page, media folder) with stable remote ids; `masilia:blocks:site:create` does it and then registers the site, as a draft, in `masilia/ibexa-sites` (refused before any content is written when the registry refuses it), or prints the siteaccess configuration to paste. It never activates a site.
+- `masilia:blocks:theme:create --standalone`: a theme that builds on none. `theme:create` prints the `design_list` line to add (the list of designs stays yours), and `theme:check` reports a theme that is in no design.
 - Settings `conventions.home_type` (default `home_page`) and `conventions.site_type` (default `site`).
 
 ## [0.4.1] - 2026-11-19

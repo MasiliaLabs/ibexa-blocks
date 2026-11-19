@@ -27,15 +27,22 @@ final class ThemeCreateCommand extends Command
     {
         $this
             ->addArgument('name', InputArgument::REQUIRED, 'The name of the theme (lower case letters, digits and _)')
-            ->addOption('extends', null, InputOption::VALUE_REQUIRED, 'The theme it builds on: its templates and its styles', 'standard')
+            ->addOption('extends', null, InputOption::VALUE_REQUIRED, 'The theme it builds on: its templates and its styles (default: standard)')
+            ->addOption('standalone', null, InputOption::VALUE_NONE, 'A theme that builds on none: it has all its templates and styles')
             ->addOption('directory', null, InputOption::VALUE_REQUIRED, 'Where the themes are (default: the first directory of the settings)');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
+        if ($input->getOption('standalone') && $input->getOption('extends') !== null) {
+            $io->error('Choose: --standalone (builds on none) or --extends=<theme>.');
+
+            return Command::INVALID;
+        }
+        $parent = $input->getOption('standalone') ? null : (string) ($input->getOption('extends') ?? 'standard');
         try {
-            $created = $this->scaffold->create((string) $input->getArgument('name'), (string) $input->getOption('extends'), $input->getOption('directory') !== null ? (string) $input->getOption('directory') : null);
+            $created = $this->scaffold->create((string) $input->getArgument('name'), $parent, $input->getOption('directory') !== null ? (string) $input->getOption('directory') : null);
         } catch (ThemeNotCreated $e) {
             $io->error($e->getMessage());
 

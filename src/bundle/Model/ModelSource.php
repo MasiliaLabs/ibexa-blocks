@@ -4,20 +4,23 @@ declare(strict_types=1);
 
 namespace Masilia\Bundle\IbexaBlocks\Model;
 
-use Masilia\Bundle\IbexaBlocks\Theme\ThemeRegistry;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Yaml\Exception\ParseException;
 use Symfony\Component\Yaml\Yaml;
 
 /**
  * Where the content types to install are: the socle of the package (layout, site, home page, page), and the
- * content_types/ folder of a theme (its blocks, its block items, its own content).
+ * directories of definitions of the project (config/content_model, and those a package adds). The types are global to
+ * the repository, not to a theme or a siteaccess: a theme only brings templates and assets.
  */
 final readonly class ModelSource
 {
-    public const THEME_FOLDER = 'content_types';
-
+    /**
+     * @param list<string> $directories Directories of *.yaml definitions; a directory that does not exist is ignored
+     */
     public function __construct(
-        private ThemeRegistry $themes,
+        #[Autowire('%masilia_blocks.model.directories%')]
+        private array $directories = [],
         private string $socleDirectory = __DIR__ . '/../Resources/config/model',
     ) {
     }
@@ -32,36 +35,29 @@ final readonly class ModelSource
         return $this->read($this->socleDirectory);
     }
 
-    /** Whether the theme has a content_types/ folder */
-    public function declares(string $theme): bool
-    {
-        foreach ($this->themes->directories() as $directory) {
-            if (is_dir(sprintf('%s/%s/%s', rtrim($directory, '/'), $theme, self::THEME_FOLDER))) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
     /**
-     * @return list<TypeDefinition>
+     * @return list<TypeDefinition> What the directories of the project define (a type defined twice is an error)
      *
      * @throws InvalidModel
      */
-    public function theme(string $theme): array
+    public function project(): array
     {
-        foreach ($this->themes->directories() as $directory) {
-            $folder = sprintf('%s/%s/%s', rtrim($directory, '/'), $theme, self::THEME_FOLDER);
-            if (is_dir($folder)) {
-                return $this->read($folder);
+        $types = [];
+        $seen = [];
+        foreach ($this->directories as $directory) {
+            if (!is_dir($directory)) {
+                continue;
+            }
+            foreach ($this->read($directory) as $type) {
+                if (isset($seen[$type->identifier])) {
+                    throw new InvalidModel(sprintf('The content type "%s" is defined twice (%s and %s).', $type->identifier, $seen[$type->identifier], $type->source));
+                }
+                $seen[$type->identifier] = $type->source;
+                $types[] = $type;
             }
         }
-        if ($this->themes->manifest($theme) === null) {
-            throw new InvalidModel(sprintf('The theme "%s" does not exist (no theme.yaml in %s).', $theme, implode(', ', $this->themes->directories())));
-        }
 
-        return [];
+        return $types;
     }
 
     /**
