@@ -8,7 +8,7 @@ description: Work with masilia/ibexa-blocks, the front-office engine of Ibexa 5 
 A page holds an ordered list of block contents; each block is rendered by a Twig template named after its content type. A theme is **assets plus templates**, nothing else. Content types are **global to the repository** (not per siteaccess): all sites share the same block types; a theme only decides how they look.
 
 ## Install (blank project)
-`composer require masilia/ibexa-blocks` (+ `masilia/ibexa-sites` recommended); enable `MasiliaIbexaBlocksBundle`; import `@MasiliaIbexaBlocksBundle/Resources/config/routing.yaml` **before** Ibexa's routes (it has its own `/search`); newsletter: `routing_newsletter.yaml` and `doctrine:migrations:migrate`.
+`composer require masilia/ibexa-blocks` (+ `masilia/ibexa-sites` recommended); enable `MasiliaIbexaBlocksBundle`; import `@MasiliaIbexaBlocksBundle/Resources/config/routing.yaml` **before** Ibexa's routes (it has its own `/search`); newsletter: `routing_newsletter.yaml` and `doctrine:migrations:migrate`. Flex only enables the bundle: routes and config are written by hand (name the routes file so that it sorts first, e.g. `aa_masilia_blocks.yaml`). `model:install` prints `field "metas" skipped: ... novaseometas` when Nova SEO is absent: expected.
 
 ## Conventions (config `masilia_ibexa_blocks.conventions`)
 `page_type` (page), `home_type` (home_page), `site_type` (site), `blocks_field` (blocks), `block_group` (Blocks), `items_field` (items), `items_field_by_type` (e.g. `info_cards: cards`). Wrong names are the first cause of "blocks do not show". The layout of a site comes from `masilia/ibexa-sites` (`Site::layoutRemoteId`), else `masilia_ibexa_blocks.system.<group>.layout_remote_id`.

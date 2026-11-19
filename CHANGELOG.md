@@ -4,6 +4,9 @@ All notable changes to `masilia/ibexa-blocks` are documented here. The format fo
 
 ## [Unreleased]
 
+### Fixed
+- Docs: `model:install` says that the `metas` field is skipped, with a note, when Nova SEO is not installed; the skill says that Flex only enables the bundle (routes and config are written by hand).
+
 ## [0.5.1] - 2026-11-19
 
 ### Added
