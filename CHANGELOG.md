@@ -4,6 +4,8 @@ All notable changes to `masilia/ibexa-blocks` are documented here. The format fo
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-11-19
+
 ### Added
 - The content model of a site comes with the package: `masilia:blocks:model:install` creates the groups and the content types `layout_config`, `site`, `home_page` and `page` (the socle), and the types the project defines as `*.yaml` files in `config/content_model/` (and in the directories of `masilia_ibexa_blocks.model.directories`, which a package can add by prepending the setting). It only creates and completes: a type or a field that exists is never changed or removed. Options: `--dry-run`, `--no-socle`, `--only`.
 - Every content type of the group of the blocks is allowed in the blocks field of `page` and `home_page` when those fields restrict the types (`model:install`, and `masilia:blocks:model:sync-blocks` alone for an existing project).
@@ -47,7 +49,8 @@ First release.
 - Search and forms by mail, driven by configuration.
 - Themes as a mechanism: base layout, theme tooling, asset discovery.
 
-[Unreleased]: https://github.com/MasiliaLabs/ibexa-blocks/compare/0.4.1...HEAD
+[Unreleased]: https://github.com/MasiliaLabs/ibexa-blocks/compare/0.5.0...HEAD
+[0.5.0]: https://github.com/MasiliaLabs/ibexa-blocks/compare/0.4.1...0.5.0
 [0.4.1]: https://github.com/MasiliaLabs/ibexa-blocks/compare/0.4.0...0.4.1
 [0.4.0]: https://github.com/MasiliaLabs/ibexa-blocks/compare/0.3.0...0.4.0
 [0.3.0]: https://github.com/MasiliaLabs/ibexa-blocks/compare/0.2.0...0.3.0
