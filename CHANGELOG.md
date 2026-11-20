@@ -4,6 +4,8 @@ All notable changes to `masilia/ibexa-blocks` are documented here. The format fo
 
 ## [Unreleased]
 
+## [0.6.3] - 2026-11-20
+
 ### Added
 - `masilia:blocks:theme:check` reports an error for each entry of the themes of a design that is not in `public/build/entrypoints.json` (the pages of a site that uses it answer 500 "Could not find the entry ..."); nothing is said while the assets were never built.
 
@@ -104,7 +106,8 @@ First release.
 - Search and forms by mail, driven by configuration.
 - Themes as a mechanism: base layout, theme tooling, asset discovery.
 
-[Unreleased]: https://github.com/MasiliaLabs/ibexa-blocks/compare/0.6.2...HEAD
+[Unreleased]: https://github.com/MasiliaLabs/ibexa-blocks/compare/0.6.3...HEAD
+[0.6.3]: https://github.com/MasiliaLabs/ibexa-blocks/compare/0.6.2...0.6.3
 [0.6.2]: https://github.com/MasiliaLabs/ibexa-blocks/compare/0.6.1...0.6.2
 [0.6.1]: https://github.com/MasiliaLabs/ibexa-blocks/compare/0.6.0...0.6.1
 [0.6.0]: https://github.com/MasiliaLabs/ibexa-blocks/compare/0.5.4...0.6.0
