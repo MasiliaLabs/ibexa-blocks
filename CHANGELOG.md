@@ -4,6 +4,8 @@ All notable changes to `masilia/ibexa-blocks` are documented here. The format fo
 
 ## [Unreleased]
 
+## [0.6.1] - 2026-11-20
+
 ### Added
 - Docs: a *Stay informed* section in the README: how to be told of new releases (GitHub Watch, the releases feed, `composer outdated`, Dependabot) and where to read what changes.
 
@@ -91,7 +93,8 @@ First release.
 - Search and forms by mail, driven by configuration.
 - Themes as a mechanism: base layout, theme tooling, asset discovery.
 
-[Unreleased]: https://github.com/MasiliaLabs/ibexa-blocks/compare/0.6.0...HEAD
+[Unreleased]: https://github.com/MasiliaLabs/ibexa-blocks/compare/0.6.1...HEAD
+[0.6.1]: https://github.com/MasiliaLabs/ibexa-blocks/compare/0.6.0...0.6.1
 [0.6.0]: https://github.com/MasiliaLabs/ibexa-blocks/compare/0.5.4...0.6.0
 [0.5.4]: https://github.com/MasiliaLabs/ibexa-blocks/compare/0.5.3...0.5.4
 [0.5.3]: https://github.com/MasiliaLabs/ibexa-blocks/compare/0.5.2...0.5.3
