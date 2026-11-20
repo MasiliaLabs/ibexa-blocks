@@ -4,6 +4,8 @@ All notable changes to `masilia/ibexa-blocks` are documented here. The format fo
 
 ## [Unreleased]
 
+## [0.6.2] - 2026-11-20
+
 ### Fixed
 - Docs: a multi-line text field reaches a template as a `Text` value printed with `<br />`; `fields.<name>.rawText` is the text as written.
 
@@ -96,7 +98,8 @@ First release.
 - Search and forms by mail, driven by configuration.
 - Themes as a mechanism: base layout, theme tooling, asset discovery.
 
-[Unreleased]: https://github.com/MasiliaLabs/ibexa-blocks/compare/0.6.1...HEAD
+[Unreleased]: https://github.com/MasiliaLabs/ibexa-blocks/compare/0.6.2...HEAD
+[0.6.2]: https://github.com/MasiliaLabs/ibexa-blocks/compare/0.6.1...0.6.2
 [0.6.1]: https://github.com/MasiliaLabs/ibexa-blocks/compare/0.6.0...0.6.1
 [0.6.0]: https://github.com/MasiliaLabs/ibexa-blocks/compare/0.5.4...0.6.0
 [0.5.4]: https://github.com/MasiliaLabs/ibexa-blocks/compare/0.5.3...0.5.4
