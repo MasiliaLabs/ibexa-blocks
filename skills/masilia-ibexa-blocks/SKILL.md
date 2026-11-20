@@ -34,7 +34,7 @@ A multi-line `ibexa_text` field reaches a template as a `Text` value that prints
 `masilia:blocks:site:create "Name" --domain=… --design=<design> --language=eng-GB [--host --admin-host --parent --media-parent --dry-run]`: creates the tree (site container, layout, home page, media folder, stable remote ids, rerunnable) and, with `ibexa-sites`, registers the site as a **draft** (root = home page, layout, design, one siteaccess per language); the registry is asked first, so a refused site writes no content. Without ibexa-sites it prints the siteaccess YAML. `masilia:blocks:site:init` does the tree only. **Never activates**: the user does (`/sites` or `masilia:sites:set-status <id> active`), because that serves the hosts.
 
 ## After changes
-`cache:clear` and `cache:pool:clear cache.redis cache.app`; PHP-FPM reload if PHP files changed; rebuild assets for theme changes. Templates read optional values safely (a missing field must not 500 the page).
+`cache:clear` and `cache:pool:clear --all`; PHP-FPM reload if PHP files changed; rebuild assets for theme changes. Templates read optional values safely (a missing field must not 500 the page).
 
 ## Pitfalls
 - New block type without a template in the design chain: the block silently shows nothing; run `theme:check`.
