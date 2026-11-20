@@ -4,6 +4,12 @@ All notable changes to `masilia/ibexa-blocks` are documented here. The format fo
 
 ## [Unreleased]
 
+### Added
+- `masilia:blocks:theme:check` reports an error for each entry of the themes of a design that is not in `public/build/entrypoints.json` (the pages of a site that uses it answer 500 "Could not find the entry ..."); nothing is said while the assets were never built.
+
+### Fixed
+- Docs: how the Encore build of a project gets the entries of the themes (the skeleton of Ibexa does not), in the README, the skill, `theme:create` and the recipe, which now copies the helper `assets/masilia-themes.js`.
+
 ## [0.6.2] - 2026-11-20
 
 ### Fixed

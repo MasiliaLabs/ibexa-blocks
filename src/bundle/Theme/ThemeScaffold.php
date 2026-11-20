@@ -80,7 +80,7 @@ final readonly class ThemeScaffold
             sprintf('Add the theme to a design (the design list stays yours): ibexa_design_engine.design_list.%s: [%s] (and the design of a site: %s).', $name, $parent !== null ? $name . ', ' . $parent : $name, $name),
             'Put its favicons in assets/images/' . $name . '/icons and uncomment favicons in its theme.yaml.',
             $parent === null ? 'A standalone theme shows nothing it has no template for: fill layout/header.twig and layout/footer.twig (stubs are written) and write a template for every block type (see masilia:blocks:theme:check ' . $name . ').' : 'Write only what differs in its templates, named after the content type: blocks/<type>.twig, cards/<type>.twig, line/<type>.twig, full/<type>.twig (a file of the same name in this theme replaces the one of the theme it extends).',
-            'Build the assets: yarn encore dev (the entries are found from the theme.yaml files).',
+            'Build the assets: yarn encore dev (the entries are found from the theme.yaml files, once webpack.config.js adds them: require(\'./assets/masilia-themes.js\')(Encore, __dirname); the recipe of masilia/ibexa-blocks copies that helper, see the README).',
             sprintf('Check it: bin/console masilia:blocks:theme:check %s', $name),
         ]];
     }

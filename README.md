@@ -225,6 +225,14 @@ php bin/console masilia:blocks:theme:create acme --extends=standard   # only wha
 php bin/console masilia:blocks:theme:create solo --standalone         # all its templates and styles
 ```
 
+**Build the assets of the themes.** A theme says in its `theme.yaml` which entry it builds and from which sources; the Encore build of your project has to add them, and the skeleton of Ibexa does not: without it a site that uses the theme answers **500** (`Could not find the entry "acme.css" in entrypoints.json`). The recipe copies a helper to `assets/masilia-themes.js`: add one line to `webpack.config.js`, before `Encore.getWebpackConfig()`:
+
+```js
+require('./assets/masilia-themes.js')(Encore, __dirname);
+```
+
+Without the recipe, the helper is this: read `php bin/console masilia:blocks:themes --json` (`{"entries": {"acme.css": "assets/themes/acme/scss/main.scss", ...}, "problems": []}`) and `Encore.addEntry(entry, [path.resolve(__dirname, source)])` for each, then `yarn encore dev`. `masilia:blocks:theme:check` tells you when an entry is missing from `public/build/entrypoints.json`.
+
 Declare it in a design yourself (the list of designs stays yours), for instance `ibexa_design_engine.design_list.acme: [acme, standard]`, write the templates named after the content types (`blocks/<type>.twig`, `cards/`, `line/`, `full/`), and check it:
 
 ```bash

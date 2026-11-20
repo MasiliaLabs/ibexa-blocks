@@ -158,6 +158,7 @@ final class ThemeToolsTest extends TestCase
             $this->createStub(\Ibexa\Contracts\Core\Repository\PermissionResolver::class),
             new \Masilia\IbexaBlocks\Conventions(),
             $this->registry(),
+            $this->project,
             ['site' => ['standard'], 'standard' => []],
         );
 
@@ -165,6 +166,34 @@ final class ThemeToolsTest extends TestCase
         $tester->execute(['design' => 'site']);
 
         self::assertStringContainsString('[orphan] the theme is in no design', $tester->getDisplay());
+    }
+
+    public function testATheNotInTheBuildOfTheAssetsIsAnError(): void
+    {
+        $this->standardTheme();
+        $types = $this->createStub(\Ibexa\Contracts\Core\Repository\ContentTypeService::class);
+        $types->method('loadContentTypeGroupByIdentifier')->willReturn(new \Ibexa\Core\Repository\Values\ContentType\ContentTypeGroup(['identifier' => 'Blocks']));
+        $types->method('loadContentTypes')->willReturn([]);
+        $types->method('loadContentTypeGroups')->willReturn([]);
+        $make = fn () => new CommandTester(new \Masilia\Bundle\IbexaBlocks\Command\ThemeCheckCommand(
+            new ThemeChecker($this->registry(), $this->project),
+            $types,
+            $this->createStub(\Ibexa\Contracts\Core\Repository\PermissionResolver::class),
+            new \Masilia\IbexaBlocks\Conventions(),
+            $this->registry(),
+            $this->project,
+            ['standard' => []],
+        ));
+
+        $tester = $make();
+        $tester->execute(['design' => 'standard']);
+        self::assertStringNotContainsString('entrypoints.json', $tester->getDisplay(), 'no build yet: nothing to say about it');
+
+        $this->write('public/build/entrypoints.json', json_encode(['entrypoints' => ['app' => [], 'standard.css' => []]], JSON_THROW_ON_ERROR));
+        $tester = $make();
+        $tester->execute(['design' => 'standard']);
+        self::assertStringContainsString('the entry "standard.js" is not in public/build/entrypoints.json', $tester->getDisplay());
+        self::assertStringNotContainsString('the entry "standard.css"', $tester->getDisplay());
     }
 
     public function testAStandaloneThemeBuildsOnNone(): void
