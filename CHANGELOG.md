@@ -4,6 +4,12 @@ All notable changes to `masilia/ibexa-blocks` are documented here. The format fo
 
 ## [Unreleased]
 
+### Changed
+- `theme:create --standalone` writes stubs for `layout/header.twig` and `layout/footer.twig` and sets `layout: { notifications: false }` in the manifest: the layout of the package asks the theme for them, and a standalone theme has no theme below it (a 500 "Unable to find template" otherwise). The message of `theme:create --extends=<theme>` for a theme without `theme.yaml` says to name an existing theme or use `--standalone`.
+
+### Fixed
+- Docs: the view types (`block_item` is the view type of `cards/`, `full` is not in the default `view_types`), where block contents live (`home_page` is not a container), and `--extends` needing an existing theme with a `theme.yaml`.
+
 ## [0.5.3] - 2026-11-19
 
 ### Added

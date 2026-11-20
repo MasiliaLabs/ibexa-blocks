@@ -176,6 +176,9 @@ final class ThemeToolsTest extends TestCase
         self::assertStringContainsString('standalone', (string) file_get_contents($this->project . '/templates/themes/solo/theme.yaml'));
         self::assertStringNotContainsString('@use', (string) file_get_contents($this->project . '/assets/themes/solo/scss/main.scss'));
         self::assertStringContainsString('ibexa_design_engine.design_list.solo: [solo]', $command->getDisplay());
+        self::assertStringContainsString('notifications: false', (string) file_get_contents($this->project . '/templates/themes/solo/theme.yaml'), 'no notification template below a standalone theme');
+        self::assertFileExists($this->project . '/templates/themes/solo/layout/header.twig');
+        self::assertFileExists($this->project . '/templates/themes/solo/layout/footer.twig');
         self::assertSame(2, $command->execute(['name' => 'both', '--standalone' => true, '--extends' => 'standard']), 'one or the other');
     }
 

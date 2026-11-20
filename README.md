@@ -135,6 +135,34 @@ fonts: ['https://fonts.googleapis.com/css2?family=Inter&display=swap']
 
 Templates are found by the name of their content type; `theme.yaml` only needs `views:` for an exception. `php bin/console masilia:blocks:theme:check <design>` tells you which block type has no template, and `masilia:blocks:themes --json` gives your Encore build the entries to compile.
 
+## Showing pages and blocks
+
+A template is found by the **view type** and the name of the content type, in the themes of the design:
+
+| View type | Template | What it shows |
+| --- | --- | --- |
+| `blocks` | `blocks/<type>.twig` | a block of a page |
+| `block_item` | `cards/<type>.twig` | an item of a block (a card, a slide...) |
+| `line` | `line/<type>.twig` | a line of a list |
+| `embed` | `embed/<type>.twig`, then `line/<type>.twig` | a content embedded in another |
+| `full` | `full/<type>.twig` | a page of its own (a page, an article, an event...) |
+
+The view type is **`block_item`**, not `cards`: `cards` is only the folder. In a block template, show its items with `{{ render_blocks(fields.items, {}, 'block_item') }}` (a view type that does not exist shows nothing, without an error).
+
+**`full` is not shown by default**: `masilia_ibexa_blocks.blocks.view_types` is `[blocks, block_item, line]`, so a page falls back to the default content view of Ibexa (a dump of its fields) unless your project routes it. Either add the view types you use:
+
+```yaml
+masilia_ibexa_blocks:
+    blocks:
+        view_types: [blocks, block_item, line, embed, full]
+```
+
+so that `full/<type>.twig` of your theme shows pages (a type that holds blocks and has no template of its own is shown by the page of the package, `@MasiliaIbexaBlocks/full/blocks_page.twig`), or write your own `content_view` rule, which always wins.
+
+**Where the block contents live**: a block is a content of its own, related from the blocks field of a page. `home_page` is not a container, so its blocks cannot be its children: keep them anywhere you like, for instance under the site container (`site`) or in a folder of blocks. `page` is a container.
+
+**A standalone theme** (`theme:create --standalone`) has no theme below it: it writes stubs for `layout/header.twig` and `layout/footer.twig` and sets `layout: { notifications: false }` in its `theme.yaml` (remove that line once you add `layout/parts/notification.html.twig`). `--extends=<theme>` needs an existing theme **with a `theme.yaml`**: `standard` is only one when your project (or a package that brings the standard design) has it, so on a fresh project start with `--standalone`.
+
 ## Content model, themes and sites
 
 **Content types are global**: Ibexa has one set of types for the whole repository, not one per siteaccess. So the types (blocks, block items, your own content such as articles or events) are defined **once, at the level of the project**, and shared by all its sites; a **theme only brings templates and assets**. A library of blocks and a standard design are meant to come as a separate package; this package is the engine.
@@ -178,7 +206,7 @@ The command is safe to run again: it creates what is missing and adds the missin
 A theme is assets plus templates, **standalone** or **inherited** through the design engine of Ibexa:
 
 ```bash
-php bin/console masilia:blocks:theme:create acme --extends=standard   # only what differs from standard
+php bin/console masilia:blocks:theme:create acme --extends=standard   # only what differs from standard (an existing theme with a theme.yaml)
 php bin/console masilia:blocks:theme:create solo --standalone         # all its templates and styles
 ```
 

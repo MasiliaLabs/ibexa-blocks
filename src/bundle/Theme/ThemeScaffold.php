@@ -34,7 +34,7 @@ final readonly class ThemeScaffold
         }
         $parentAssets = $parent !== null ? $this->themes->manifest($parent)?->assets : null;
         if ($parent !== null && $this->themes->manifest($parent) === null) {
-            throw new ThemeNotCreated(sprintf('The theme "%s" it should extend has no theme.yaml.', $parent));
+            throw new ThemeNotCreated(sprintf('The theme "%s" it should extend has no theme.yaml: name an existing theme with --extends=<theme>, or use --standalone for a theme that builds on none.', $parent));
         }
 
         $assetsDirectory = 'assets/themes/' . $name;
@@ -49,6 +49,7 @@ final readonly class ThemeScaffold
             sprintf('  entry: %s', $name),
             sprintf('  styles: [%s]', implode(', ', $styles)),
             sprintf('  extra: [%s]', implode(', ', $extra)),
+            ...($parent === null ? ['layout:', '  notifications: false   # the notification template of a design is not there: add layout/parts/notification.html.twig and remove this line'] : []),
             '# favicons: build/images/' . $name . '/icons',
             '# fonts:',
             '#   - https://fonts.googleapis.com/css2?family=Inter&display=swap',
@@ -61,6 +62,11 @@ final readonly class ThemeScaffold
             $this->projectDir . '/' . $assetsDirectory . '/scss/main.scss' => $this->stylesheet($parentAssets?->directory, $assetsDirectory),
             $this->projectDir . '/' . $assetsDirectory . '/js/main.js' => $this->script($parentAssets?->directory, $assetsDirectory),
         ];
+        if ($parent === null) {
+            // The layout of the package asks the theme for its header and footer: a standalone theme has no theme below it to take them from.
+            $files[$themeDir . '/layout/header.twig'] = "{# The header of the site. It gets the fields of the layout content as variables. #}\n<header class=\"site-header\"></header>\n";
+            $files[$themeDir . '/layout/footer.twig'] = "{# The footer of the site. It gets the fields of the layout content as variables. #}\n<footer class=\"site-footer\"></footer>\n";
+        }
         $written = [];
         foreach ($files as $path => $content) {
             if (!is_dir(dirname($path)) && !mkdir(dirname($path), 0775, true) && !is_dir(dirname($path))) {
@@ -73,7 +79,7 @@ final readonly class ThemeScaffold
         return ['files' => $written, 'next' => [
             sprintf('Add the theme to a design (the design list stays yours): ibexa_design_engine.design_list.%s: [%s] (and the design of a site: %s).', $name, $parent !== null ? $name . ', ' . $parent : $name, $name),
             'Put its favicons in assets/images/' . $name . '/icons and uncomment favicons in its theme.yaml.',
-            $parent === null ? 'A standalone theme shows nothing it has no template for: write a template for every block type (see masilia:blocks:theme:check ' . $name . ').' : 'Write only what differs in its templates, named after the content type: blocks/<type>.twig, cards/<type>.twig, line/<type>.twig, full/<type>.twig (a file of the same name in this theme replaces the one of the theme it extends).',
+            $parent === null ? 'A standalone theme shows nothing it has no template for: fill layout/header.twig and layout/footer.twig (stubs are written) and write a template for every block type (see masilia:blocks:theme:check ' . $name . ').' : 'Write only what differs in its templates, named after the content type: blocks/<type>.twig, cards/<type>.twig, line/<type>.twig, full/<type>.twig (a file of the same name in this theme replaces the one of the theme it extends).',
             'Build the assets: yarn encore dev (the entries are found from the theme.yaml files).',
             sprintf('Check it: bin/console masilia:blocks:theme:check %s', $name),
         ]];
