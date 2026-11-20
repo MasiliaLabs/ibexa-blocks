@@ -159,6 +159,8 @@ masilia_ibexa_blocks:
 
 so that `full/<type>.twig` of your theme shows pages (a type that holds blocks and has no template of its own is shown by the page of the package, `@MasiliaIbexaBlocks/full/blocks_page.twig`), or write your own `content_view` rule, which always wins.
 
+**Multi-line text in a template**: a field of type `ibexa_text` (several lines) reaches the template as a `Text` value that prints with its line breaks turned into `<br />`. To split it into lines, show it in a `<pre>`, or print it your way, use the text as it was written: `fields.<name>.rawText` (`{{ fields.notes.rawText|nl2br }}` shows the breaks and escapes the rest; `{% for line in fields.notes.rawText|split("\n") %}` goes through the lines).
+
 **Where the block contents live**: a block is a content of its own, related from the blocks field of a page (relations follow the id of the content, not its place). By convention the blocks of a page are stored in **a folder that is a child of that page**, named after it: `<page name> Blocks` ("Home Blocks", "About Blocks"; the suffix is `conventions.blocks_folder_suffix`). The tree of a site:
 
 ```

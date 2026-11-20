@@ -4,6 +4,9 @@ All notable changes to `masilia/ibexa-blocks` are documented here. The format fo
 
 ## [Unreleased]
 
+### Fixed
+- Docs: a multi-line text field reaches a template as a `Text` value printed with `<br />`; `fields.<name>.rawText` is the text as written.
+
 ## [0.6.1] - 2026-11-20
 
 ### Added
