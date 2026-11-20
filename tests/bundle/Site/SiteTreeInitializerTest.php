@@ -47,10 +47,23 @@ final class SiteTreeInitializerTest extends TestCase
         $this->assertSame([22], array_values(array_filter(array_column($steps, 'locationId'), static fn (?int $l): bool => $l === 22)));
     }
 
+    public function testWithAHomePageThatIsNotAContainerTheFolderOfItsBlocksIsSkippedWithTheWayOut(): void
+    {
+        $types = $this->createStub(ContentTypeService::class);
+        $types->method('loadContentTypeByIdentifier')->willReturn(new ContentType(['identifier' => 'any', 'isContainer' => false]));
+
+        $steps = $this->initializer($types, [])->init('Acme', 'acme.org', 2, null, 'eng-GB', true);
+
+        $this->assertSame(['acme_site', 'acme_layout_config', 'acme_home', 'acme_home_blocks'], array_column($steps, 'remoteId'));
+        $skipped = array_values(array_filter($steps, static fn (array $s): bool => isset($s['skipped'])));
+        $this->assertCount(1, $skipped);
+        $this->assertStringContainsString('--allow-container', $skipped[0]['skipped']);
+    }
+
     private function types(): ContentTypeService
     {
         $types = $this->createStub(ContentTypeService::class);
-        $types->method('loadContentTypeByIdentifier')->willReturn(new ContentType(['identifier' => 'any']));
+        $types->method('loadContentTypeByIdentifier')->willReturn(new ContentType(['identifier' => 'any', 'isContainer' => true]));
 
         return $types;
     }

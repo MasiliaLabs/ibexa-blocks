@@ -66,6 +66,10 @@ final class InitSiteCommand extends Command
         $layout = null;
         $root = null;
         foreach ($steps as $step) {
+            if (isset($step['skipped'])) {
+                $io->writeln(sprintf(' <comment>skipped</comment>      %-14s %s', $step['what'], $step['skipped']));
+                continue;
+            }
             $state = $step['exists'] ? 'exists ' : ($step['contentId'] === null ? 'would create' : '<info>created</info>');
             $io->writeln(sprintf(' %-12s %-14s %s%s', $state, $step['what'], $step['remoteId'], $step['locationId'] !== null ? ' (location ' . $step['locationId'] . ')' : ''));
             $layout = $step['what'] === 'layout' ? $step['remoteId'] : $layout;

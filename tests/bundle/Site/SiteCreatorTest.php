@@ -123,7 +123,7 @@ final class SiteCreatorTest extends TestCase
     private function creator(?SiteRegistry $registry, bool $exists): SiteCreator
     {
         $types = $this->createStub(ContentTypeService::class);
-        $types->method('loadContentTypeByIdentifier')->willReturn(new ContentType(['identifier' => 'any']));
+        $types->method('loadContentTypeByIdentifier')->willReturn(new ContentType(['identifier' => 'any', 'isContainer' => true]));
         $contents = $this->createStub(ContentService::class);
         $contents->method('loadContentInfoByRemoteId')->willReturnCallback(static fn (string $r) => $exists
             ? new ContentInfo(['id' => 10, 'mainLocationId' => str_ends_with($r, '_home') ? 22 : 20])

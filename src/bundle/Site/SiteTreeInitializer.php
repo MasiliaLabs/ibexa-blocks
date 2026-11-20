@@ -35,7 +35,7 @@ final readonly class SiteTreeInitializer
     }
 
     /**
-     * @return list<array{what: string, type: string, remoteId: string, exists: bool, contentId: ?int, locationId: ?int}>
+     * @return list<array{what: string, type: string, remoteId: string, exists: bool, contentId: ?int, locationId: ?int, skipped?: string}>
      *
      * @throws RuntimeException When a content type or a location it needs is missing
      */
@@ -49,7 +49,7 @@ final readonly class SiteTreeInitializer
         return $this->repository->sudo(fn (): array => $this->run($name, $slug, $domain, $parentLocationId, $mediaParentLocationId, $language, $dryRun));
     }
 
-    /** @return list<array{what: string, type: string, remoteId: string, exists: bool, contentId: ?int, locationId: ?int}> */
+    /** @return list<array{what: string, type: string, remoteId: string, exists: bool, contentId: ?int, locationId: ?int, skipped?: string}> */
     private function run(string $name, string $slug, string $domain, ?int $parentId, ?int $mediaParentId, ?string $language, bool $dryRun): array
     {
         $language ??= $this->repository->getContentLanguageService()->getDefaultLanguageCode();
@@ -72,8 +72,13 @@ final readonly class SiteTreeInitializer
             ['layout', self::LAYOUT_TYPE, $slug . '_layout_config', fn (): array => ['bo_title' => $name . ' Layout Configuration', 'logo_text' => $this->richText($name)], null],
             ['home page', $this->conventions->homeType, $slug . '_home', fn (): array => ['title' => 'Home', $this->conventions->blocksField => []], null],
         ];
-        // The blocks of the home page, in a folder under it (a page of the site gets its own the same way).
-        $steps[] = ['blocks folder', $this->conventions->folderType, BlocksFolder::remoteId($slug . '_home'), fn (): array => ['name' => BlocksFolder::name('Home', $this->conventions->blocksFolderSuffix)], fn (array $made) => $made['home page'] ?? null];
+        // The blocks of the home page, in a folder under it (a page of the site gets its own the same way), when the home page can hold it.
+        $skipped = [];
+        if ($types->loadContentTypeByIdentifier($this->conventions->homeType)->isContainer()) {
+            $steps[] = ['blocks folder', $this->conventions->folderType, BlocksFolder::remoteId($slug . '_home'), fn (): array => ['name' => BlocksFolder::name('Home', $this->conventions->blocksFolderSuffix)], fn (array $made) => $made['home page'] ?? null];
+        } else {
+            $skipped[] = ['what' => 'blocks folder', 'type' => $this->conventions->folderType, 'remoteId' => BlocksFolder::remoteId($slug . '_home'), 'exists' => false, 'contentId' => null, 'locationId' => null, 'skipped' => sprintf('"%s" is not a container: run masilia:blocks:model:install --allow-container, then this command again', $this->conventions->homeType)];
+        }
         if ($mediaParentId !== null && $this->locationExists($mediaParentId) && $this->typeExists(self::FOLDER_TYPE)) {
             $steps[] = ['media folder', self::FOLDER_TYPE, $slug . '_media', fn (): array => ['name' => $name . ' Media'], fn (array $made) => $mediaParentId];
         }
@@ -104,7 +109,7 @@ final readonly class SiteTreeInitializer
             throw $e;
         }
 
-        return $result;
+        return [...$result, ...$skipped];
     }
 
     /**
