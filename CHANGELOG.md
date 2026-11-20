@@ -4,6 +4,11 @@ All notable changes to `masilia/ibexa-blocks` are documented here. The format fo
 
 ## [Unreleased]
 
+## [0.5.4] - 2026-11-20
+
+### Added
+- `masilia:blocks:site:create --admin-host=<host>` registers an admin siteaccess `admin_<site>` on that host (in the languages of the site) with the draft site.
+
 ### Changed
 - `theme:create --standalone` writes stubs for `layout/header.twig` and `layout/footer.twig` and sets `layout: { notifications: false }` in the manifest: the layout of the package asks the theme for them, and a standalone theme has no theme below it (a 500 "Unable to find template" otherwise). The message of `theme:create --extends=<theme>` for a theme without `theme.yaml` says to name an existing theme or use `--standalone`.
 
@@ -73,7 +78,8 @@ First release.
 - Search and forms by mail, driven by configuration.
 - Themes as a mechanism: base layout, theme tooling, asset discovery.
 
-[Unreleased]: https://github.com/MasiliaLabs/ibexa-blocks/compare/0.5.3...HEAD
+[Unreleased]: https://github.com/MasiliaLabs/ibexa-blocks/compare/0.5.4...HEAD
+[0.5.4]: https://github.com/MasiliaLabs/ibexa-blocks/compare/0.5.3...0.5.4
 [0.5.3]: https://github.com/MasiliaLabs/ibexa-blocks/compare/0.5.2...0.5.3
 [0.5.2]: https://github.com/MasiliaLabs/ibexa-blocks/compare/0.5.1...0.5.2
 [0.5.1]: https://github.com/MasiliaLabs/ibexa-blocks/compare/0.5.0...0.5.1

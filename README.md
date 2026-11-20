@@ -219,10 +219,10 @@ php bin/console masilia:blocks:theme:check acme     # missing templates, assets,
 ### 3. A site
 
 ```bash
-php bin/console masilia:blocks:site:create "Acme" --domain=acme.example.org --design=acme --language=eng-GB
+php bin/console masilia:blocks:site:create "Acme" --domain=acme.example.org --design=acme --language=eng-GB [--admin-host=admin.acme.example.org]
 ```
 
-It creates the content tree (container, layout, home page, media folder: `site:init` does that part alone) and, when [`masilia/ibexa-sites`](https://github.com/MasiliaLabs/ibexa-sites) is installed, registers the site as a **draft** (root = the home page, the layout, the design, a siteaccess per language). The registry is asked first: a site it refuses (unknown design, a host already taken...) writes no content. Without `ibexa-sites` it prints the siteaccess configuration to adapt. It never activates a site, since that serves its hosts: do it from the admin or with `masilia:sites:set-status <id> active`.
+It creates the content tree (container, layout, home page, media folder: `site:init` does that part alone) and, when [`masilia/ibexa-sites`](https://github.com/MasiliaLabs/ibexa-sites) is installed, registers the site as a **draft** (root = the home page, the layout, the design, a siteaccess per language, and with `--admin-host` an admin siteaccess `admin_<site>` on that host). The registry is asked first: a site it refuses (unknown design, a host already taken...) writes no content. Without `ibexa-sites` it prints the siteaccess configuration to adapt. It never activates a site, since that serves its hosts: do it from the admin or with `masilia:sites:set-status <id> active`.
 
 ## Tests
 

@@ -83,6 +83,19 @@ final class SiteCreatorTest extends TestCase
         $this->assertSame([], $registry->created);
     }
 
+    public function testTheAdminOfTheSiteIsRegisteredOnItsHost(): void
+    {
+        $registry = $this->registry([]);
+
+        $this->creator($registry, true)->create('Acme', 'acme.org', 'acme', ['eng-GB'], null, 2, null, false, 'Admin.Acme.org');
+
+        $admin = $registry->created[0]->adminSiteaccesses;
+        $this->assertCount(1, $admin);
+        $this->assertSame('admin_acme', $admin[0]->name);
+        $this->assertSame('admin.acme.org', $admin[0]->host);
+        $this->assertSame(['eng-GB'], $admin[0]->languages);
+    }
+
     /** @param list<Problem> $problems */
     private function registry(array $problems, ?Site $existing = null): object
     {

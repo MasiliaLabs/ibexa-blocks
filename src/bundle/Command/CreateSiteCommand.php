@@ -32,6 +32,7 @@ final class CreateSiteCommand extends Command
             ->addOption('design', null, InputOption::VALUE_REQUIRED, 'The design of the site: a key of ibexa_design_engine.design_list')
             ->addOption('language', null, InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY, 'A language code of the site (repeat it); the first is the main one, at the root of the host')
             ->addOption('host', null, InputOption::VALUE_REQUIRED, 'The host that serves the site (default: the domain)')
+            ->addOption('admin-host', null, InputOption::VALUE_REQUIRED, 'The host of the admin of the site (an admin siteaccess admin_<site> is registered on it)')
             ->addOption('parent', null, InputOption::VALUE_REQUIRED, 'The location the site goes under (default: location_ids.content_structure)')
             ->addOption('media-parent', null, InputOption::VALUE_REQUIRED, 'The location the media folder goes under (default: location_ids.media)')
             ->addOption('dry-run', null, InputOption::VALUE_NONE, 'Show what would be done, write nothing');
@@ -57,6 +58,7 @@ final class CreateSiteCommand extends Command
                 $input->getOption('parent') !== null ? (int) $input->getOption('parent') : null,
                 $input->getOption('media-parent') !== null ? (int) $input->getOption('media-parent') : null,
                 (bool) $input->getOption('dry-run'),
+                $input->getOption('admin-host') !== null ? (string) $input->getOption('admin-host') : null,
             );
         } catch (RuntimeException $e) {
             $io->error($e->getMessage());

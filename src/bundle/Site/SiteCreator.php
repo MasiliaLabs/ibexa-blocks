@@ -35,7 +35,7 @@ final readonly class SiteCreator
      *
      * @throws RuntimeException When the tree cannot be made
      */
-    public function create(string $name, string $domain, string $design, array $languages, ?string $host, ?int $parentLocationId, ?int $mediaParentLocationId, bool $dryRun): array
+    public function create(string $name, string $domain, string $design, array $languages, ?string $host, ?int $parentLocationId, ?int $mediaParentLocationId, bool $dryRun, ?string $adminHost = null): array
     {
         $host = strtolower(trim($host ?? $domain));
         $slug = SiteTreeInitializer::slug($name);
@@ -49,7 +49,7 @@ final readonly class SiteCreator
         // Before writing any content: what the registry already refuses (design, hosts, languages).
         if ($this->registry !== null && $existing === null) {
             // The root is not known yet (the home page does not exist): any location stands in for it.
-            $problems = $this->check($this->toSite($this->draft($slug, $name, $design, $host, $languages, $parentLocationId ?? 2, null)));
+            $problems = $this->check($this->toSite($this->draft($slug, $name, $design, $host, $languages, $parentLocationId ?? 2, null, $adminHost)));
             if ($problems !== []) {
                 return ['tree' => [], 'registry' => true, 'site' => null, 'problems' => $problems, 'config' => null];
             }
@@ -62,7 +62,7 @@ final readonly class SiteCreator
             $home = $step['what'] === 'home page' ? $step['locationId'] : $home;
             $layout = $step['what'] === 'layout' ? $step['remoteId'] : $layout;
         }
-        $draft = $this->draft($slug, $name, $design, $host, $languages, $home ?? $parentLocationId ?? 0, $layout);
+        $draft = $this->draft($slug, $name, $design, $host, $languages, $home ?? $parentLocationId ?? 0, $layout, $adminHost);
 
         if ($this->registry === null) {
             return ['tree' => $tree, 'registry' => false, 'site' => null, 'problems' => [], 'config' => $this->config($draft)];
@@ -103,9 +103,9 @@ final readonly class SiteCreator
     /**
      * @param list<string|null> $languages
      *
-     * @return array{identifier: string, name: string, design: string, root: int, layout: ?string, siteaccesses: list<array{name: string, languages: list<string>, host: string, prefix: ?string}>}
+     * @return array{identifier: string, name: string, design: string, root: int, layout: ?string, siteaccesses: list<array{name: string, languages: list<string>, host: string, prefix: ?string}>, admins: list<array{name: string, languages: list<string>, host: string, prefix: ?string}>}
      */
-    private function draft(string $slug, string $name, string $design, string $host, array $languages, int $root, ?string $layout): array
+    private function draft(string $slug, string $name, string $design, string $host, array $languages, int $root, ?string $layout, ?string $adminHost = null): array
     {
         $siteaccesses = [];
         foreach ($languages as $i => $language) {
@@ -113,10 +113,16 @@ final readonly class SiteCreator
             $siteaccesses[] = ['name' => $i === 0 ? $slug : $slug . '_' . $short, 'languages' => $language === null ? [] : [$language], 'host' => $host, 'prefix' => $i === 0 ? null : $short];
         }
 
-        return ['identifier' => $slug . '_group', 'name' => $name, 'design' => $design, 'root' => $root, 'layout' => $layout, 'siteaccesses' => $siteaccesses];
+        // The admin of the site: one siteaccess on its own host, in the languages of the site.
+        $admins = [];
+        if ($adminHost !== null && trim($adminHost) !== '') {
+            $admins[] = ['name' => 'admin_' . $slug, 'languages' => array_values(array_filter($languages)), 'host' => strtolower(trim($adminHost)), 'prefix' => null];
+        }
+
+        return ['identifier' => $slug . '_group', 'name' => $name, 'design' => $design, 'root' => $root, 'layout' => $layout, 'siteaccesses' => $siteaccesses, 'admins' => $admins];
     }
 
-    /** @param array{identifier: string, name: string, design: string, root: int, layout: ?string, siteaccesses: list<array{name: string, languages: list<string>, host: string, prefix: ?string}>} $draft */
+    /** @param array{identifier: string, name: string, design: string, root: int, layout: ?string, siteaccesses: list<array{name: string, languages: list<string>, host: string, prefix: ?string}>, admins: list<array{name: string, languages: list<string>, host: string, prefix: ?string}>} $draft */
     private function toSite(array $draft): Site
     {
         return new Site(
@@ -127,15 +133,16 @@ final readonly class SiteCreator
             $draft['design'],
             array_map(static fn (array $s): SiteAccessDefinition => new SiteAccessDefinition($s['name'], $s['languages'], $s['host'], $s['prefix']), $draft['siteaccesses']),
             layoutRemoteId: $draft['layout'],
+            adminSiteaccesses: array_map(static fn (array $s): SiteAccessDefinition => new SiteAccessDefinition($s['name'], $s['languages'], $s['host'], $s['prefix']), $draft['admins']),
         );
     }
 
-    /** @param array{identifier: string, name: string, design: string, root: int, layout: ?string, siteaccesses: list<array{name: string, languages: list<string>, host: string, prefix: ?string}>} $draft */
+    /** @param array{identifier: string, name: string, design: string, root: int, layout: ?string, siteaccesses: list<array{name: string, languages: list<string>, host: string, prefix: ?string}>, admins: list<array{name: string, languages: list<string>, host: string, prefix: ?string}>} $draft */
     private function config(array $draft): string
     {
         $names = array_column($draft['siteaccesses'], 'name');
         $lines = ['ibexa:', '    siteaccess:', '        list: [' . implode(', ', $names) . ']', '        groups:', '            ' . $draft['identifier'] . ': [' . implode(', ', $names) . ']', '    system:', '        ' . $draft['identifier'] . ':', '            design: ' . $draft['design'], '            content: { tree_root: { location_id: ' . $draft['root'] . ' } }', '# Match each siteaccess to its host (and prefix):'];
-        foreach ($draft['siteaccesses'] as $s) {
+        foreach ([...$draft['siteaccesses'], ...$draft['admins']] as $s) {
             $lines[] = sprintf('#   %s: %s/%s, languages: %s', $s['name'], $s['host'], $s['prefix'] ?? '', implode(', ', $s['languages']));
         }
         $lines[] = '# masilia_ibexa_blocks.system.' . $draft['identifier'] . '.layout_remote_id: ' . ($draft['layout'] ?? '');
