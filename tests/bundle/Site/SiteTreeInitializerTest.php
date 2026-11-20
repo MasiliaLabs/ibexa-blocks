@@ -34,16 +34,16 @@ final class SiteTreeInitializerTest extends TestCase
     {
         $steps = $this->initializer($this->types(), [])->init('Acme Shop', 'acme.org', 2, null, 'eng-GB', true);
 
-        $this->assertSame(['acme_shop_site', 'acme_shop_layout_config', 'acme_shop_home'], array_column($steps, 'remoteId'));
-        $this->assertSame([false, false, false], array_column($steps, 'exists'));
-        $this->assertSame([null, null, null], array_column($steps, 'contentId'));
+        $this->assertSame(['acme_shop_site', 'acme_shop_layout_config', 'acme_shop_home', 'acme_shop_home_blocks'], array_column($steps, 'remoteId'));
+        $this->assertSame([false, false, false, false], array_column($steps, 'exists'));
+        $this->assertSame([null, null, null, null], array_column($steps, 'contentId'));
     }
 
     public function testWhatExistsIsLeftAlone(): void
     {
-        $steps = $this->initializer($this->types(), ['acme_site' => [10, 20], 'acme_layout_config' => [11, 21], 'acme_home' => [12, 22]])->init('Acme', 'acme.org', 2, null, 'eng-GB', false);
+        $steps = $this->initializer($this->types(), ['acme_site' => [10, 20], 'acme_layout_config' => [11, 21], 'acme_home' => [12, 22], 'acme_home_blocks' => [13, 23]])->init('Acme', 'acme.org', 2, null, 'eng-GB', false);
 
-        $this->assertSame([true, true, true], array_column($steps, 'exists'));
+        $this->assertSame([true, true, true, true], array_column($steps, 'exists'));
         $this->assertSame([22], array_values(array_filter(array_column($steps, 'locationId'), static fn (?int $l): bool => $l === 22)));
     }
 

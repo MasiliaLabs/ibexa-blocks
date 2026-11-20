@@ -54,8 +54,8 @@ final readonly class ModelInstaller
                 $this->create($item['type'], $item['add']);
                 $done[] = sprintf('type "%s" created (%d fields)', $item['type']->identifier, count($item['add']));
             } elseif ($item['action'] === 'complete') {
-                $this->complete($item['type'], $item['add']);
-                $done[] = sprintf('type "%s" completed: %s', $item['type']->identifier, implode(', ', $item['add']));
+                $this->complete($item['type'], $item['add'], $item['container']);
+                $done[] = sprintf('type "%s" completed: %s', $item['type']->identifier, trim(($item['container'] ? 'now a container ' : '') . implode(', ', $item['add'])));
             }
         }
         foreach ($plan->selections as $selection) {
@@ -88,9 +88,14 @@ final readonly class ModelInstaller
     }
 
     /** @param list<string> $fields */
-    private function complete(TypeDefinition $definition, array $fields): void
+    private function complete(TypeDefinition $definition, array $fields, bool $container = false): void
     {
         $draft = $this->contentTypes->createContentTypeDraft($this->contentTypes->loadContentTypeByIdentifier($definition->identifier));
+        if ($container) {
+            $update = $this->contentTypes->newContentTypeUpdateStruct();
+            $update->isContainer = true;
+            $this->contentTypes->updateContentTypeDraft($draft, $update);
+        }
         foreach ($definition->fields as $field) {
             if (in_array($field['identifier'], $fields, true)) {
                 $this->contentTypes->addFieldDefinition($draft, $this->fieldStruct($definition, $field));

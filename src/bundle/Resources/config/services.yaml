@@ -80,6 +80,10 @@ services:
         resource: '../../Controller/'
         exclude: '../../Controller/SubscriptionController.php'
         tags: ['controller.service_arguments']
+    # The folder of the blocks of a page is storage: 404 on the front (above BlockViewProvider, below the project's content_view).
+    Masilia\Bundle\IbexaBlocks\View\BlocksFolderViewProvider:
+        tags:
+            - { name: ibexa.view.provider, type: 'Ibexa\Core\MVC\Symfony\View\ContentView', priority: 6 }
     # Below the project's own content_view rules (priority 10) and above Ibexa's defaults (-1).
     Masilia\Bundle\IbexaBlocks\View\BlockViewProvider:
         tags:

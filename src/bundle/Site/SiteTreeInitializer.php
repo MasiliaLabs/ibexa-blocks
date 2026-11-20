@@ -7,6 +7,7 @@ namespace Masilia\Bundle\IbexaBlocks\Site;
 use Ibexa\Contracts\Core\Repository\Exceptions\NotFoundException;
 use Ibexa\Contracts\Core\Repository\Repository;
 use Ibexa\Contracts\Core\SiteAccess\ConfigResolverInterface;
+use Masilia\IbexaBlocks\Content\BlocksFolder;
 use Masilia\IbexaBlocks\Conventions;
 use RuntimeException;
 use Throwable;
@@ -67,32 +68,34 @@ final readonly class SiteTreeInitializer
         }
 
         $steps = [
-            ['site', $this->conventions->siteType, $slug . '_site', fn (): array => ['title' => $name, 'domain' => $domain], fn (?int $site) => $parentId],
+            ['site', $this->conventions->siteType, $slug . '_site', fn (): array => ['title' => $name, 'domain' => $domain], fn (array $made) => $parentId],
             ['layout', self::LAYOUT_TYPE, $slug . '_layout_config', fn (): array => ['bo_title' => $name . ' Layout Configuration', 'logo_text' => $this->richText($name)], null],
             ['home page', $this->conventions->homeType, $slug . '_home', fn (): array => ['title' => 'Home', $this->conventions->blocksField => []], null],
         ];
+        // The blocks of the home page, in a folder under it (a page of the site gets its own the same way).
+        $steps[] = ['blocks folder', $this->conventions->folderType, BlocksFolder::remoteId($slug . '_home'), fn (): array => ['name' => BlocksFolder::name('Home', $this->conventions->blocksFolderSuffix)], fn (array $made) => $made['home page'] ?? null];
         if ($mediaParentId !== null && $this->locationExists($mediaParentId) && $this->typeExists(self::FOLDER_TYPE)) {
-            $steps[] = ['media folder', self::FOLDER_TYPE, $slug . '_media', fn (): array => ['name' => $name . ' Media'], fn (?int $site) => $mediaParentId];
+            $steps[] = ['media folder', self::FOLDER_TYPE, $slug . '_media', fn (): array => ['name' => $name . ' Media'], fn (array $made) => $mediaParentId];
         }
 
         $result = [];
-        $siteLocation = null;
+        $made = [];
         $this->repository->beginTransaction();
         try {
             foreach ($steps as [$what, $type, $remoteId, $fields, $parent]) {
                 $existing = $this->existing($remoteId);
                 if ($existing !== null) {
                     $result[] = ['what' => $what, 'type' => $type, 'remoteId' => $remoteId, 'exists' => true, 'contentId' => $existing[0], 'locationId' => $existing[1]];
-                    $siteLocation ??= $what === 'site' ? $existing[1] : null;
+                    $made[$what] = $existing[1];
                     continue;
                 }
-                $parentLocation = $parent !== null ? $parent($siteLocation) : $siteLocation;
+                $parentLocation = $parent !== null ? $parent($made) : ($made['site'] ?? null);
                 if ($dryRun || $parentLocation === null) {
                     $result[] = ['what' => $what, 'type' => $type, 'remoteId' => $remoteId, 'exists' => false, 'contentId' => null, 'locationId' => null];
                     continue;
                 }
                 [$contentId, $locationId] = $this->create($type, $remoteId, $parentLocation, $fields(), $language);
-                $siteLocation = $what === 'site' ? $locationId : $siteLocation;
+                $made[$what] = $locationId;
                 $result[] = ['what' => $what, 'type' => $type, 'remoteId' => $remoteId, 'exists' => false, 'contentId' => $contentId, 'locationId' => $locationId];
             }
             $this->repository->commit();

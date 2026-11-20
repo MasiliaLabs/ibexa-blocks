@@ -4,6 +4,13 @@ All notable changes to `masilia/ibexa-blocks` are documented here. The format fo
 
 ## [Unreleased]
 
+### Added
+- The blocks of a page live in a folder under that page, named after it (`<page name> Blocks`, suffix `conventions.blocks_folder_suffix`), found by the remote id `<page remote id>_blocks`. `site:init` and `site:create` make the one of the home page. The full view of such a folder answers 404 (`BlocksFolderViewProvider`); a `content_view` of the project wins. `Masilia\IbexaBlocks\Content\BlocksFolder` holds the rules for the packages that make or find the folder. Settings `conventions.blocks_folder_suffix` and `conventions.folder_type`.
+- `masilia:blocks:model:install --allow-container`: makes a type a container when its definition says so and it is not yet (never the other way round), for the projects that installed `home_page` before it became a container.
+
+### Changed
+- **Breaking (the socle):** `home_page` is a container (so that its blocks can go under it). Projects that already have the type keep it as it is until `model:install --allow-container`.
+
 ## [0.5.4] - 2026-11-20
 
 ### Added

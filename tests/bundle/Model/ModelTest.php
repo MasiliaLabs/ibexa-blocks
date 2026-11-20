@@ -122,6 +122,24 @@ final class ModelTest extends TestCase
         $this->assertFalse($plan->isEmpty());
     }
 
+    public function testAHomePageThatIsNotAContainerIsOnlyChangedWhenAsked(): void
+    {
+        $definition = TypeDefinition::fromArray(['identifier' => 'home_page', 'group' => 'Content', 'names' => ['eng-GB' => 'Home'], 'container' => true, 'fields' => [['identifier' => 'title', 'type' => 'ibexa_string']]], 'home_page.yaml');
+        $existing = ['home_page' => new ContentType(['identifier' => 'home_page', 'isContainer' => false, 'fieldDefinitions' => new FieldDefinitionCollection([new FieldDefinition(['identifier' => 'title', 'fieldTypeIdentifier' => 'ibexa_string'])])])];
+
+        $refused = $this->planner($existing, ['Content'], ['ibexa_string'])->plan([$definition]);
+        $this->assertSame('conform', $refused->types[0]['action']);
+        $this->assertStringContainsString('--allow-container', $refused->types[0]['notes'][0]);
+
+        $allowed = $this->planner($existing, ['Content'], ['ibexa_string'])->plan([$definition], true);
+        $this->assertSame('complete', $allowed->types[0]['action']);
+        $this->assertTrue($allowed->types[0]['container']);
+
+        // The other way round is never touched.
+        $flat = TypeDefinition::fromArray(['identifier' => 'home_page', 'group' => 'Content', 'names' => ['eng-GB' => 'Home'], 'container' => false, 'fields' => [['identifier' => 'title', 'type' => 'ibexa_string']]], 'home_page.yaml');
+        $this->assertSame('conform', $this->planner(['home_page' => new ContentType(['identifier' => 'home_page', 'isContainer' => true, 'fieldDefinitions' => $existing['home_page']->getFieldDefinitions()])], ['Content'], ['ibexa_string'])->plan([$flat], true)->types[0]['action']);
+    }
+
     public function testAnOpenBlocksFieldIsNotRestricted(): void
     {
         $existing = ['page' => $this->contentType('page', ['title' => 'ibexa_string', 'blocks' => 'ibexa_object_relation_list'], ['selectionContentTypes' => []])];

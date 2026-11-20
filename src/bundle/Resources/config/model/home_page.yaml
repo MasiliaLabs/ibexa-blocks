@@ -4,7 +4,7 @@ names:
   eng-GB: Home Page
 name_pattern: <title>
 url_name_pattern: <title>
-container: false
+container: true
 sort:
   field: modified
   order: DESC

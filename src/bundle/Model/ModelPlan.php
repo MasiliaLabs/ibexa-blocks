@@ -12,7 +12,7 @@ final readonly class ModelPlan
 {
     /**
      * @param list<string>                                                                                                        $groups     Content type groups to create
-     * @param list<array{type: TypeDefinition, action: 'create'|'complete'|'conform', add: list<string>, notes: list<string>}>      $types
+     * @param list<array{type: TypeDefinition, action: 'create'|'complete'|'conform', add: list<string>, notes: list<string>, container: bool}>      $types
      * @param list<array{owner: string, field: string, add: list<string>}>                                                         $selections Blocks to allow in the blocks field of a page type
      */
     public function __construct(

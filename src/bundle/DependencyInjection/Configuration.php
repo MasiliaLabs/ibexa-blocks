@@ -37,6 +37,8 @@ final class Configuration extends SiteAccessAware\Configuration
                         ->scalarNode('page_type')->defaultValue('page')->info('The content type of a page')->end()
                         ->scalarNode('home_type')->defaultValue('home_page')->info('The content type of a home page')->end()
                         ->scalarNode('site_type')->defaultValue('site')->info('The content type of the container of a site')->end()
+                        ->scalarNode('blocks_folder_suffix')->defaultValue('Blocks')->info('The end of the name of the folder that holds the blocks of a page: "Home Blocks"')->end()
+                        ->scalarNode('folder_type')->defaultValue('folder')->info('The content type of a folder')->end()
                         ->scalarNode('blocks_field')->defaultValue('blocks')->info('The field of a page that holds its blocks')->end()
                         ->scalarNode('items_field')->defaultValue('items')->info('The field of a block that holds its child items')->end()
                         ->arrayNode('items_field_by_type')

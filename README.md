@@ -159,7 +159,20 @@ masilia_ibexa_blocks:
 
 so that `full/<type>.twig` of your theme shows pages (a type that holds blocks and has no template of its own is shown by the page of the package, `@MasiliaIbexaBlocks/full/blocks_page.twig`), or write your own `content_view` rule, which always wins.
 
-**Where the block contents live**: a block is a content of its own, related from the blocks field of a page. `home_page` is not a container, so its blocks cannot be its children: keep them anywhere you like, for instance under the site container (`site`) or in a folder of blocks. `page` is a container.
+**Where the block contents live**: a block is a content of its own, related from the blocks field of a page (relations follow the id of the content, not its place). By convention the blocks of a page are stored in **a folder that is a child of that page**, named after it: `<page name> Blocks` ("Home Blocks", "About Blocks"; the suffix is `conventions.blocks_folder_suffix`). The tree of a site:
+
+```
+site
+├── layout_config
+├── media folder
+└── home_page
+    ├── Home Blocks          the blocks of the home
+    ├── About (page)
+    │   └── About Blocks     the blocks of the page
+    └── ...
+```
+
+`home_page` is a container for this. The socle says so; a project that installed it before has to allow the change once: `masilia:blocks:model:install --allow-container` (a type is never changed otherwise). `site:init` and `site:create` make the home folder; `masilia/ibexa-ai-craft` and `masilia/editorial-toolbox` make a page's folder when they create its first block, and find it by its **remote id** (the page's remote id and `_blocks`), so renaming a page changes nothing. The folders of blocks are storage, not pages: their full view answers **404** (a `content_view` rule of the project still wins). Blocks that exist elsewhere are not moved.
 
 **A standalone theme** (`theme:create --standalone`) has no theme below it: it writes stubs for `layout/header.twig` and `layout/footer.twig` and sets `layout: { notifications: false }` in its `theme.yaml` (remove that line once you add `layout/parts/notification.html.twig`). `--extends=<theme>` needs an existing theme **with a `theme.yaml`**: `standard` is only one when your project (or a package that brings the standard design) has it, so on a fresh project start with `--standalone`.
 

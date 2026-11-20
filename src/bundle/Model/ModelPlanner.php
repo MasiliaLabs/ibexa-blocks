@@ -22,13 +22,13 @@ final readonly class ModelPlanner
     }
 
     /** @param list<TypeDefinition> $definitions */
-    public function plan(array $definitions): ModelPlan
+    public function plan(array $definitions, bool $allowContainer = false): ModelPlan
     {
-        return $this->repository->sudo(fn (): ModelPlan => $this->build($definitions));
+        return $this->repository->sudo(fn (): ModelPlan => $this->build($definitions, $allowContainer));
     }
 
     /** @param list<TypeDefinition> $definitions */
-    private function build(array $definitions): ModelPlan
+    private function build(array $definitions, bool $allowContainer): ModelPlan
     {
         $groups = [];
         foreach ($definitions as $definition) {
@@ -39,14 +39,14 @@ final readonly class ModelPlanner
 
         $types = [];
         foreach ($definitions as $definition) {
-            $types[] = $this->item($definition);
+            $types[] = $this->item($definition, $allowContainer);
         }
 
         return new ModelPlan(array_values($groups), $types, $this->selections($definitions));
     }
 
-    /** @return array{type: TypeDefinition, action: 'create'|'complete'|'conform', add: list<string>, notes: list<string>} */
-    private function item(TypeDefinition $definition): array
+    /** @return array{type: TypeDefinition, action: 'create'|'complete'|'conform', add: list<string>, notes: list<string>, container: bool} */
+    private function item(TypeDefinition $definition, bool $allowContainer): array
     {
         $notes = [];
         $available = [];
@@ -61,7 +61,7 @@ final readonly class ModelPlanner
         try {
             $type = $this->contentTypes->loadContentTypeByIdentifier($definition->identifier);
         } catch (NotFoundException) {
-            return ['type' => $definition, 'action' => 'create', 'add' => $available, 'notes' => $notes];
+            return ['type' => $definition, 'action' => 'create', 'add' => $available, 'notes' => $notes, 'container' => false];
         }
 
         $add = [];
@@ -76,7 +76,15 @@ final readonly class ModelPlanner
             }
         }
 
-        return ['type' => $definition, 'action' => $add === [] ? 'conform' : 'complete', 'add' => $add, 'notes' => $notes];
+        // A type that should hold content but does not: making it a container only widens what it can do, so it is safe, but it is
+        // a change of a type that exists: it needs --allow-container. The other way round is never touched.
+        $widen = $definition->container && !$type->isContainer;
+        if ($widen && !$allowContainer) {
+            $notes[] = 'is not a container, the definition says it is (the blocks of the page cannot go under it): run with --allow-container to change it';
+        }
+        $container = $widen && $allowContainer;
+
+        return ['type' => $definition, 'action' => $add === [] && !$container ? 'conform' : 'complete', 'add' => $add, 'notes' => $notes, 'container' => $container];
     }
 
     /**

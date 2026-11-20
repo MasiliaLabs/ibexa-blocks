@@ -20,6 +20,8 @@ final readonly class Conventions
      * @param list<string> $contentGroups The groups of the other content types the site is made of
      * @param string       $homeType      The content type of a home page (it holds blocks like a page)
      * @param string       $siteType      The content type of the container of a site (its settings)
+     * @param string       $blocksFolderSuffix The end of the name of the folder that holds the blocks of a page ("Home Blocks")
+     * @param string       $folderType    The content type of a folder
      */
     public function __construct(
         public string $pageType = 'page',
@@ -30,6 +32,8 @@ final readonly class Conventions
         public array $itemsFieldByType = [],
         public string $homeType = 'home_page',
         public string $siteType = 'site',
+        public string $blocksFolderSuffix = 'Blocks',
+        public string $folderType = 'folder',
     ) {
     }
 
@@ -55,6 +59,8 @@ final readonly class Conventions
             itemsFieldByType: array_map('strval', (array) ($settings['items_field_by_type'] ?? $defaults->itemsFieldByType)),
             homeType: (string) ($settings['home_type'] ?? $defaults->homeType),
             siteType: (string) ($settings['site_type'] ?? $defaults->siteType),
+            blocksFolderSuffix: (string) ($settings['blocks_folder_suffix'] ?? $defaults->blocksFolderSuffix),
+            folderType: (string) ($settings['folder_type'] ?? $defaults->folderType),
         );
     }
 }

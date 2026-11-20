@@ -32,6 +32,7 @@ final class InstallModelCommand extends Command
         $this
             ->addOption('no-socle', null, InputOption::VALUE_NONE, 'Do not install the socle of the package, only the definitions of the project')
             ->addOption('only', null, InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY, 'Install only this content type (repeat it)')
+            ->addOption('allow-container', null, InputOption::VALUE_NONE, 'Make a type a container when its definition says it is one and it is not yet (home_page, so that the blocks of the home can go under it)')
             ->addOption('dry-run', null, InputOption::VALUE_NONE, 'Show what would be done, write nothing');
     }
 
@@ -45,7 +46,7 @@ final class InstallModelCommand extends Command
                 $only = array_map('strval', (array) $input->getOption('only'));
                 $definitions = array_values(array_filter($definitions, static fn ($d): bool => in_array($d->identifier, $only, true)));
             }
-            $plan = $this->planner->plan($definitions);
+            $plan = $this->planner->plan($definitions, (bool) $input->getOption('allow-container'));
         } catch (InvalidModel $e) {
             $io->error($e->getMessage());
 
@@ -61,7 +62,7 @@ final class InstallModelCommand extends Command
                 'complete' => '<comment>complete</comment>',
                 default => 'ok       ',
             };
-            $io->writeln(sprintf(' %s type %s%s', $label, $item['type']->identifier, $item['add'] !== [] && $item['action'] === 'complete' ? ' + ' . implode(', ', $item['add']) : ''));
+            $io->writeln(sprintf(' %s type %s%s', $label, $item['type']->identifier, $item['action'] === 'complete' ? ' + ' . trim(($item['container'] ? 'container ' : '') . implode(', ', $item['add'])) : ''));
             foreach ($item['notes'] as $note) {
                 $io->writeln('            <comment>' . $note . '</comment>');
             }

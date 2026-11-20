@@ -52,7 +52,7 @@ final class SiteCreatorTest extends TestCase
         $result = $this->creator($registry, false)->create('Acme', 'acme.org', 'acme', [], null, 2, null, true);
 
         $this->assertSame([], $registry->created);
-        $this->assertSame([false, false, false], array_column($result['tree'], 'exists'));
+        $this->assertSame([false, false, false, false], array_column($result['tree'], 'exists'), 'site, layout, home page and the folder of its blocks');
     }
 
     public function testTheSiteIsMadeAsADraftOnTheHomePageAndTheLayout(): void
