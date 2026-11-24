@@ -44,6 +44,10 @@ services:
         arguments: ['%masilia_blocks.forms%']
     Masilia\Bundle\IbexaBlocks\Form\MatrixFormBuilder: ~
 
+    # `siteaccess_in_group('...')` in the `condition` of a route (the search page is not matched on the admin siteaccesses).
+    Masilia\Bundle\IbexaBlocks\Routing\SiteAccessGroupExpression:
+        tags: ['routing.expression_language_provider']
+
     # Themes and the blocks they show.
     Masilia\Bundle\IbexaBlocks\Theme\:
         resource: '../../Theme/'

@@ -32,7 +32,8 @@ final readonly class SearchController
     ) {
     }
 
-    #[Route('/search', name: 'search_page', methods: ['GET'])]
+    // Not on the admin siteaccesses: the admin has a /search of its own, and this route is loaded first (see SiteAccessGroupExpression).
+    #[Route('/search', name: 'search_page', methods: ['GET'], condition: "not siteaccess_in_group('%admin_group_name%')")]
     public function page(Request $request): Response
     {
         $type = (string) $request->query->get('type', 'all');

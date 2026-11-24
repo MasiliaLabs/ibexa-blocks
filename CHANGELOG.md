@@ -4,6 +4,9 @@ All notable changes to `masilia/ibexa-blocks` are documented here. The format fo
 
 ## [Unreleased]
 
+### Fixed
+- The search page (`/search`, route `search_page`) is no longer matched on the admin siteaccesses. It is loaded before Ibexa's routes (it must win on the front), so on an admin siteaccess it hid the admin's own `/search` and answered 500 (`Variable "logo_text" does not exist` in the front header). The route now carries the condition `not siteaccess_in_group('%admin_group_name%')`; `siteaccess_in_group()` is a new function of the routing expression language, provided by the bundle (the groups of a siteaccess are objects, so `in` cannot test them).
+
 ## [0.6.3] - 2026-11-20
 
 ### Added
