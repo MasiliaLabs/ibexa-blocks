@@ -4,8 +4,11 @@ All notable changes to `masilia/ibexa-blocks` are documented here. The format fo
 
 ## [Unreleased]
 
+## [0.6.4] - 2026-11-24
+
 ### Fixed
 - The search page (`/search`, route `search_page`) is no longer matched on the admin siteaccesses. It is loaded before Ibexa's routes (it must win on the front), so on an admin siteaccess it hid the admin's own `/search` and answered 500 (`Variable "logo_text" does not exist` in the front header). The route now carries the condition `not siteaccess_in_group('%admin_group_name%')`; `siteaccess_in_group()` is a new function of the routing expression language, provided by the bundle (the groups of a siteaccess are objects, so `in` cannot test them).
+- Docs: the skill says to run `cache:pool:clear --all` after a database restore or an SQL change (the persistence cache of Ibexa is in the application pool, `cache:clear` leaves it).
 
 ## [0.6.3] - 2026-11-20
 
@@ -109,7 +112,8 @@ First release.
 - Search and forms by mail, driven by configuration.
 - Themes as a mechanism: base layout, theme tooling, asset discovery.
 
-[Unreleased]: https://github.com/MasiliaLabs/ibexa-blocks/compare/0.6.3...HEAD
+[Unreleased]: https://github.com/MasiliaLabs/ibexa-blocks/compare/0.6.4...HEAD
+[0.6.4]: https://github.com/MasiliaLabs/ibexa-blocks/compare/0.6.3...0.6.4
 [0.6.3]: https://github.com/MasiliaLabs/ibexa-blocks/compare/0.6.2...0.6.3
 [0.6.2]: https://github.com/MasiliaLabs/ibexa-blocks/compare/0.6.1...0.6.2
 [0.6.1]: https://github.com/MasiliaLabs/ibexa-blocks/compare/0.6.0...0.6.1
