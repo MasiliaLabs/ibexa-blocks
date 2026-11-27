@@ -86,35 +86,50 @@ Then `composer require masilia/ibexa-blocks` enables the bundle and writes `conf
 
 ## Configuration
 
+Every setting is **per site**: it goes under `system`, in `default` for what all the sites share, then in a siteaccess group (a site made with `masilia/ibexa-sites` is the group `<identifier>_group`) or a siteaccess for what differs. Nothing is left at the root of the configuration.
+
 ```yaml
 masilia_ibexa_blocks:
-    conventions:
-        page_type: page            # the content type of a page
-        blocks_field: blocks       # the field of a page that holds its blocks
-        items_field: items         # the field of a block that holds its child items
-        items_field_by_type:       # block types that call it differently
-            info_cards: cards
     system:
-        my_site_group:
+        default:                   # all the sites
+            conventions:
+                page_type: page            # the content type of a page
+                blocks_field: blocks       # the field of a page that holds its blocks
+                items_field: items         # the field of a block that holds its child items
+                items_field_by_type:       # block types that call it differently
+                    info_cards: cards
+            blocks:
+                flatten_fields: true       # each field is a Twig variable
+                lists:
+                    auto_items: { types: [grid_cards, slider] }
+                    featured:   { types: [grid_cards] }
+                    all_posts:  { types: [all_posts] }
+            search:
+                allowed_content_types: [article, page]
+                default_content_types: [article]
+            forms:
+                content_types: [steps_form]
+                from_address: contact@example.org
+            newsletter:
+                enabled: true
+                from_address: contact@example.org
+                subject: Confirm your subscription
+        my_site_group:             # what differs for one site
             layout_remote_id: my_layout_config   # the layout of the site (logo, footer)
-    blocks:
-        flatten_fields: true       # each field is a Twig variable
-        lists:
-            auto_items: { types: [grid_cards, slider] }
-            featured:   { types: [grid_cards] }
-            all_posts:  { types: [all_posts] }
-    search:
-        allowed_content_types: [article, page]
-        default_content_types: [article]
-    forms:
-        content_types: [steps_form]
-        from_address: contact@example.org
-    newsletter:
-        enabled: true
-        from_address: contact@example.org
+            newsletter:
+                subject: Confirm your subscription to My Site
+                list_name: the My Site newsletter
 ```
 
-Every key has a default; the full tree is `bin/console config:dump-reference masilia_ibexa_blocks`. If you use [`masilia/ibexa-sites`](https://github.com/MasiliaLabs/ibexa-sites), the layout of each site is read from its registry instead of `system:`.
+The sections are `conventions`, `model`, `themes`, `blocks`, `search`, `fields`, `forms`, `newsletter` and `rate_limit`, with `layout_remote_id`, `layout_menus` and `favicons`; the full tree is `bin/console config:dump-reference masilia_ibexa_blocks` (the defaults are those of the code: a setting nobody says is not in the tree).
+
+#### How a site gets its settings
+
+Each setting is read **when it is used**, for the site of the request, in this order: the **registry of the sites** (`masilia/ibexa-sites`: the `site_email` of the site is the address the mails are sent from, `layout_remote_id` the layout), then the siteaccess, then its group, then `default`, then the default of the code. A setting is looked up on its own: a site that says `newsletter.subject` keeps the `from_address` of `default`. A list (`content_types: [...]`) or a table (`sorts`, `facets`, `variations`, `items_field_by_type`, `auto_item_sort_fields`) is one setting: the more specific scope **replaces** it, it is not merged.
+
+- The newsletter, the list blocks and the contact forms are always there once one scope turns them on; a site that did not answers `404` on the newsletter routes, and the list providers leave its blocks alone.
+- `themes.directories` and `model.directories` are those of the site; a command (`theme:check`, `model:install`) uses the default siteaccess, or `--siteaccess`. A package that adds directories writes them under `system.default`.
+- Ibexa does not check the name of a scope: a typo is a setting no siteaccess reads (`bin/console debug:config masilia_ibexa_blocks` shows what was read).
 
 ### A theme
 
@@ -145,9 +160,11 @@ The endpoints that send a mail can be limited per address, which is off unless y
 
 ```yaml
 masilia_ibexa_blocks:
-    rate_limit:
-        forms_submit: { limit: 5, interval: '10 minutes' }   # POST /api/forms/submit
-        subscribe:    { limit: 3, interval: '1 hour' }       # POST /api/subscribe
+    system:
+        default:
+            rate_limit:
+                forms_submit: { limit: 5, interval: '10 minutes' }   # POST /api/forms/submit
+                subscribe:    { limit: 3, interval: '1 hour' }       # POST /api/subscribe
 ```
 
 Over the limit the answer is `429` with a `Retry-After` header. A visitor is told apart by its address (`Request::getClientIp()`): behind a proxy such as Varnish, set `framework.trusted_proxies` (and `trusted_headers`), or every visitor has the address of the proxy and the limit becomes one for the whole site. The unsubscribe link of the newsletter shows a confirmation page first (a theme may write `emails/unsubscribe_confirm.html.twig`; its form posts to the current address); the change is made by the button, so a mail scanner that opens the link unsubscribes nobody.
@@ -166,12 +183,14 @@ A template is found by the **view type** and the name of the content type, in th
 
 The view type is **`block_item`**, not `cards`: `cards` is only the folder. In a block template, show its items with `{{ render_blocks(fields.items, {}, 'block_item') }}` (a view type that does not exist shows nothing, without an error).
 
-**`full` is not shown by default**: `masilia_ibexa_blocks.blocks.view_types` is `[blocks, block_item, line]`, so a page falls back to the default content view of Ibexa (a dump of its fields) unless your project routes it. Either add the view types you use:
+**`full` is not shown by default**: `masilia_ibexa_blocks.system.default.blocks.view_types` is `[blocks, block_item, line]`, so a page falls back to the default content view of Ibexa (a dump of its fields) unless your project routes it. Either add the view types you use:
 
 ```yaml
 masilia_ibexa_blocks:
-    blocks:
-        view_types: [blocks, block_item, line, embed, full]
+    system:
+        default:
+            blocks:
+                view_types: [blocks, block_item, line, embed, full]
 ```
 
 so that `full/<type>.twig` of your theme shows pages (a type that holds blocks and has no template of its own is shown by the page of the package, `@MasiliaIbexaBlocks/full/blocks_page.twig`), or write your own `content_view` rule, which always wins.
@@ -223,7 +242,7 @@ fields:
   - { identifier: image, type: ibexa_image, name: Image, translatable: false, position: 30 }
 ```
 
-Fields take `type` (an Ibexa field type identifier), `name`, `description`, `required`, `searchable`, `translatable`, `category`, `position`, `settings` and `validator`. A type of another group (`Content`...) is content of your own, shown by `full/<type>.twig` and `line/<type>.twig`. More directories can be listed in `masilia_ibexa_blocks.model.directories` (a package adds its own by prepending that setting).
+Fields take `type` (an Ibexa field type identifier), `name`, `description`, `required`, `searchable`, `translatable`, `category`, `position`, `settings` and `validator`. A type of another group (`Content`...) is content of your own, shown by `full/<type>.twig` and `line/<type>.twig`. More directories can be listed in `masilia_ibexa_blocks.system.default.model.directories` (a package adds its own by prepending that setting).
 
 ```bash
 php bin/console masilia:blocks:model:install --dry-run   # what would be created

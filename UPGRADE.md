@@ -1,5 +1,37 @@
 # Upgrade
 
+## From 0.7 to 0.8
+
+Every setting is now **per site** and lives under `system`. A setting at the root of `masilia_ibexa_blocks` is refused when the container is compiled. Move each section under `system.default` (it is the global configuration: what all the sites share), and what differs for a site under its group (`<identifier>_group` with `masilia/ibexa-sites`) or siteaccess:
+
+```yaml
+# before
+masilia_ibexa_blocks:
+    forms: { from_address: contact@example.org }
+    newsletter: { enabled: true, subject: 'Confirm' }
+    search: { page: { items: 10 } }
+
+# after
+masilia_ibexa_blocks:
+    system:
+        default:
+            forms: { from_address: contact@example.org }
+            newsletter: { enabled: true, subject: 'Confirm' }
+            search: { page: { items: 10 } }
+        fossil_exit_group:
+            newsletter: { subject: 'Confirm your subscription to Fossil Exit' }
+```
+
+The sections are `conventions`, `model`, `themes`, `blocks`, `search`, `fields`, `forms`, `newsletter` and `rate_limit`. A project that already uses `system` for `favicons`, `layout_remote_id` or `layout_menus` only adds `default`.
+
+What to know:
+
+- **Order**: registry of the sites (`site_email` is the sender of the forms and of the newsletter) → siteaccess → group → `default` → default of the code, setting by setting. A list or a table (`sorts`, `facets`, `variations`, `items_field_by_type`, `auto_item_sort_fields`) is replaced as a whole by the more specific scope, not merged. With `masilia/ibexa-sites`, a site whose registry has an email now sends its mails from it: before, every site sent from `forms.from_address`.
+- **Newsletter**: its services and routes exist once one scope has `newsletter.enabled: true`; the other sites get a `404` on the routes. The rate limit is read per site, and `symfony/rate-limiter` missing is reported at the first request that has a limit, no longer when the container is compiled.
+- **Packages that add directories** (`themes.directories`, `model.directories`, by `prependExtensionConfig`) write `['system' => ['default' => ['model' => ['directories' => [...]]]]]`.
+- **PHP**: `Conventions`, `SearchSettings`, `FormSettings`, `ContactSettings` and `NewsletterSettings` are not services any more, and the `masilia_blocks.conventions|search|forms|newsletter|fields.*|blocks.*` container parameters are gone: inject `Masilia\Bundle\IbexaBlocks\Site\SettingsProvider` and call `conventions()`, `search()`, `forms()`… when you need them (do not keep the result in a property of a service: it is the site of one request). A Twig global that gave `SearchSettings` gives the provider instead (`masilia_settings.search.popularSearches`).
+- Commands (`theme:check`, `model:install`) read the settings of the default siteaccess; pass `--siteaccess` for another.
+
 ## From 0.6 to 0.7
 
 Three changes of the base layout (`@MasiliaIbexaBlocks/layout.twig`) and of `theme.yaml` can break a theme. Run `bin/console masilia:blocks:theme:check <design>` after the upgrade.

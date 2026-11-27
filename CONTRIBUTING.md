@@ -20,6 +20,10 @@ Before you open a pull request, run what the continuous integration runs:
 vendor/bin/phpunit
 ```
 
+### Adding a setting
+
+Every setting is per site: add it to the tree of `Configuration::generateScopeBaseNode` (under `system`, with **no default in the tree**: the default is that of the value object or of the reader, so that a group or `default` can say it), register its section in the list of `MasiliaIbexaBlocksExtension` (a table, whole, goes in `SettingsProvider::TABLES`) and read it through `SettingsProvider` **when it is used**: never keep a setting in a property of a service or in a container parameter (a worker serves several sites). A value that the registry of the sites manages (`site_email`…) is read from it first. Tests build a provider with `Tests\Support\TestSettings`.
+
 ## Pull requests
 
 - Target the `main` branch and keep the change focused on one thing.

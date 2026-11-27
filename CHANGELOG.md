@@ -4,6 +4,14 @@ All notable changes to `masilia/ibexa-blocks` are documented here. The format fo
 
 ## [Unreleased]
 
+### Changed
+- **Breaking:** every setting is per site. `conventions`, `model`, `themes`, `blocks`, `search`, `fields`, `forms`, `newsletter` and `rate_limit` move from the root of `masilia_ibexa_blocks` to `system.default` (all the sites), `system.<group>` or `system.<siteaccess>` (what differs); a setting at the root is refused. See UPGRADE.md.
+- Each setting is read when it is used, for the site of the request: siteaccess, then group, then `default`, then the default of the code, setting by setting (a list or a table is one setting that a more specific scope replaces). The `site_email` of the registry of the sites (`masilia/ibexa-sites`), when the site has one, is the address of the forms and of the newsletter before the configured one.
+- The newsletter routes answer `404` for a site that does not turn the newsletter on; the list providers and the contact form answer only for the block types of the site; the rate limit is that of the site and a missing `symfony/rate-limiter` is reported at the first request, not at compilation.
+
+### Added
+- `Masilia\Bundle\IbexaBlocks\Site\SettingsProvider`: the settings of the current site (`forms()`, `contact()`, `newsletter()`, `conventions()`, `search()`, `get($name)`). `Conventions`, `SearchSettings`, `FormSettings`, `ContactSettings` and `NewsletterSettings` are no longer services: ask the provider.
+
 ## [0.7.0] - 2026-11-27
 
 ### Added
