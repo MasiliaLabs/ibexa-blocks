@@ -4,6 +4,12 @@ All notable changes to `masilia/ibexa-blocks` are documented here. The format fo
 
 ## [Unreleased]
 
+### Changed
+- **Breaking:** the base layout has no `seo_metas` block any more: it is replaced by three blocks of the `<head>`, `favicons`, `fonts` and `seo`, so a theme overrides only the part it needs (its own icons, say). A theme that overrides `seo_metas` must override these instead (`{{ parent() }}` of `favicons` and `fonts` keeps the icons and fonts of theme.yaml).
+
+### Added
+- `novactive/ezseobundle` is suggested in composer.json: the `seo` block of the layout includes its head template and the page models have its `novaseometas` field. Both are optional: without the bundle the block is empty and `model:install` skips the field.
+
 ## [0.6.4] - 2026-11-24
 
 ### Fixed

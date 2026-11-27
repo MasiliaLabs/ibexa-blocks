@@ -54,6 +54,7 @@
         "masilia/ibexa-ai-craft": "The assistant builds pages with the blocks of the theme and reads the conventions of this package",
         "masilia/ibexa-sites": "Sets the layout, name, email and address of each site from its registry, and registers the sites that masilia:blocks:site:create makes",
         "novactive/ezmenumanagerbundle": "Menus managed in the admin (NovactiveMenuProvider)",
+        "novactive/ezseobundle": "SEO metas of each page: the layout includes its head template (the seo block) and the page and home_page models have its novaseometas field",
         "symfony/form": "Contact forms made from a matrix of questions",
         "symfony/mailer": "Contact forms, form submissions and the newsletter",
         "symfony/mime": "Emails of the contact forms and the newsletter",

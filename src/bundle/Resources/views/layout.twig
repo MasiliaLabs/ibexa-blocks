@@ -3,7 +3,8 @@
  What changes from one theme to the next (the assets it builds, its favicons, its fonts) is read from the theme.yaml of the
  themes of the design, so a new theme does not copy this file.
 
- Blocks: seo_metas, head_extra, stylesheets, toolbox, header, content, footer, modals, javascripts.
+ Blocks: favicons, fonts, seo, head_extra, stylesheets, toolbox, header, content, footer, modals, javascripts.
+ A theme overrides the one it needs: `favicons` to link its own icons, `fonts` for its fonts, `seo` for the SEO metas.
 #}
 {% set assets = theme_layout('assets') %}
 {% set favicons = theme_layout('favicons') %}
@@ -11,7 +12,7 @@
 <html lang="{{ app.request.locale|replace({'_': '-'}) }}" dir="{{ app.request.locale starts with 'ar' ? 'rtl' : 'ltr' }}">
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    {% block seo_metas %}
+    {% block favicons %}
         {% if favicons %}
             <link rel="apple-touch-icon" sizes="180x180" href="{{ asset(favicons ~ '/android-chrome-192x192.png') }}">
             <link rel="icon" type="image/png" sizes="32x32" href="{{ asset(favicons ~ '/favicon-32x32.png') }}">
@@ -20,7 +21,9 @@
             <link rel="shortcut icon" href="{{ asset(favicons ~ '/favicon.ico') }}">
             <link rel="icon" type="image/x-icon" href="{{ asset(favicons ~ '/favicon.ico') }}">
         {% endif %}
+    {% endblock %}
 
+    {% block fonts %}
         {% set fonts = theme_layout('fonts') %}
         {% if fonts %}
             <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -29,7 +32,9 @@
                 <link href="{{ font }}" rel="stylesheet">
             {% endfor %}
         {% endif %}
+    {% endblock %}
 
+    {% block seo_metas %}
         {% include "@NovaeZSEO/seometas_head.html.twig" ignore missing %}
     {% endblock %}
 
