@@ -326,4 +326,34 @@ final class ThemeToolsTest extends TestCase
         ], $this->settingsOf('quiet')->preconnect(), 'a theme that says nothing takes the next one');
         self::assertSame([], $this->settingsOf('acme')->preconnect(), 'an empty list says none, and stops the search');
     }
+
+    public function testATemplateASettingNamesIsNotDead(): void
+    {
+        $this->standardTheme();
+        $this->write('templates/themes/standard/blocks/latest_news.twig', 'x');
+        $this->write('templates/themes/standard/blocks/dead.twig', 'x');
+        $text = static fn (array $issues): string => implode("\n", array_map(static fn (array $i): string => $i['message'], $issues));
+
+        $without = $text((new ThemeChecker($this->registry(), $this->project))->check(['standard'], ['hero']));
+        self::assertStringContainsString('blocks/latest_news.twig is named after no content type', $without);
+
+        $with = $text((new ThemeChecker($this->registry(), $this->project, [], ['blocks/latest_news.twig']))->check(['standard'], ['hero']));
+        self::assertStringNotContainsString('latest_news.twig', $with, 'the Featured list of the bundle settings names it');
+        self::assertStringContainsString('blocks/dead.twig is named after no content type', $with, 'the others are still checked');
+    }
+
+    public function testAFolderAThemeIncludesFromByABuiltNameIsNotDeadForThatThemeOnly(): void
+    {
+        $this->standardTheme();
+        $this->write('templates/themes/standard/blocks/info_cards.twig', "{% include '@ibexadesign/cards/' ~ type ~ '.twig' %}");
+        $this->write('templates/themes/standard/cards/metric.twig', 'x');
+        $this->write('templates/themes/light/theme.yaml', "layout: { notifications: false }\n");
+        $this->write('templates/themes/light/cards/metric.twig', 'x');
+        $text = static fn (array $issues): string => implode("\n", array_map(static fn (array $i): string => ($i['theme'] ?? '') . ': ' . $i['message'], $issues));
+
+        $issues = $text((new ThemeChecker($this->registry(), $this->project))->check(['light', 'standard'], []));
+
+        self::assertStringNotContainsString('standard: cards/metric.twig is named after no content type', $issues, 'standard builds the name of the card it includes');
+        self::assertStringContainsString('light: cards/metric.twig is named after no content type', $issues, 'light does not: its card is dead unless something names it');
+    }
 }

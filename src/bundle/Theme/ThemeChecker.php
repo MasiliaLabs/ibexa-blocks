@@ -22,6 +22,8 @@ final readonly class ThemeChecker
         private string $projectDir,
         /** Directories (besides the themes) whose files may refer to templates: the code of providers, say */
         private array $referenceDirs = [],
+        /** Templates a setting of the bundle names (the one of the Featured list): used, though no file says so */
+        private array $configuredTemplates = [],
     ) {
     }
 
@@ -111,12 +113,13 @@ final readonly class ThemeChecker
         }
 
         // Files that nothing refers to: not named by a theme.yaml, not the template of a content type, not included by a template.
-        $mentions = $this->mentions($chain);
+        $mentions = $this->mentions($chain) . "\n" . implode("\n", $this->configuredTemplates);
         foreach ($chain as $theme) {
+            $dynamic = $this->dynamicFolders($theme);
             foreach (['blocks', 'cards', 'line', 'embed', 'full'] as $folder) {
                 foreach ($this->directoryFiles($theme, $folder) as $relative) {
                     $name = basename($relative, '.twig');
-                    if (isset($referenced[$relative]) || str_contains($mentions, $relative) || $name === '_default' || in_array($name, $contentTypes, true)) {
+                    if (isset($referenced[$relative]) || isset($dynamic[$folder]) || str_contains($mentions, $relative) || $name === '_default' || in_array($name, $contentTypes, true)) {
                         continue;
                     }
                     $add(self::NOTICE, $theme, sprintf('%s is named after no content type, and no theme.yaml, template or provider refers to it (dead, a typo in the name, or included by a name built at run time).', $relative));
@@ -196,6 +199,32 @@ final readonly class ThemeChecker
         }
 
         return null;
+    }
+
+    /**
+     * The folders a template of the theme includes from by a name it builds (`'cards/' ~ type ~ '.twig'`): any file of the folder may be
+     * the one included, so none is dead; it counts for this theme only, a theme whose templates name their cards is still checked.
+     *
+     * @return array<string, true>
+     */
+    private function dynamicFolders(string $theme): array
+    {
+        $folders = [];
+        foreach ($this->themes->directories() as $directory) {
+            $root = rtrim($directory, '/') . '/' . $theme;
+            if (!is_dir($root)) {
+                continue;
+            }
+            foreach (new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($root, \FilesystemIterator::SKIP_DOTS)) as $file) {
+                if ($file->isFile() && $file->getExtension() === 'twig' && preg_match_all('#[\'"](?:@ibexadesign/)?(blocks|cards|line|embed|full)/[\'"]\s*~#', (string) file_get_contents($file->getPathname()), $found) > 0) {
+                    foreach ($found[1] as $folder) {
+                        $folders[$folder] = true;
+                    }
+                }
+            }
+        }
+
+        return $folders;
     }
 
     /**

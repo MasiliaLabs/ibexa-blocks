@@ -88,6 +88,7 @@ final class MasiliaIbexaBlocksExtension extends Extension implements PrependExte
             $loader->load('newsletter.yaml');
         }
 
+        $container->setParameter('masilia_blocks.configured_templates', array_filter([(string) ($config['blocks']['lists']['featured']['template'] ?? '')]));
         $this->registerLists($container, $config);
         $this->registerRateLimits($container, $config['rate_limit']);
 

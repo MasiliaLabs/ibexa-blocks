@@ -3,14 +3,15 @@
  What changes from one theme to the next (the assets it builds, its favicons, its fonts) is read from the theme.yaml of the
  themes of the design, so a new theme does not copy this file.
 
- Blocks: favicons, preconnect, fonts, seo_metas, head_extra, stylesheets, toolbox, header, content, footer, modals, javascripts.
+ Blocks: charset, favicons, preconnect, fonts, seo_metas, head_extra, stylesheets, toolbox, header, content, footer, modals, javascripts.
  A theme overrides the one it needs: `favicons` to link its own icons, `preconnect` for the origins to connect to early, `fonts` for its fonts, `seo_metas` for the SEO metas.
 #}
 {% set assets = theme_layout('assets') %}
 {% set favicons = theme_layout('favicons') %}
 <!doctype html>
-<html lang="{{ app.request.locale|replace({'_': '-'}) }}" dir="{{ app.request.locale starts with 'ar' ? 'rtl' : 'ltr' }}">
+<html lang="{{ app.request.locale|replace({'_': '-'}) }}" dir="{{ app.request.locale|replace({'-': '_'})|split('_')|first in ['ar', 'he', 'fa', 'ur', 'ps', 'sd', 'ug', 'yi', 'dv'] ? 'rtl' : 'ltr' }}">
 <head>
+    {% block charset %}<meta charset="UTF-8">{% endblock %}
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     {% block favicons %}
         {% for icon in favicons %}
