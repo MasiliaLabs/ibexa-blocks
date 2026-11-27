@@ -89,6 +89,7 @@ final class MasiliaIbexaBlocksExtension extends Extension implements PrependExte
         }
 
         $this->registerLists($container, $config);
+        $this->registerRateLimits($container, $config['rate_limit']);
 
         // The settings that change from one site to the next: read with the ConfigResolver, in the "masilia_ibexa_blocks" namespace.
         $processor = new ConfigurationProcessor($container, 'masilia_ibexa_blocks');
@@ -151,5 +152,29 @@ final class MasiliaIbexaBlocksExtension extends Extension implements PrependExte
                 ->setAutowired(true)
                 ->addTag(MasiliaIbexaBlocksBundle::TAG_BLOCK_PARAMETERS, ['types' => implode(',', $contact), 'priority' => 0]));
         }
+    }
+
+    /**
+     * The limits of the public endpoints that send a mail: a limiter for each one the site configures, kept in the application cache.
+     *
+     * @param array<string, array{limit?: int, interval?: string}> $limits
+     */
+    private function registerRateLimits(ContainerBuilder $container, array $limits): void
+    {
+        $factories = [];
+        foreach ($limits as $name => $limit) {
+            if ($limit === []) {
+                continue;
+            }
+            if (!class_exists(\Symfony\Component\RateLimiter\RateLimiterFactory::class)) {
+                throw new \LogicException('masilia_ibexa_blocks.rate_limit needs symfony/rate-limiter: composer require symfony/rate-limiter');
+            }
+            $factories[$name] = new Definition(\Symfony\Component\RateLimiter\RateLimiterFactory::class, [
+                ['id' => 'masilia_blocks_' . $name, 'policy' => 'sliding_window', 'limit' => $limit['limit'], 'interval' => $limit['interval']],
+                new Definition(\Symfony\Component\RateLimiter\Storage\CacheStorage::class, [new Reference('cache.app')]),
+            ]);
+        }
+
+        $container->register(\Masilia\Bundle\IbexaBlocks\RateLimit\RequestRateLimits::class, \Masilia\Bundle\IbexaBlocks\RateLimit\RequestRateLimits::class)->setArguments([$factories]);
     }
 }

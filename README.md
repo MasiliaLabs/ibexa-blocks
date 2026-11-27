@@ -141,6 +141,17 @@ Templates are found by the name of their content type; `theme.yaml` only needs `
 
 The public search is bounded by the `search` node: `api.max_items` (page size), `api.max_term_length` and `api.max_tags` (what a request may send to the index) and, when you want `/api/posts/suggestions` kept by the browser and the HTTP cache, `api.suggestions_cache_ttl` in seconds.
 
+The endpoints that send a mail can be limited per address, which is off unless you ask (it needs `symfony/rate-limiter`):
+
+```yaml
+masilia_ibexa_blocks:
+    rate_limit:
+        forms_submit: { limit: 5, interval: '10 minutes' }   # POST /api/forms/submit
+        subscribe:    { limit: 3, interval: '1 hour' }       # POST /api/subscribe
+```
+
+Over the limit the answer is `429` with a `Retry-After` header. The unsubscribe link of the newsletter shows a confirmation page first (a theme may write `emails/subscription_confirm.html.twig`; its form posts to the current address); the change is made by the button, so a mail scanner that opens the link unsubscribes nobody.
+
 ## Showing pages and blocks
 
 A template is found by the **view type** and the name of the content type, in the themes of the design:

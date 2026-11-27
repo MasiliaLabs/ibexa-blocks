@@ -43,6 +43,7 @@
         "symfony/form": "^7.4",
         "symfony/mailer": "^7.4",
         "symfony/mime": "^7.4",
+        "symfony/rate-limiter": "^7.4",
         "symfony/validator": "^7.4"
     },
     "suggest": {
@@ -59,6 +60,7 @@
         "symfony/form": "Contact forms made from a matrix of questions",
         "symfony/mailer": "Contact forms, form submissions and the newsletter",
         "symfony/mime": "Emails of the contact forms and the newsletter",
+        "symfony/rate-limiter": "Limits how often a visitor may submit a form or subscribe (masilia_ibexa_blocks.rate_limit)",
         "symfony/validator": "Contact forms made from a matrix of questions"
     },
     "autoload": {

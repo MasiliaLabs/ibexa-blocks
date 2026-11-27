@@ -1,0 +1,23 @@
+{#
+ The page that asks to confirm an unsubscribe, shown by the link of a mail. The link only shows this page: a mail scanner or a link
+ preview that opens it must not unsubscribe anyone, so the change is made by the button, which posts to the same address.
+ A theme writes its own as emails/subscription_confirm.html.twig (it gets: title, message, button).
+#}
+<!doctype html>
+<html lang="{{ app.request.locale|replace({'_': '-'}) }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>{{ title }}</title>
+</head>
+<body style="font-family: system-ui, sans-serif; display: flex; min-height: 100vh; align-items: center; justify-content: center; margin: 0; padding: 20px;">
+    <main style="max-width: 28rem; text-align: center;">
+        <h1>{{ title }}</h1>
+        <p>{{ message }}</p>
+        <form method="post" action="">
+            <button type="submit" style="padding: .6rem 1.4rem; font-size: 1rem; cursor: pointer;">{{ button }}</button>
+        </form>
+    </main>
+</body>
+</html>

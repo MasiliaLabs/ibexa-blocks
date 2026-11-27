@@ -54,3 +54,7 @@ fonts:
 ```
 
 `preconnect: []` means none (self-hosted fonts, whose stylesheet is a path in `public/`, need no link). Like the other keys it comes from the first theme of the design that has it: a theme that changes `fonts:` says its `preconnect:` too.
+
+### 4. Unsubscribing asks for a confirmation (newsletter)
+
+The link at the end of the newsletter mails no longer unsubscribes by itself: it shows a page with a button, and the button posts to the same address. Nothing to change to keep it working: without a template of the theme, the page of the package is shown (plain, unstyled). To style it, write `emails/subscription_confirm.html.twig` in the theme: it gets `title`, `message` and `button`, and its `<form method="post" action="">` must post to the current address. The confirmation of a subscription (`/subscription/confirm/{token}`) is unchanged.

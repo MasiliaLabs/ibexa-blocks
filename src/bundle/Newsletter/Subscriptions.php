@@ -92,6 +92,12 @@ final readonly class Subscriptions
         return new SubscriptionResult(true, sprintf('Thank you, %s! You are now subscribed to %s.', $subscriber->getName() ?: 'subscriber', $this->settings->listName));
     }
 
+    /** Whether the link of an unsubscribe belongs to a subscriber: it changes nothing, it is what the confirmation page asks first. */
+    public function canUnsubscribe(string $token): bool
+    {
+        return $token !== '' && $this->store->byToken($token) !== null;
+    }
+
     public function unsubscribe(string $token): SubscriptionResult
     {
         $subscriber = $token === '' ? null : $this->store->byToken($token);

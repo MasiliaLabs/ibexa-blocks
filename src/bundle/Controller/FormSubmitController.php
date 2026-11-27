@@ -6,6 +6,7 @@ namespace Masilia\Bundle\IbexaBlocks\Controller;
 
 use Masilia\Bundle\IbexaBlocks\Mail\FormDefinitionLoader;
 use Masilia\Bundle\IbexaBlocks\Mail\FormMailer;
+use Masilia\Bundle\IbexaBlocks\RateLimit\RequestRateLimits;
 use Masilia\IbexaBlocks\Form\FormSettings;
 use Masilia\IbexaBlocks\Form\FormSubmission;
 use Psr\Log\LoggerInterface;
@@ -25,12 +26,17 @@ final readonly class FormSubmitController
         private FormMailer $mailer,
         private FormSettings $settings,
         private LoggerInterface $logger,
+        private RequestRateLimits $limits = new RequestRateLimits(),
     ) {
     }
 
     #[Route('/api/forms/submit', name: 'api_form_submit', methods: ['POST'])]
     public function submit(Request $request): JsonResponse
     {
+        if (($wait = $this->limits->check('forms_submit', $request)) !== null) {
+            return new JsonResponse(['success' => false, 'message' => 'Too many requests. Please try again later.'], Response::HTTP_TOO_MANY_REQUESTS, ['Retry-After' => (string) $wait]);
+        }
+
         try {
             $body = json_decode($request->getContent(), true, 512, JSON_THROW_ON_ERROR);
             $submission = FormSubmission::fromArray(is_array($body) ? $body : [], $this->settings);

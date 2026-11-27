@@ -135,6 +135,14 @@ final class Configuration extends SiteAccessAware\Configuration
                         ->end()
                     ->end()
                 ->end()
+                ->arrayNode('rate_limit')
+                    ->info('How often a visitor may use the public endpoints that send a mail (needs symfony/rate-limiter). Nothing is limited by default.')
+                    ->addDefaultsIfNotSet()
+                    ->children()
+                        ->append($this->limit('forms_submit', 'POST /api/forms/submit'))
+                        ->append($this->limit('subscribe', 'POST /api/subscribe'))
+                    ->end()
+                ->end()
                 ->arrayNode('search')
                     ->info('What the search of a site can do: the content types, the sorts, the facets. Nothing is searched that is not named here.')
                     ->addDefaultsIfNotSet()
@@ -244,5 +252,18 @@ final class Configuration extends SiteAccessAware\Configuration
             ->end();
 
         return $tree;
+    }
+
+    private function limit(string $name, string $what): \Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition
+    {
+        $node = (new \Symfony\Component\Config\Definition\Builder\TreeBuilder($name))->getRootNode();
+        $node
+            ->info(sprintf('%s: at most `limit` requests from one address in each `interval` ("10 minutes"); unset: not limited', $what))
+            ->children()
+                ->integerNode('limit')->isRequired()->min(1)->end()
+                ->scalarNode('interval')->isRequired()->cannotBeEmpty()->end()
+            ->end();
+
+        return $node;
     }
 }
