@@ -6,6 +6,8 @@ namespace Masilia\Bundle\IbexaBlocks\Mail;
 
 use Masilia\Bundle\IbexaBlocks\Content\ContentFactory;
 use Masilia\IbexaBlocks\Form\FormSettings;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 use Throwable;
 
 /**
@@ -17,6 +19,7 @@ final readonly class FormDefinitionLoader
     public function __construct(
         private ContentFactory $factory,
         private FormSettings $settings,
+        private LoggerInterface $logger = new NullLogger(),
     ) {
     }
 
@@ -31,7 +34,12 @@ final readonly class FormDefinitionLoader
             $recipients = self::emails($fields->get($this->settings->recipientsField));
             $sender = self::emails($fields->get($this->settings->senderField))[0] ?? $this->settings->fromAddress;
             $title = $fields->get($this->settings->titleField);
-        } catch (Throwable) {
+        } catch (\Ibexa\Contracts\Core\Repository\Exceptions\NotFoundException|\Ibexa\Contracts\Core\Repository\Exceptions\UnauthorizedException) {
+            return null;
+        } catch (Throwable $e) {
+            // A fault is not an unknown form: the visitor gets the same answer, the log says why.
+            $this->logger->warning('The form {id} could not be read: {message}', ['id' => $formId, 'message' => $e->getMessage(), 'exception' => $e]);
+
             return null;
         }
 

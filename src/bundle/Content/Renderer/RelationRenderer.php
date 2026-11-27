@@ -11,6 +11,8 @@ use Masilia\Bundle\IbexaBlocks\Content\ContentFactory;
 use Masilia\Bundle\IbexaBlocks\Content\RenderableContent;
 use Masilia\Contracts\IbexaBlocks\AsFieldRenderer;
 use Masilia\Contracts\IbexaBlocks\FieldRenderer;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Throwable;
 
@@ -31,6 +33,7 @@ final readonly class RelationRenderer implements FieldRenderer
         private ContentFactory $factory,
         #[Autowire('%masilia_blocks.fields.summary_types%')]
         private array $summaryTypes = [],
+        private LoggerInterface $logger = new NullLogger(),
     ) {
     }
 
@@ -60,7 +63,13 @@ final readonly class RelationRenderer implements FieldRenderer
             }
 
             return $related;
-        } catch (Throwable) {
+        } catch (\Ibexa\Contracts\Core\Repository\Exceptions\NotFoundException|\Ibexa\Contracts\Core\Repository\Exceptions\UnauthorizedException) {
+            // A related content that is gone, or that the visitor may not read, is simply not shown.
+            return null;
+        } catch (Throwable $e) {
+            // Anything else is a fault: the block it should have shown would vanish with no trace.
+            $this->logger->warning('The content {id} related to a content could not be loaded: {message}', ['id' => $contentId, 'message' => $e->getMessage(), 'exception' => $e]);
+
             return null;
         }
     }

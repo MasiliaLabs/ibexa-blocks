@@ -12,7 +12,6 @@ use Masilia\Bundle\IbexaBlocks\Controller\BlocksFolderController;
 use Masilia\IbexaBlocks\Content\BlocksFolder;
 use Masilia\IbexaBlocks\Conventions;
 use Symfony\Component\HttpKernel\Controller\ControllerReference;
-use Throwable;
 
 /**
  * The folder that holds the blocks of a page is storage, not a page of the site: its full view answers 404 instead of
@@ -56,7 +55,7 @@ final readonly class BlocksFolderViewProvider implements ViewProvider
             $parent = $this->repository->getLocationService()->loadLocation((int) $location->parentLocationId);
 
             return in_array($parent->getContentInfo()->getContentType()->identifier, [$this->conventions->pageType, $this->conventions->homeType], true);
-        } catch (Throwable) {
+        } catch (\Ibexa\Contracts\Core\Repository\Exceptions\NotFoundException|\Ibexa\Contracts\Core\Repository\Exceptions\UnauthorizedException) {
             return false;
         }
     }

@@ -170,7 +170,7 @@ final readonly class SiteTreeInitializer
             $this->repository->getLocationService()->loadLocation($id);
 
             return true;
-        } catch (Throwable) {
+        } catch (\Ibexa\Contracts\Core\Repository\Exceptions\NotFoundException|\Ibexa\Contracts\Core\Repository\Exceptions\UnauthorizedException) {
             return false;
         }
     }
@@ -179,7 +179,7 @@ final readonly class SiteTreeInitializer
     {
         try {
             return (int) $this->config->getParameter($parameter) ?: null;
-        } catch (Throwable) {
+        } catch (\Ibexa\Core\MVC\Exception\ParameterNotFoundException) {
             return null;
         }
     }
