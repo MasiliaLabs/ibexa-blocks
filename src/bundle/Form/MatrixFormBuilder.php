@@ -17,6 +17,7 @@ use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\Form\FormInterface;
+use Symfony\Component\Form\FormTypeInterface;
 use Symfony\Component\Validator\Constraints\Email;
 use Symfony\Component\Validator\Constraints\File;
 use Symfony\Component\Validator\Constraints\NotBlank;
@@ -33,7 +34,7 @@ final readonly class MatrixFormBuilder
     }
 
     /**
-     * @param list<array{label: string, type: string, isRequired?: bool, values?: string}> $rows
+     * @param list<array{label: string, type?: string, isRequired?: bool, values?: string}> $rows
      * @param array<string, mixed>                                                       $options Options of the form itself
      */
     public function build(array $rows, array $options = [], bool $captcha = false): FormInterface
@@ -87,7 +88,11 @@ final readonly class MatrixFormBuilder
         return strtolower((string) preg_replace('/[^a-zA-Z0-9]/', '_', $label));
     }
 
-    /** @param array<string, mixed> $row */
+    /**
+     * @param array<string, mixed> $row
+     *
+     * @return class-string<FormTypeInterface>
+     */
     private function formType(string $type, array $row): string
     {
         if ($type === 'checkbox' && ($row['values'] ?? '') !== '') {

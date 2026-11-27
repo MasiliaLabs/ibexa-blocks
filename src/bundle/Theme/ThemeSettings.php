@@ -90,7 +90,7 @@ final readonly class ThemeSettings
     /**
      * @template T
      *
-     * @param callable(\Masilia\IbexaBlocks\Theme\ThemeManifest): T|null $read
+     * @param callable(\Masilia\IbexaBlocks\Theme\ThemeManifest): (T|null) $read
      *
      * @return T|null
      */

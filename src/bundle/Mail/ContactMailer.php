@@ -81,7 +81,10 @@ final readonly class ContactMailer
         if (!is_string($message) || $message === '' || $request === null || !$request->hasSession()) {
             return;
         }
-        $request->getSession()->getFlashBag()->add($type, nl2br($message));
+        $session = $request->getSession();
+        if ($session instanceof \Symfony\Component\HttpFoundation\Session\FlashBagAwareSessionInterface) {
+            $session->getFlashBag()->add($type, nl2br($message));
+        }
     }
 
     /** The answer to the question that asks for a name: the last label that has "name" in it. */

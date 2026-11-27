@@ -1,0 +1,48 @@
+parameters:
+    level: 5
+    paths:
+        - src
+    reportUnmatchedIgnoredErrors: true
+    ignoreErrors:
+        # `$x?->y ?? default`: the `??` already covers a null, the `?->` only says so out loud.
+        - identifier: nullsafe.neverNull
+
+        # A field renderer is chosen by the type of the field (#[AsFieldRenderer]), so the value it gets is of that type's class; the
+        # contract of Content::getFieldValue() only says Value.
+        -
+            message: '#^Access to an undefined property Ibexa\\Contracts\\Core\\FieldType\\Value::\$#'
+            path: src/bundle/Content/Renderer
+        -
+            message: '#^Call to an undefined method Ibexa\\Contracts\\Core\\FieldType\\Value::getRows\(\)#'
+            path: src/bundle/Content/Renderer/MatrixRenderer.php
+
+        # Optional packages (composer suggest): not installed when the package is analysed alone.
+        -
+            identifier: class.notFound
+            paths:
+                - src/bundle/Content/Renderer/RichtextRenderer.php
+                - src/bundle/Site/IbexaCacheTagger.php
+                - src/bundle/Site/NovactiveMenuProvider.php
+                - src/bundle/Site/ToolboxAdminMetaProvider.php
+
+        # gregwar/captcha-bundle is a suggestion: CaptchaType is only used when class_exists() says it is there.
+        -
+            identifier: argument.type
+            path: src/bundle/Form/MatrixFormBuilder.php
+
+        # The ORM sets the id, the code only reads it.
+        -
+            identifier: property.unusedType
+            path: src/bundle/Entity/Subscriber.php
+
+        # Ibexa types the content of a view as never null; the check stays for a view built without one.
+        -
+            identifier: identical.alwaysFalse
+            paths:
+                - src/bundle/View/BlockViewProvider.php
+                - src/bundle/View/BlocksFolderViewProvider.php
+
+        # offsetExists()/offsetGet() take mixed, the check is the point.
+        -
+            identifier: function.alreadyNarrowedType
+            path: src/bundle/Content/ContentFields.php

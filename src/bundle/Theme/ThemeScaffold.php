@@ -108,7 +108,7 @@ final readonly class ThemeScaffold
     {
         $from = explode('/', $fromDirectory);
         $target = explode('/', $to);
-        while ($from !== [] && $target !== [] && $from[0] === $target[0] && count($target) > 1) {
+        while ($from !== [] && $from[0] === $target[0] && count($target) > 1) {
             array_shift($from);
             array_shift($target);
         }

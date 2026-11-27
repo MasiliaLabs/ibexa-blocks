@@ -78,7 +78,7 @@ final readonly class ModelPlanner
 
         // A type that should hold content but does not: making it a container only widens what it can do, so it is safe, but it is
         // a change of a type that exists: it needs --allow-container. The other way round is never touched.
-        $widen = $definition->container && !$type->isContainer;
+        $widen = $definition->container && !$type->isContainer();
         if ($widen && !$allowContainer) {
             $notes[] = 'is not a container, the definition says it is (the blocks of the page cannot go under it): run with --allow-container to change it';
         }

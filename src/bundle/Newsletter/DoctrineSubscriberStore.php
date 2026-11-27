@@ -30,7 +30,7 @@ final readonly class DoctrineSubscriberStore implements SubscriberStore
 
     public function latest(int $limit): array
     {
-        return array_values($this->em->getRepository(Subscriber::class)->findBy([], ['createdAt' => 'DESC', 'id' => 'DESC'], max(1, $limit)));
+        return $this->em->getRepository(Subscriber::class)->findBy([], ['createdAt' => 'DESC', 'id' => 'DESC'], max(1, $limit));
     }
 
     public function add(Subscriber $subscriber): void
