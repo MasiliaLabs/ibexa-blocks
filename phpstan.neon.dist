@@ -25,10 +25,12 @@ parameters:
                 - src/bundle/Site/NovactiveMenuProvider.php
                 - src/bundle/Site/ToolboxAdminMetaProvider.php
 
-        # gregwar/captcha-bundle is a suggestion: CaptchaType is only used when class_exists() says it is there.
+        # gregwar/captcha-bundle is a suggestion: CaptchaType is only used when class_exists() says it is there. (With the oldest Symfony the
+        # signature of add() is not the one that complains, hence reportUnmatched: false for this one.)
         -
             identifier: argument.type
             path: src/bundle/Form/MatrixFormBuilder.php
+            reportUnmatched: false
 
         # The ORM sets the id, the code only reads it.
         -

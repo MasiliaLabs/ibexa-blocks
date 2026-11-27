@@ -24,3 +24,20 @@ jobs:
             - run: composer install --no-interaction --prefer-dist --no-progress
             - run: vendor/bin/phpstan analyse --memory-limit=2G --no-progress
             - run: vendor/bin/phpunit
+            # Only a known vulnerability fails: an abandoned package is reported, not refused.
+            - run: composer audit --abandoned=report
+
+    lowest:
+        name: Lowest dependencies
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+            - uses: shivammathur/setup-php@v2
+              with:
+                  php-version: '8.3'
+                  extensions: curl, dom, gd, intl, pdo_mysql, sodium, xsl
+                  coverage: none
+            # What composer.json promises (the oldest versions it allows) must work, not only the newest.
+            - run: composer update --prefer-lowest --prefer-stable --no-interaction --prefer-dist --no-progress
+            - run: vendor/bin/phpstan analyse --memory-limit=2G --no-progress
+            - run: vendor/bin/phpunit

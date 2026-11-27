@@ -17,6 +17,14 @@ jobs:
               run: |
                   awk -v v="$GITHUB_REF_NAME" 'index($0, "## [" v "]") == 1 { f = 1; next } /^## \[/ { f = 0 } f' CHANGELOG.md > notes.md
                   test -s notes.md || echo "See CHANGELOG.md" > notes.md
+            # A release that breaks something must say what to change: its minor version has a section in UPGRADE.md.
+            - name: Upgrade notes
+              run: |
+                  minor="${GITHUB_REF_NAME%.*}"
+                  if grep -qi 'breaking' notes.md && ! grep -q "to $minor" UPGRADE.md 2>/dev/null; then
+                      echo "::error::The CHANGELOG of $GITHUB_REF_NAME says Breaking, but UPGRADE.md has no section 'From ... to $minor'."
+                      exit 1
+                  fi
             - run: gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --notes-file notes.md --verify-tag
               env:
                   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

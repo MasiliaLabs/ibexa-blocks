@@ -4,6 +4,8 @@ All notable changes to `masilia/ibexa-blocks` are documented here. The format fo
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-11-27
+
 ### Added
 - The layout no longer names a font provider. The origins to connect to early are listed by the theme, explicitly, in the new `preconnect` key of `theme.yaml` (a URL, or `{origin, crossorigin}`; `[]` for none), found like the other keys: the first theme of the design that has one. They are linked in the new `preconnect` block, before `fonts`. An entry of `fonts:` can now be a path in `public/` (`build/fonts/fonts.css`) as well as an https URL, so fonts can be self-hosted. `theme_layout('preconnect')` gives the origins.
 - `favicons` of a theme.yaml can be a list of links (`{rel, href, sizes, type}`) for an icon set the convention does not know (an SVG logo, say), as well as a folder; `favicons: ''` means no icons and still stops the themes below.
@@ -137,7 +139,8 @@ First release.
 - Search and forms by mail, driven by configuration.
 - Themes as a mechanism: base layout, theme tooling, asset discovery.
 
-[Unreleased]: https://github.com/MasiliaLabs/ibexa-blocks/compare/0.6.4...HEAD
+[Unreleased]: https://github.com/MasiliaLabs/ibexa-blocks/compare/0.7.0...HEAD
+[0.7.0]: https://github.com/MasiliaLabs/ibexa-blocks/compare/0.6.4...0.7.0
 [0.6.4]: https://github.com/MasiliaLabs/ibexa-blocks/compare/0.6.3...0.6.4
 [0.6.3]: https://github.com/MasiliaLabs/ibexa-blocks/compare/0.6.2...0.6.3
 [0.6.2]: https://github.com/MasiliaLabs/ibexa-blocks/compare/0.6.1...0.6.2
