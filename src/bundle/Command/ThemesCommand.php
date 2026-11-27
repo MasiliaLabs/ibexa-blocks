@@ -78,10 +78,10 @@ final class ThemesCommand extends Command
         foreach ($this->themes->names() as $name) {
             $manifest = $this->themes->manifest($name);
             $views = array_sum(array_map('count', $manifest?->views ?? []));
-            $rows[] = [$name, $views, $manifest?->assets?->entry ?? '-', $manifest?->favicons ?? '-'];
+            $rows[] = [$name, $views, $manifest?->assets?->entry ?? '-'];
         }
         $io->section('Themes with a theme.yaml');
-        $io->table(['Theme', 'Views', 'Assets entry', 'Favicons'], $rows);
+        $io->table(['Theme', 'Views', 'Assets entry'], $rows);
         $io->writeln(sprintf('%d entries to build.', count($entries)));
         foreach ($problems as $problem) {
             $io->error($problem);

@@ -10,7 +10,7 @@ use Masilia\IbexaBlocks\Theme\ThemeFavicons;
 
 /**
  * What the themes of the current design say about the layout: the first theme of the chain that says each thing wins, as for the
- * templates, so a theme that changes only its favicons says only that.
+ * templates, so a theme that changes only its fonts says only that.
  */
 final readonly class ThemeSettings
 {
@@ -27,32 +27,20 @@ final readonly class ThemeSettings
         return $this->first(static fn ($manifest) => $manifest->assets);
     }
 
-    public function favicons(): ?string
-    {
-        return $this->first(static fn ($manifest) => $manifest->favicons);
-    }
-
     /**
-     * The icon links of the site: the setting `favicons` of the site if it has one, else what the first theme of the chain says (a
-     * folder, of which only the files that are there are linked, or explicit links).
+     * The icon links of the site: its setting `favicons` (a folder, of which only the files that are there are linked, or explicit
+     * links); the icons are the site's, not the theme's, so that two sites of one design have their own.
      *
      * @return list<array{rel: string, href: string, sizes?: string, type?: string}>
      */
     public function faviconLinks(): array
     {
-        if ($this->config !== null && $this->config->hasParameter('favicons', 'masilia_ibexa_blocks')) {
-            $site = ThemeFavicons::fromValue('masilia_ibexa_blocks.favicons', $this->config->getParameter('favicons', 'masilia_ibexa_blocks'));
-
-            return $this->links($site->directory, $site->links);
+        if ($this->config === null || !$this->config->hasParameter('favicons', 'masilia_ibexa_blocks')) {
+            return [];
         }
-        foreach ($this->design->themes() as $theme) {
-            $manifest = $this->themes->manifest($theme);
-            if ($manifest !== null && ($manifest->favicons !== null || $manifest->faviconLinks !== null)) {
-                return $this->links($manifest->favicons, $manifest->faviconLinks);
-            }
-        }
+        $site = ThemeFavicons::fromValue('masilia_ibexa_blocks.favicons', $this->config->getParameter('favicons', 'masilia_ibexa_blocks'));
 
-        return [];
+        return $this->links($site->directory, $site->links);
     }
 
     /** @return list<array{rel: string, href: string, sizes?: string, type?: string}> */

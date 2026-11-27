@@ -56,7 +56,7 @@ A theme that overrode `seo_metas` to change the icons or the fonts overrides `fa
 {% endblock %}
 ```
 
-A theme that only wants other icons does not need Twig any more: say `favicons` in its `theme.yaml` (see 2).
+A site that only wants other icons does not need Twig: it says `favicons` in its settings (see 2).
 
 ### 2. `theme_layout('favicons')` is a list of links
 
@@ -72,7 +72,7 @@ It was the path of the folder of icons; it is now the list of the links to draw 
 {% endfor %}
 ```
 
-In `theme.yaml`, `favicons` is still a folder (only the files that are there are linked, under their exact name), and can also be a list of links, or `''` for no icon at all. A site can have its own with `masilia_ibexa_blocks.system.<siteaccess or group>.favicons`.
+The icons are the **site's**, not the theme's: `masilia_ibexa_blocks.system.<siteaccess or group>.favicons` is a folder (only the files that are there are linked, under their exact name), a list of links, or `''` for no icon at all. A `favicons` key in a `theme.yaml` is refused: move it to the settings of the sites that use the theme (two sites of one design can then have their own).
 
 ### 3. The preconnect links are the theme's to say
 

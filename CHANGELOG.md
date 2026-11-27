@@ -17,8 +17,7 @@ All notable changes to `masilia/ibexa-blocks` are documented here. The format fo
 
 ### Added
 - The layout no longer names a font provider. The origins to connect to early are listed by the theme, explicitly, in the new `preconnect` key of `theme.yaml` (a URL, or `{origin, crossorigin}`; `[]` for none), found like the other keys: the first theme of the design that has one. They are linked in the new `preconnect` block, before `fonts`. An entry of `fonts:` can now be a path in `public/` (`build/fonts/fonts.css`) as well as an https URL, so fonts can be self-hosted. `theme_layout('preconnect')` gives the origins.
-- `favicons` of a theme.yaml can be a list of links (`{rel, href, sizes, type}`) for an icon set the convention does not know (an SVG logo, say), as well as a folder; `favicons: ''` means no icons and still stops the themes below.
-- The setting `masilia_ibexa_blocks.system.<siteaccess or group>.favicons` gives a site its own icons over those of its theme (two sites that share a design no longer share their icons).
+- The icons are the site's, not the theme's: the setting `masilia_ibexa_blocks.system.<siteaccess or group>.favicons` is a folder of `public/` or a list of links (`{rel, href, sizes, type}`, for an icon set the convention does not know: an SVG logo, say), `''` for none. Two sites that share a design have their own icons. A `favicons` key in a theme.yaml is refused, with a message saying where it goes.
 - `theme:check` checks the icons once the assets are built: an error for a declared file that is missing or spelled with another case (a 404 on a server that tells the two apart), for a folder that is not in `public/`, a notice for a standard icon the folder lacks.
 
 - The public search is bounded: `search.api.max_term_length` (200 characters) cuts the term, the category and each tag, `search.api.max_tags` (10) drops the tags beyond it; a request used to send them to the index as they came.

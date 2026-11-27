@@ -92,12 +92,11 @@ final readonly class ThemeChecker
                 }
             }
         }
-        // Favicons: each icon a theme declares is a file of public/ under that exact name (checked once the assets were built).
-        if (is_dir($this->projectDir . '/public/build')) {
-            foreach ($manifests as $theme => $manifest) {
-                foreach ($this->faviconIssues($manifest) as $issue) {
-                    $add($issue[0], $theme, $issue[1]);
-                }
+        // Favicons: each icon of the site is a file of public/ under that exact name (checked once the assets were built).
+        if (is_dir($this->projectDir . '/public/build') && $this->settings !== null && $this->settings->get('favicons') !== null) {
+            $site = \Masilia\IbexaBlocks\Theme\ThemeFavicons::fromValue('masilia_ibexa_blocks.favicons', $this->settings->get('favicons'));
+            foreach ($this->faviconIssues($site->directory, $site->links) as $issue) {
+                $add($issue[0], '(site)', $issue[1]);
             }
         }
 
@@ -132,9 +131,11 @@ final readonly class ThemeChecker
     }
 
     /**
+     * @param list<array{rel: string, href: string, sizes?: string, type?: string}>|null $links
+     *
      * @return list<array{0: string, 1: string}>
      */
-    private function faviconIssues(?\Masilia\IbexaBlocks\Theme\ThemeManifest $manifest): array
+    private function faviconIssues(?string $directory, ?array $links): array
     {
         $issues = [];
         $public = new FaviconSet($this->projectDir . '/public');
@@ -149,7 +150,6 @@ final readonly class ThemeChecker
         };
         $mismatch = static fn (string $path, string $found): string => sprintf('favicons: "%s" is there as "%s": a server that tells upper and lower case apart answers 404; rename the file.', $path, $found);
 
-        $directory = $manifest?->favicons;
         if ($directory !== null && $directory !== '') {
             $files = $public->files($directory);
             if ($files === []) {
@@ -164,7 +164,7 @@ final readonly class ThemeChecker
                 $issues[] = $found !== null ? [self::ERROR, $mismatch($directory . '/' . $file, $found)] : [self::NOTICE, sprintf('favicons: %s/%s is not there, its link is left out.', $directory, $file)];
             }
         }
-        foreach ($manifest?->faviconLinks ?? [] as $link) {
+        foreach ($links ?? [] as $link) {
             $folder = dirname($link['href']);
             $files = $public->files($folder);
             if (in_array(basename($link['href']), $files, true)) {

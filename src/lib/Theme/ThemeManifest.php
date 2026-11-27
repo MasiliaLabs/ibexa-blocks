@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Masilia\IbexaBlocks\Theme;
 
 /**
- * What a theme says about itself in its theme.yaml: its assets, favicons, fonts and layout. It does not have to list its
+ * What a theme says about itself in its theme.yaml: its assets, fonts and layout. It does not have to list its
  * templates: they are found by their name (blocks/<type>.twig, cards/<type>.twig, line/<type>.twig, full/<type>.twig, see
  * BlockRegistry), and what a theme does not write comes from the next theme of the design (the chain of the design engine).
  * `views` is still read, for the exception: a template that is not named after its content type, or image variations
@@ -13,8 +13,6 @@ namespace Masilia\IbexaBlocks\Theme;
  *
  *     name: my_site            # optional, the folder name when absent
  *     assets: { directory: assets/themes/my_site, entry: my_site, styles: [fa-icons], extra: [admin-toolbar.js] }
- *     favicons: build/images/my_site/icons   # a folder (android-chrome-192x192.png, favicon-32x32.png, favicon-16x16.png, favicon.ico,
- *                                            # site.webmanifest: the ones it holds are linked), '' for none, or a list of links, see ThemeFavicons
  *     fonts: [https://fonts.googleapis.com/css2?family=Inter&display=swap]
  *     preconnect:                            # the origins the browser connects to early: a URL, or {origin, crossorigin}
  *         - https://fonts.googleapis.com
@@ -32,7 +30,7 @@ namespace Masilia\IbexaBlocks\Theme;
  */
 final readonly class ThemeManifest
 {
-    private const KNOWN_KEYS = ['name', 'views', 'assets', 'favicons', 'fonts', 'preconnect', 'layout'];
+    private const KNOWN_KEYS = ['name', 'views', 'assets', 'fonts', 'preconnect', 'layout'];
     private const KNOWN_ASSET_KEYS = ['directory', 'entry', 'styles', 'extra'];
     private const KNOWN_LAYOUT_KEYS = ['notifications'];
     private const KNOWN_VIEW_KEYS = ['template', 'variations', 'params'];
@@ -47,11 +45,8 @@ final readonly class ThemeManifest
         public string $name,
         public array $views = [],
         public ?ThemeAssets $assets = null,
-        public ?string $favicons = null,
         public array $fonts = [],
         public ?bool $notifications = null,
-        /** @var list<array{rel: string, href: string, sizes?: string, type?: string}>|null The explicit links of `favicons` (then $favicons is null) */
-        public ?array $faviconLinks = null,
         /** @var list<array{origin: string, crossorigin: bool}>|null The origins of `preconnect` ([] for none, null when the theme says nothing) */
         public ?array $preconnect = null,
     ) {
@@ -65,6 +60,9 @@ final readonly class ThemeManifest
     public static function fromArray(string $theme, array $data): self
     {
         foreach (array_diff(array_keys($data), self::KNOWN_KEYS) as $unknown) {
+            if ($unknown === 'favicons') {
+                throw new InvalidThemeManifest(sprintf('Theme "%s": the icons are those of the site, not of the theme: say them in masilia_ibexa_blocks.system.<siteaccess or group>.favicons.', $theme));
+            }
             throw new InvalidThemeManifest(sprintf('Theme "%s": unknown key "%s" (known: %s).', $theme, $unknown, implode(', ', self::KNOWN_KEYS)));
         }
 
@@ -90,16 +88,12 @@ final readonly class ThemeManifest
             }
         }
 
-        $favicons = isset($data['favicons']) ? ThemeFavicons::fromValue(sprintf('Theme "%s"', $theme), $data['favicons']) : null;
-
         return new self(
             (string) ($data['name'] ?? $theme),
             $views,
             isset($data['assets']) ? self::assets($theme, $data['assets']) : null,
-            $favicons?->directory,
             array_values($fonts),
             isset($layout['notifications']) ? (bool) $layout['notifications'] : null,
-            $favicons?->links,
             isset($data['preconnect']) ? self::preconnect($theme, $data['preconnect']) : null,
         );
     }

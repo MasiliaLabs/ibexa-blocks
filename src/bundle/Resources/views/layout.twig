@@ -1,10 +1,10 @@
 {#
  The base layout of a site. A theme's layout.twig extends it and says only what differs: the head, the content, the modals…
- What changes from one theme to the next (the assets it builds, its favicons, its fonts) is read from the theme.yaml of the
+ What changes from one theme to the next (the assets it builds, its fonts) is read from the theme.yaml of the
  themes of the design, so a new theme does not copy this file.
 
  Blocks: charset, favicons, preconnect, fonts, seo_metas, head_extra, stylesheets, toolbox, header, content, footer, modals, javascripts.
- A theme overrides the one it needs: `favicons` to link its own icons, `preconnect` for the origins to connect to early, `fonts` for its fonts, `seo_metas` for the SEO metas.
+ A theme overrides the one it needs: `favicons` to draw the icons of the site otherwise, `preconnect` for the origins to connect to early, `fonts` for its fonts, `seo_metas` for the SEO metas.
 #}
 {% set assets = theme_layout('assets') %}
 {% set favicons = theme_layout('favicons') %}

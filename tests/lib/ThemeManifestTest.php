@@ -63,7 +63,6 @@ final class ThemeManifestTest extends TestCase
     {
         $manifest = ThemeManifest::fromArray('acme', [
             'assets' => ['directory' => 'assets/themes/fuelexit/', 'entry' => 'fuelexit', 'styles' => ['fa-icons'], 'extra' => ['admin-toolbar.js']],
-            'favicons' => 'build/images/acme/icons/',
             'fonts' => ['https://fonts.googleapis.com/css2?family=Inter&display=swap'],
             'layout' => ['notifications' => false],
         ]);
@@ -73,7 +72,6 @@ final class ThemeManifestTest extends TestCase
         self::assertSame('assets/themes/fuelexit/scss/main.scss', $manifest->assets->stylesheetSource());
         self::assertSame('assets/themes/fuelexit/js/main.js', $manifest->assets->scriptSource());
         self::assertSame(['fa-icons'], $manifest->assets->styles);
-        self::assertSame('build/images/acme/icons', $manifest->favicons);
         self::assertFalse($manifest->notifications);
         self::assertSame('standard', ThemeManifest::fromArray('t', ['assets' => ['entry' => 'standard']])->assets->entry);
         self::assertSame('assets/themes/t', ThemeManifest::fromArray('t', ['assets' => []])->assets->directory, 'the folder and the entry default to the name of the theme');
@@ -102,45 +100,12 @@ final class ThemeManifestTest extends TestCase
         ThemeManifest::fromArray('t', $data);
     }
 
-    public function testFaviconsAreAFolderNoneOrExplicitLinks(): void
-    {
-        $folder = ThemeManifest::fromArray('t', ['favicons' => 'build/images/t/icons/']);
-        self::assertSame('build/images/t/icons', $folder->favicons);
-        self::assertNull($folder->faviconLinks);
-
-        self::assertSame('', ThemeManifest::fromArray('t', ['favicons' => ''])->favicons, 'an empty value means no icons, and still stops the themes below');
-
-        $links = ThemeManifest::fromArray('t', ['favicons' => [
-            ['rel' => 'icon', 'type' => 'image/svg+xml', 'href' => 'build/images/t/logo.svg'],
-            ['rel' => 'apple-touch-icon', 'sizes' => '180x180', 'href' => 'build/images/t/touch.png'],
-        ]]);
-        self::assertNull($links->favicons);
-        self::assertSame('build/images/t/logo.svg', $links->faviconLinks[0]['href']);
-        self::assertSame('180x180', $links->faviconLinks[1]['sizes']);
-    }
-
-    /**
-     * @return iterable<string, array{0: array<string, mixed>, 1: string}>
-     */
-    public static function badFavicons(): iterable
-    {
-        yield 'a map' => [['favicons' => ['rel' => 'icon']], 'a folder (string) or a list of links'];
-        yield 'no href' => [['favicons' => [['rel' => 'icon']]], 'needs a rel'];
-        yield 'outside public' => [['favicons' => [['rel' => 'icon', 'href' => '../x.ico']]], 'path in public/'];
-        yield 'an absolute url' => [['favicons' => [['rel' => 'icon', 'href' => 'https://x.test/a.ico']]], 'path in public/'];
-        yield 'an unknown key' => [['favicons' => [['rel' => 'icon', 'href' => 'a.ico', 'color' => 'red']]], 'unknown key favicons[0].color'];
-    }
-
-    /**
-     * @param array<string, mixed> $data
-     */
-    #[\PHPUnit\Framework\Attributes\DataProvider('badFavicons')]
-    public function testBadFaviconsAreRefused(array $data, string $message): void
+    public function testTheIconsAreTheSitesNotTheThemes(): void
     {
         $this->expectException(InvalidThemeManifest::class);
-        $this->expectExceptionMessage($message);
+        $this->expectExceptionMessage('masilia_ibexa_blocks.system.<siteaccess or group>.favicons');
 
-        ThemeManifest::fromArray('t', $data);
+        ThemeManifest::fromArray('t', ['favicons' => 'build/images/t/icons']);
     }
 
     public function testAFontIsAnHttpsUrlOrAPathOfPublic(): void
