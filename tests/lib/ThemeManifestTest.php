@@ -142,4 +142,19 @@ final class ThemeManifestTest extends TestCase
 
         ThemeManifest::fromArray('t', $data);
     }
+
+    public function testAFontIsAnHttpsUrlOrAPathOfPublic(): void
+    {
+        $manifest = ThemeManifest::fromArray('t', ['fonts' => ['https://fonts.bunny.net/css?family=inter', 'https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400..700', 'build/fonts/fonts.css']]);
+        self::assertCount(3, $manifest->fonts, 'a URL may hold two dots (a weight range), a path may not');
+
+        foreach (['http://x.test/a.css', '/etc/a.css', '../a.css', 'data:text/css,a', ''] as $bad) {
+            try {
+                ThemeManifest::fromArray('t', ['fonts' => [$bad]]);
+                self::fail(sprintf('"%s" must be refused', $bad));
+            } catch (InvalidThemeManifest $e) {
+                self::assertStringContainsString('every font must be', $e->getMessage());
+            }
+        }
+    }
 }

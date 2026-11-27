@@ -3,8 +3,8 @@
  What changes from one theme to the next (the assets it builds, its favicons, its fonts) is read from the theme.yaml of the
  themes of the design, so a new theme does not copy this file.
 
- Blocks: favicons, fonts, seo, head_extra, stylesheets, toolbox, header, content, footer, modals, javascripts.
- A theme overrides the one it needs: `favicons` to link its own icons, `fonts` for its fonts, `seo` for the SEO metas.
+ Blocks: favicons, fonts, seo_metas, head_extra, stylesheets, toolbox, header, content, footer, modals, javascripts.
+ A theme overrides the one it needs: `favicons` to link its own icons, `fonts` for its fonts, `seo_metas` for the SEO metas.
 #}
 {% set assets = theme_layout('assets') %}
 {% set favicons = theme_layout('favicons') %}
@@ -19,14 +19,12 @@
     {% endblock %}
 
     {% block fonts %}
-        {% set fonts = theme_layout('fonts') %}
-        {% if fonts %}
-            <link rel="preconnect" href="https://fonts.googleapis.com">
-            <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-            {% for font in fonts %}
-                <link href="{{ font }}" rel="stylesheet">
-            {% endfor %}
-        {% endif %}
+        {% for font_origin in theme_layout('font_origins') %}
+            <link rel="preconnect" href="{{ font_origin.origin }}"{% if font_origin.crossorigin %} crossorigin{% endif %}>
+        {% endfor %}
+        {% for font in theme_layout('fonts') %}
+            <link href="{{ font starts with 'https://' ? font : asset(font) }}" rel="stylesheet">
+        {% endfor %}
     {% endblock %}
 
     {% block seo_metas %}

@@ -38,7 +38,7 @@ final readonly class ThemeManifest
      * @param array<string, array<string, ViewDefinition>> $views View type => content type => definition
      */
     /**
-     * @param list<string> $fonts Stylesheets of web fonts the layout links
+     * @param list<string> $fonts Stylesheets of web fonts the layout links: https URLs, or paths in public/
      */
     public function __construct(
         public string $name,
@@ -79,8 +79,9 @@ final readonly class ThemeManifest
         }
         $fonts = (array) ($data['fonts'] ?? []);
         foreach ($fonts as $font) {
-            if (!is_string($font) || !str_starts_with($font, 'https://')) {
-                throw new InvalidThemeManifest(sprintf('Theme "%s": every font must be the https URL of a stylesheet.', $theme));
+            // The https URL of a stylesheet of web fonts, or the path in public/ of one that the project hosts itself.
+            if (!is_string($font) || $font === '' || (!str_starts_with($font, 'https://') && (str_contains($font, '..') || preg_match('#^([a-z][a-z0-9+.-]*:|/)#i', $font) === 1))) {
+                throw new InvalidThemeManifest(sprintf('Theme "%s": every font must be the https URL of a stylesheet, or its path in public/ (build/fonts/fonts.css).', $theme));
             }
         }
 

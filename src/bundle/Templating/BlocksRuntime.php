@@ -22,7 +22,7 @@ final readonly class BlocksRuntime implements RuntimeExtensionInterface
     }
 
     /**
-     * What the themes of the design say about the layout: "assets" (entry, styles, extra), "favicons" (the icon links: rel, href, sizes, type), "fonts", "notifications".
+     * What the themes of the design say about the layout: "assets" (entry, styles, extra), "favicons" (the icon links: rel, href, sizes, type), "fonts", "font_origins", "notifications".
      */
     public function layout(string $name): mixed
     {
@@ -30,8 +30,9 @@ final readonly class BlocksRuntime implements RuntimeExtensionInterface
             'assets' => $this->settings->assets(),
             'favicons' => $this->settings->faviconLinks(),
             'fonts' => $this->settings->fonts(),
+            'font_origins' => $this->settings->fontOrigins(),
             'notifications' => $this->settings->notifications(),
-            default => throw new \InvalidArgumentException(sprintf('The layout has no "%s" (known: assets, favicons, fonts, notifications).', $name)),
+            default => throw new \InvalidArgumentException(sprintf('The layout has no "%s" (known: assets, favicons, fonts, font_origins, notifications).', $name)),
         };
     }
 
