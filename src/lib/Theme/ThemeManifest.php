@@ -16,6 +16,9 @@ namespace Masilia\IbexaBlocks\Theme;
  *     favicons: build/images/my_site/icons   # a folder (android-chrome-192x192.png, favicon-32x32.png, favicon-16x16.png, favicon.ico,
  *                                            # site.webmanifest: the ones it holds are linked), '' for none, or a list of links, see ThemeFavicons
  *     fonts: [https://fonts.googleapis.com/css2?family=Inter&display=swap]
+ *     preconnect:                            # the origins the browser connects to early: a URL, or {origin, crossorigin}
+ *         - https://fonts.googleapis.com
+ *         - { origin: https://fonts.gstatic.com, crossorigin: true }
  *     layout: { notifications: false }
  *     views:
  *         blocks:
@@ -29,7 +32,7 @@ namespace Masilia\IbexaBlocks\Theme;
  */
 final readonly class ThemeManifest
 {
-    private const KNOWN_KEYS = ['name', 'views', 'assets', 'favicons', 'fonts', 'layout'];
+    private const KNOWN_KEYS = ['name', 'views', 'assets', 'favicons', 'fonts', 'preconnect', 'layout'];
     private const KNOWN_ASSET_KEYS = ['directory', 'entry', 'styles', 'extra'];
     private const KNOWN_LAYOUT_KEYS = ['notifications'];
     private const KNOWN_VIEW_KEYS = ['template', 'variations', 'params'];
@@ -49,6 +52,8 @@ final readonly class ThemeManifest
         public ?bool $notifications = null,
         /** @var list<array{rel: string, href: string, sizes?: string, type?: string}>|null The explicit links of `favicons` (then $favicons is null) */
         public ?array $faviconLinks = null,
+        /** @var list<array{origin: string, crossorigin: bool}>|null The origins of `preconnect` ([] for none, null when the theme says nothing) */
+        public ?array $preconnect = null,
     ) {
     }
 
@@ -95,7 +100,32 @@ final readonly class ThemeManifest
             array_values($fonts),
             isset($layout['notifications']) ? (bool) $layout['notifications'] : null,
             $favicons?->links,
+            isset($data['preconnect']) ? self::preconnect($theme, $data['preconnect']) : null,
         );
+    }
+
+    /**
+     * @return list<array{origin: string, crossorigin: bool}>
+     */
+    private static function preconnect(string $theme, mixed $data): array
+    {
+        if (!is_array($data) || !array_is_list($data)) {
+            throw new InvalidThemeManifest(sprintf('Theme "%s": preconnect is a list of origins (https://fonts.googleapis.com) or of {origin, crossorigin}.', $theme));
+        }
+        $origins = [];
+        foreach ($data as $i => $item) {
+            $origin = is_array($item) ? ($item['origin'] ?? null) : $item;
+            $crossorigin = is_array($item) ? ($item['crossorigin'] ?? false) : false;
+            if (is_array($item) && array_diff(array_keys($item), ['origin', 'crossorigin']) !== []) {
+                throw new InvalidThemeManifest(sprintf('Theme "%s": preconnect[%d] knows only origin and crossorigin.', $theme, $i));
+            }
+            if (!is_string($origin) || preg_match('#^https://[A-Za-z0-9.-]+(:\d+)?$#', $origin) !== 1 || !is_bool($crossorigin)) {
+                throw new InvalidThemeManifest(sprintf('Theme "%s": preconnect[%d] must be an origin ("https://fonts.gstatic.com", no path) and crossorigin true or false.', $theme, $i));
+            }
+            $origins[] = ['origin' => $origin, 'crossorigin' => $crossorigin];
+        }
+
+        return $origins;
     }
 
     private static function assets(string $theme, mixed $data): ThemeAssets

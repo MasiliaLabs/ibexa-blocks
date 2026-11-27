@@ -157,4 +157,21 @@ final class ThemeManifestTest extends TestCase
             }
         }
     }
+
+    public function testPreconnectIsAListOfOrigins(): void
+    {
+        $manifest = ThemeManifest::fromArray('t', ['preconnect' => ['https://fonts.googleapis.com', ['origin' => 'https://fonts.gstatic.com', 'crossorigin' => true]]]);
+        self::assertSame([['origin' => 'https://fonts.googleapis.com', 'crossorigin' => false], ['origin' => 'https://fonts.gstatic.com', 'crossorigin' => true]], $manifest->preconnect);
+        self::assertSame([], ThemeManifest::fromArray('t', ['preconnect' => []])->preconnect);
+        self::assertNull(ThemeManifest::fromArray('t', [])->preconnect);
+
+        foreach ([['preconnect' => 'https://x.test'], ['preconnect' => ['http://x.test']], ['preconnect' => ['https://x.test/path']], ['preconnect' => [['origin' => 'https://x.test', 'crossorigin' => 'yes']]], ['preconnect' => [['origin' => 'https://x.test', 'as' => 'font']]]] as $bad) {
+            try {
+                ThemeManifest::fromArray('t', $bad);
+                self::fail('must be refused: ' . json_encode($bad));
+            } catch (InvalidThemeManifest $e) {
+                self::assertStringContainsString('preconnect', $e->getMessage());
+            }
+        }
+    }
 }

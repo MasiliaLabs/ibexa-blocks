@@ -65,30 +65,15 @@ final readonly class ThemeSettings
         return $directory === null || $directory === '' || $this->faviconSet === null ? [] : $this->faviconSet->links($directory);
     }
 
-    /** Where the font files of a stylesheet host are, when the host serves the stylesheet and the files from two places. */
-    private const FONT_FILE_HOSTS = ['fonts.googleapis.com' => 'fonts.gstatic.com'];
-
     /**
-     * The origins the browser should connect to early for the web fonts of the theme: the host of each https stylesheet, and the
-     * host of its font files when it is another one. A stylesheet of the project (a path) needs none.
+     * The origins the layout preconnects to: those of the first theme of the chain that has a `preconnect` (an empty list is
+     * saying "none").
      *
      * @return list<array{origin: string, crossorigin: bool}>
      */
-    public function fontOrigins(): array
+    public function preconnect(): array
     {
-        $origins = [];
-        foreach ($this->fonts() as $font) {
-            $host = str_starts_with($font, 'https://') ? parse_url($font, PHP_URL_HOST) : null;
-            if (!is_string($host) || $host === '') {
-                continue;
-            }
-            $origins['https://' . $host] ??= ['origin' => 'https://' . $host, 'crossorigin' => false];
-            if (isset(self::FONT_FILE_HOSTS[$host])) {
-                $origins['https://' . self::FONT_FILE_HOSTS[$host]] ??= ['origin' => 'https://' . self::FONT_FILE_HOSTS[$host], 'crossorigin' => true];
-            }
-        }
-
-        return array_values($origins);
+        return $this->first(static fn ($manifest) => $manifest->preconnect) ?? [];
     }
 
     /** @return list<string> */

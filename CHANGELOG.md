@@ -5,12 +5,13 @@ All notable changes to `masilia/ibexa-blocks` are documented here. The format fo
 ## [Unreleased]
 
 ### Added
-- The layout no longer names a font provider: it links a `preconnect` to the host of each `fonts:` stylesheet (and to the host of the font files when it is another, as for Google Fonts), and none for a stylesheet of the project. An entry of `fonts:` can now be a path in `public/` (`build/fonts/fonts.css`) as well as an https URL, so fonts can be self-hosted. `theme_layout('font_origins')` gives the origins.
+- The layout no longer names a font provider. The origins to connect to early are listed by the theme, explicitly, in the new `preconnect` key of `theme.yaml` (a URL, or `{origin, crossorigin}`; `[]` for none), found like the other keys: the first theme of the design that has one. They are linked in the new `preconnect` block, before `fonts`. An entry of `fonts:` can now be a path in `public/` (`build/fonts/fonts.css`) as well as an https URL, so fonts can be self-hosted. `theme_layout('preconnect')` gives the origins.
 - `favicons` of a theme.yaml can be a list of links (`{rel, href, sizes, type}`) for an icon set the convention does not know (an SVG logo, say), as well as a folder; `favicons: ''` means no icons and still stops the themes below.
 - The setting `masilia_ibexa_blocks.system.<siteaccess or group>.favicons` gives a site its own icons over those of its theme (two sites that share a design no longer share their icons).
 - `theme:check` checks the icons once the assets are built: an error for a declared file that is missing or spelled with another case (a 404 on a server that tells the two apart), for a folder that is not in `public/`, a notice for a standard icon the folder lacks.
 
 ### Changed
+- **Breaking:** the layout no longer links `preconnect` to fonts.googleapis.com and fonts.gstatic.com by itself: a theme that has Google Fonts must say `preconnect: [https://fonts.googleapis.com, {origin: https://fonts.gstatic.com, crossorigin: true}]` in its theme.yaml, or the links are gone.
 - The layout links only the icon files that exist, under their exact name, where it linked all six whatever the folder held. `theme_layout('favicons')` now gives the list of links (`rel`, `href`, `sizes`, `type`) instead of the folder path, so a theme that overrides the `favicons` block and builds the paths itself must loop over that list.
 - **Breaking:** the base layout has no block that wraps the SEO metas, the icons and the fonts any more: its content is now three blocks of the `<head>`, `favicons`, `fonts` and `seo_metas` (which holds the SEO metas only), so a theme overrides only the part it needs (its own icons, say). A theme that overrode `seo_metas` to change the icons or the fonts must override `favicons` or `fonts` instead (`{{ parent() }}` of `favicons` and `fonts` keeps the icons and fonts of theme.yaml).
 

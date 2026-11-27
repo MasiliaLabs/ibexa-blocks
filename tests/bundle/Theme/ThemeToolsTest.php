@@ -314,17 +314,16 @@ final class ThemeToolsTest extends TestCase
         self::assertSame([], array_filter((new ThemeChecker($this->registry(), $this->project))->check(['acme', 'standard'], []), static fn (array $i): bool => str_contains($i['message'], 'favicons')));
     }
 
-    public function testTheFontOriginsComeFromTheStylesheetsOfTheTheme(): void
+    public function testThePreconnectOriginsAreThoseOfTheFirstThemeThatSaysSo(): void
     {
-        $this->standardTheme();
-        $this->write('templates/themes/acme/theme.yaml', "fonts:\n  - https://fonts.googleapis.com/css2?family=Inter\n  - https://fonts.googleapis.com/css2?family=Rubik\n  - https://fonts.bunny.net/css?family=lora\n  - build/fonts/own.css\n");
-        $this->write('templates/themes/local/theme.yaml', "fonts: [build/fonts/own.css]\n");
+        $this->write('templates/themes/standard/theme.yaml', "preconnect:\n  - https://fonts.googleapis.com\n  - { origin: https://fonts.gstatic.com, crossorigin: true }\n");
+        $this->write('templates/themes/acme/theme.yaml', "fonts: [build/fonts/own.css]\npreconnect: []\n");
+        $this->write('templates/themes/quiet/theme.yaml', "layout: { notifications: false }\n");
 
         self::assertSame([
             ['origin' => 'https://fonts.googleapis.com', 'crossorigin' => false],
             ['origin' => 'https://fonts.gstatic.com', 'crossorigin' => true],
-            ['origin' => 'https://fonts.bunny.net', 'crossorigin' => false],
-        ], $this->settingsOf('acme')->fontOrigins(), 'one origin per host, and the host of the Google font files; nothing for a path');
-        self::assertSame([], $this->settingsOf('local')->fontOrigins(), 'self-hosted fonts need no preconnect');
+        ], $this->settingsOf('quiet')->preconnect(), 'a theme that says nothing takes the next one');
+        self::assertSame([], $this->settingsOf('acme')->preconnect(), 'an empty list says none, and stops the search');
     }
 }
