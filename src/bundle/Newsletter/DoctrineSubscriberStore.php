@@ -13,14 +13,14 @@ final readonly class DoctrineSubscriberStore implements SubscriberStore
     {
     }
 
-    public function byEmail(string $email): ?Subscriber
+    public function byEmail(string $email, string $listId = 'default'): ?Subscriber
     {
-        return $this->em->getRepository(Subscriber::class)->findOneBy(['email' => $email]);
+        return $this->em->getRepository(Subscriber::class)->findOneBy(['email' => $email, 'listId' => $listId]);
     }
 
-    public function byToken(string $token): ?Subscriber
+    public function byToken(string $token, string $listId = 'default'): ?Subscriber
     {
-        return $this->em->getRepository(Subscriber::class)->findOneBy(['confirmationToken' => $token]);
+        return $this->em->getRepository(Subscriber::class)->findOneBy(['confirmationToken' => $token, 'listId' => $listId]);
     }
 
     public function count(): int

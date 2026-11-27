@@ -23,6 +23,7 @@ final readonly class StoredSubscribers implements Subscribers
     {
         return array_map(static fn (Subscriber $subscriber): array => [
             'email' => $subscriber->getEmail(),
+            'list' => $subscriber->getListId(),
             'name' => $subscriber->getName(),
             'confirmed' => $subscriber->isConfirmed(),
             'active' => $subscriber->isActive(),

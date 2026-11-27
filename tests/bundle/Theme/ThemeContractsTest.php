@@ -107,7 +107,7 @@ final class ThemeContractsTest extends TestCase
 
         self::assertSame(1, $subscribers->count());
         $row = $subscribers->latest(5)[0];
-        self::assertSame(['email', 'name', 'confirmed', 'active', 'subscribed_at'], array_keys($row));
+        self::assertSame(['email', 'list', 'name', 'confirmed', 'active', 'subscribed_at'], array_keys($row));
         self::assertSame('a@example.org', $row['email']);
         self::assertStringNotContainsString('secret-token', json_encode($row, JSON_THROW_ON_ERROR));
     }

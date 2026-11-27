@@ -102,6 +102,7 @@ final class Configuration extends SiteAccessAware\Configuration
                     ->scalarNode('subject')->end()
                     ->scalarNode('list_name')->info('What the visitor subscribed to, in the page that confirms it')->end()
                     ->scalarNode('confirmation_template')->info('Relative to the templates of the theme: has confirmUrl and subscriber')->end()
+                    ->scalarNode('list_id')->info('The list of subscribers of the site: sites that give the same one share them, the others have their own (default: "default")')->end()
                     ->scalarNode('status_template')->info('The page of the links of the mails: has status (success|info|error), title and message')->end()
                 ->end();
 

@@ -41,9 +41,9 @@ final readonly class Subscriptions
             return new SubscriptionResult(true, 'Thank you for subscribing!');
         }
 
-        $subscriber = $this->store->byEmail($email);
+        $subscriber = $this->store->byEmail($email, $this->settings()->listId);
         if ($subscriber === null) {
-            $subscriber = (new Subscriber())->setEmail($email)->setName($name !== '' ? $name : null);
+            $subscriber = (new Subscriber())->setEmail($email)->setListId($this->settings()->listId)->setName($name !== '' ? $name : null);
             $subscriber->generateConfirmationToken();
             $this->store->add($subscriber);
             $this->sendConfirmation($subscriber);
@@ -79,7 +79,7 @@ final readonly class Subscriptions
     /** The result of a click on the link of the confirmation mail: [title, message, status type, HTTP status]. */
     public function confirm(string $token): SubscriptionResult
     {
-        $subscriber = $token === '' ? null : $this->store->byToken($token);
+        $subscriber = $token === '' ? null : $this->store->byToken($token, $this->settings()->listId);
         if ($subscriber === null) {
             return new SubscriptionResult(false, 'This confirmation link is invalid or has already been used.', 404);
         }
@@ -96,12 +96,12 @@ final readonly class Subscriptions
     /** Whether the link of an unsubscribe belongs to a subscriber: it changes nothing, it is what the confirmation page asks first. */
     public function canUnsubscribe(string $token): bool
     {
-        return $token !== '' && $this->store->byToken($token) !== null;
+        return $token !== '' && $this->store->byToken($token, $this->settings()->listId) !== null;
     }
 
     public function unsubscribe(string $token): SubscriptionResult
     {
-        $subscriber = $token === '' ? null : $this->store->byToken($token);
+        $subscriber = $token === '' ? null : $this->store->byToken($token, $this->settings()->listId);
         if ($subscriber === null) {
             return new SubscriptionResult(false, 'This unsubscribe link is invalid or has already been used.', 404);
         }

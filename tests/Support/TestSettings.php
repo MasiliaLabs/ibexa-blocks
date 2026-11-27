@@ -80,6 +80,7 @@ final class TestSettings
             $set('newsletter.list_name', $newsletter->listName);
             $set('newsletter.confirmation_template', $newsletter->confirmationTemplate);
             $set('newsletter.status_template', $newsletter->statusTemplate);
+            $set('newsletter.list_id', $newsletter->listId);
         }
 
         return self::fromParameters($p);

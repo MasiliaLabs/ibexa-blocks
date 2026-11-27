@@ -10,6 +10,7 @@ use Doctrine\ORM\Mapping as ORM;
 /** A person who subscribed to the newsletter. Table `app_subscriber`, created by the migration of the bundle. */
 #[ORM\Entity]
 #[ORM\Table(name: 'app_subscriber')]
+#[ORM\UniqueConstraint(name: 'UNIQ_SUBSCRIBER_EMAIL_LIST', columns: ['email', 'list_id'])]
 #[ORM\HasLifecycleCallbacks]
 class Subscriber
 {
@@ -21,8 +22,12 @@ class Subscriber
     #[ORM\Column(type: Types::STRING, length: 255, nullable: true)]
     private ?string $name = null;
 
-    #[ORM\Column(type: Types::STRING, length: 255, unique: true)]
+    #[ORM\Column(type: Types::STRING, length: 255)]
     private string $email;
+
+    /** The list the person subscribed to: the sites that share a `newsletter.list_id` share their subscribers. */
+    #[ORM\Column(name: 'list_id', type: Types::STRING, length: 64, options: ['default' => 'default'])]
+    private string $listId = 'default';
 
     #[ORM\Column(type: Types::BOOLEAN)]
     private bool $isActive = true;
@@ -59,6 +64,18 @@ class Subscriber
     public function setName(?string $name): self
     {
         $this->name = $name;
+        return $this;
+    }
+
+    public function getListId(): string
+    {
+        return $this->listId;
+    }
+
+    public function setListId(string $listId): self
+    {
+        $this->listId = $listId;
+
         return $this;
     }
 

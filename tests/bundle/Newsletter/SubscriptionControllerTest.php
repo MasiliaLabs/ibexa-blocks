@@ -36,9 +36,9 @@ final class SubscriptionControllerTest extends TestCase
         $store = new class($subscriber) implements SubscriberStore {
             public function __construct(private Subscriber $subscriber) {}
 
-            public function byEmail(string $email): ?Subscriber { return $email === $this->subscriber->getEmail() ? $this->subscriber : null; }
+            public function byEmail(string $email, string $listId = 'default'): ?Subscriber { return $email === $this->subscriber->getEmail() ? $this->subscriber : null; }
 
-            public function byToken(string $token): ?Subscriber { return $token === $this->subscriber->getConfirmationToken() ? $this->subscriber : null; }
+            public function byToken(string $token, string $listId = 'default'): ?Subscriber { return $token === $this->subscriber->getConfirmationToken() ? $this->subscriber : null; }
 
             public function count(): int { return 1; }
 

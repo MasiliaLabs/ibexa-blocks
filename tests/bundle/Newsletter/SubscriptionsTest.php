@@ -28,17 +28,17 @@ final class SubscriptionsTest extends TestCase
     private array $sent = [];
     private int $saves = 0;
 
-    private function subscriptions(?string $from = 'news@example.org'): Subscriptions
+    private function subscriptions(?string $from = 'news@example.org', string $list = 'default'): Subscriptions
     {
         $store = new class($this->subscribers, $this->saves) implements SubscriberStore {
             public function __construct(private array &$subscribers, private int &$saves) {}
 
-            public function byEmail(string $email): ?Subscriber { return $this->subscribers[$email] ?? null; }
+            public function byEmail(string $email, string $listId = 'default'): ?Subscriber { return $this->subscribers[$listId . '|' . $email] ?? null; }
 
-            public function byToken(string $token): ?Subscriber
+            public function byToken(string $token, string $listId = 'default'): ?Subscriber
             {
                 foreach ($this->subscribers as $subscriber) {
-                    if ($subscriber->getConfirmationToken() === $token) {
+                    if ($subscriber->getConfirmationToken() === $token && $subscriber->getListId() === $listId) {
                         return $subscriber;
                     }
                 }
@@ -50,7 +50,7 @@ final class SubscriptionsTest extends TestCase
 
             public function latest(int $limit): array { return array_slice(array_reverse(array_values($this->subscribers)), 0, $limit); }
 
-            public function add(Subscriber $subscriber): void { $this->subscribers[$subscriber->getEmail()] = $subscriber; }
+            public function add(Subscriber $subscriber): void { $this->subscribers[$subscriber->getListId() . '|' . $subscriber->getEmail()] = $subscriber; }
 
             public function save(): void { ++$this->saves; }
         };
@@ -70,7 +70,7 @@ final class SubscriptionsTest extends TestCase
 
             public function getContext(): \Symfony\Component\Routing\RequestContext { return new \Symfony\Component\Routing\RequestContext(); }
         };
-        $settings = TestSettings::provider(newsletter: new NewsletterSettings($from, 'Confirm please', 'the Example newsletter'));
+        $settings = TestSettings::provider(newsletter: new NewsletterSettings($from, 'Confirm please', 'the Example newsletter', listId: $list));
 
         return new Subscriptions($store, new SubscriptionMailer($mailer, $twig, $settings), $urls, $settings, new NullLogger());
     }
@@ -81,7 +81,7 @@ final class SubscriptionsTest extends TestCase
 
         self::assertTrue($result->success);
         self::assertSame(200, $result->status);
-        $subscriber = $this->subscribers['ada@example.org'];
+        $subscriber = $this->subscribers['default|ada@example.org'];
         self::assertFalse($subscriber->isConfirmed());
         self::assertSame(64, strlen((string) $subscriber->getConfirmationToken()));
         self::assertCount(1, $this->sent);
@@ -107,13 +107,13 @@ final class SubscriptionsTest extends TestCase
     {
         $subscriptions = $this->subscriptions();
         $subscriptions->subscribe(['email' => 'ada@example.org', 'name' => 'Ada']);
-        $token = (string) $this->subscribers['ada@example.org']->getConfirmationToken();
+        $token = (string) $this->subscribers['default|ada@example.org']->getConfirmationToken();
 
         $confirmed = $subscriptions->confirm($token);
         self::assertTrue($confirmed->success);
         self::assertSame('Thank you, Ada! You are now subscribed to the Example newsletter.', $confirmed->message);
-        self::assertTrue($this->subscribers['ada@example.org']->isConfirmed());
-        self::assertNull($this->subscribers['ada@example.org']->getConfirmationToken());
+        self::assertTrue($this->subscribers['default|ada@example.org']->isConfirmed());
+        self::assertNull($this->subscribers['default|ada@example.org']->getConfirmationToken());
 
         $again = $subscriptions->confirm($token);
         self::assertSame([false, 404], [$again->success, $again->status]);
@@ -124,16 +124,16 @@ final class SubscriptionsTest extends TestCase
     {
         $subscriptions = $this->subscriptions();
         $subscriptions->subscribe(['email' => 'ada@example.org']);
-        $first = (string) $this->subscribers['ada@example.org']->getConfirmationToken();
+        $first = (string) $this->subscribers['default|ada@example.org']->getConfirmationToken();
 
         $again = $subscriptions->subscribe(['email' => 'ada@example.org', 'name' => 'Ada L.']);
         self::assertTrue($again->success);
         self::assertSame('A confirmation email has been re-sent. Please check your inbox.', $again->message);
-        self::assertNotSame($first, $this->subscribers['ada@example.org']->getConfirmationToken(), 'the old link stops working');
-        self::assertSame('Ada L.', $this->subscribers['ada@example.org']->getName());
+        self::assertNotSame($first, $this->subscribers['default|ada@example.org']->getConfirmationToken(), 'the old link stops working');
+        self::assertSame('Ada L.', $this->subscribers['default|ada@example.org']->getName());
         self::assertCount(2, $this->sent);
 
-        $subscriptions->confirm((string) $this->subscribers['ada@example.org']->getConfirmationToken());
+        $subscriptions->confirm((string) $this->subscribers['default|ada@example.org']->getConfirmationToken());
         $already = $subscriptions->subscribe(['email' => 'ada@example.org']);
         self::assertSame([false, 409], [$already->success, $already->status]);
         self::assertCount(2, $this->sent);
@@ -143,8 +143,8 @@ final class SubscriptionsTest extends TestCase
     {
         $subscriptions = $this->subscriptions();
         $subscriptions->subscribe(['email' => 'ada@example.org', 'name' => 'Ada']);
-        $subscriptions->confirm((string) $this->subscribers['ada@example.org']->getConfirmationToken());
-        $subscriber = $this->subscribers['ada@example.org'];
+        $subscriptions->confirm((string) $this->subscribers['default|ada@example.org']->getConfirmationToken());
+        $subscriber = $this->subscribers['default|ada@example.org'];
 
         $url = $subscriptions->unsubscribeUrl($subscriber);
         self::assertSame('https://site.test/subscription_unsubscribe/' . $subscriber->getConfirmationToken(), $url);
@@ -166,5 +166,26 @@ final class SubscriptionsTest extends TestCase
         $this->expectExceptionMessage('newsletter.from_address');
 
         $this->subscriptions(null)->subscribe(['email' => 'ada@example.org']);
+    }
+
+    public function testTheSameAddressMaySubscribeToTheListsOfTwoSites(): void
+    {
+        $first = $this->subscriptions(list: 'imal')->subscribe(['email' => 'ada@example.org', 'name' => 'Ada']);
+        $second = $this->subscriptions(list: 'fossil')->subscribe(['email' => 'ada@example.org', 'name' => 'Ada']);
+
+        self::assertTrue($first->success);
+        self::assertTrue($second->success, 'an address of another list is not "already subscribed"');
+        self::assertSame(['imal|ada@example.org', 'fossil|ada@example.org'], array_keys($this->subscribers));
+    }
+
+    public function testTheLinkOfAListDoesNothingOnAnotherList(): void
+    {
+        $this->subscriptions(list: 'imal')->subscribe(['email' => 'ada@example.org', 'name' => 'Ada']);
+        $token = (string) $this->subscribers['imal|ada@example.org']->getConfirmationToken();
+
+        self::assertSame(404, $this->subscriptions(list: 'fossil')->confirm($token)->status);
+        self::assertFalse($this->subscribers['imal|ada@example.org']->isConfirmed());
+        self::assertTrue($this->subscriptions(list: 'imal')->confirm($token)->success);
+        self::assertFalse($this->subscriptions(list: 'fossil')->canUnsubscribe($token));
     }
 }

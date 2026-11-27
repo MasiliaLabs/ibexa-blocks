@@ -10,7 +10,7 @@ interface Subscribers
     public function count(): int;
 
     /**
-     * @return list<array{email: string, name: ?string, confirmed: bool, active: bool, subscribed_at: string}> The latest first
+     * @return list<array{email: string, list: string, name: ?string, confirmed: bool, active: bool, subscribed_at: string}> The latest first
      */
     public function latest(int $limit): array;
 }

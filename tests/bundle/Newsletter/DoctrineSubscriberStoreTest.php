@@ -16,7 +16,7 @@ final class DoctrineSubscriberStoreTest extends TestCase
     {
         $found = (new Subscriber())->setEmail('a@b.test');
         $repository = $this->createMock(ObjectRepository::class);
-        $repository->expects(self::once())->method('findOneBy')->with(['email' => 'a@b.test'])->willReturn($found);
+        $repository->expects(self::once())->method('findOneBy')->with(['email' => 'a@b.test', 'listId' => 'default'])->willReturn($found);
         $em = $this->createStub(EntityManagerInterface::class);
         $em->method('getRepository')->willReturn($repository);
 
@@ -26,7 +26,7 @@ final class DoctrineSubscriberStoreTest extends TestCase
     public function testATokenAndTheLatestAreSearchedByTheirOwnFields(): void
     {
         $repository = $this->createMock(ObjectRepository::class);
-        $repository->expects(self::once())->method('findOneBy')->with(['confirmationToken' => 'tok'])->willReturn(null);
+        $repository->expects(self::once())->method('findOneBy')->with(['confirmationToken' => 'tok', 'listId' => 'default'])->willReturn(null);
         $repository->expects(self::once())->method('findBy')->with([], ['createdAt' => 'DESC', 'id' => 'DESC'], 1)->willReturn([]);
         $em = $this->createStub(EntityManagerInterface::class);
         $em->method('getRepository')->willReturn($repository);

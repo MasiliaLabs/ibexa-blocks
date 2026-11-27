@@ -138,6 +138,7 @@ final readonly class SettingsProvider
             listName: $text($listName, $d->listName, 'the ' . $name . ' newsletter'),
             confirmationTemplate: (string) $this->get('newsletter.confirmation_template', $d->confirmationTemplate),
             statusTemplate: (string) $this->get('newsletter.status_template', $d->statusTemplate),
+            listId: (string) $this->get('newsletter.list_id', $d->listId),
         );
     }
 

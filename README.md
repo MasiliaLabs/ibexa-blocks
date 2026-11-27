@@ -127,6 +127,7 @@ The sections are `conventions`, `model`, `themes`, `blocks`, `search`, `fields`,
 
 Each setting is read **when it is used**, for the site of the request, in this order: the **registry of the sites** (`masilia/ibexa-sites`: the `site_email` of the site is the address the mails are sent from, `layout_remote_id` the layout), then the siteaccess, then its group, then `default`, then the default of the code. A setting is looked up on its own: a site that says `newsletter.subject` keeps the `from_address` of `default`. A list (`content_types: [...]`) or a table (`sorts`, `facets`, `variations`, `items_field_by_type`, `auto_item_sort_fields`) is one setting: the more specific scope **replaces** it, it is not merged.
 
+- `newsletter.list_id` names the list of subscribers of a site (`default`): sites that give the same one share them, the others have their own, and the same address can subscribe to both.
 - The newsletter, the list blocks and the contact forms are always there once one scope turns them on; a site that did not answers `404` on the newsletter routes, and the list providers leave its blocks alone.
 - `themes.directories` and `model.directories` are those of the site; a command (`theme:check`, `model:install`) uses the default siteaccess, or `--siteaccess`. A package that adds directories writes them under `system.default`.
 - Ibexa does not check the name of a scope: a typo is a setting no siteaccess reads (`bin/console debug:config masilia_ibexa_blocks` shows what was read).

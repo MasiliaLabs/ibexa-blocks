@@ -13,6 +13,7 @@ final readonly class NewsletterSettings
      * @param string      $listName             What the visitor subscribed to ("the Acme newsletter"), in the confirmation page
      * @param string      $confirmationTemplate The confirmation mail, relative to the templates of the theme
      * @param string      $statusTemplate       The page shown after a click on a link of the mail
+     * @param string      $listId               The list of subscribers: the sites that give the same one share them
      */
     public function __construct(
         public ?string $fromAddress = null,
@@ -20,6 +21,7 @@ final readonly class NewsletterSettings
         public string $listName = 'our newsletter',
         public string $confirmationTemplate = 'emails/subscription_confirmation.html.twig',
         public string $statusTemplate = 'emails/subscription_status.html.twig',
+        public string $listId = 'default',
     ) {
     }
 
@@ -36,6 +38,7 @@ final readonly class NewsletterSettings
             listName: (string) ($newsletter['list_name'] ?? $d->listName),
             confirmationTemplate: (string) ($newsletter['confirmation_template'] ?? $d->confirmationTemplate),
             statusTemplate: (string) ($newsletter['status_template'] ?? $d->statusTemplate),
+            listId: (string) ($newsletter['list_id'] ?? $d->listId),
         );
     }
 }

@@ -10,6 +10,7 @@ All notable changes to `masilia/ibexa-blocks` are documented here. The format fo
 - The newsletter routes answer `404` for a site that does not turn the newsletter on; the list providers and the contact form answer only for the block types of the site; the rate limit is that of the site and a missing `symfony/rate-limiter` is reported at the first request, not at compilation.
 
 ### Added
+- `newsletter.list_id` (per site, `default`): the subscribers belong to a list, so that the same address can subscribe to the newsletters of two sites, and the link of a mail works only on the site that sent it. Needs the migration `Version20261127000000` (`list_id` column, unique `(email, list_id)`); `Subscribers::latest()` rows have a `list` key.
 - The name of the site in the registry of the sites names the site in the newsletter (subject and list) before the configured texts; `{site_name}` in them says where it goes.
 - `Masilia\Bundle\IbexaBlocks\Site\SettingsProvider`: the settings of the current site (`forms()`, `contact()`, `newsletter()`, `conventions()`, `search()`, `get($name)`). `Conventions`, `SearchSettings`, `FormSettings`, `ContactSettings` and `NewsletterSettings` are no longer services: ask the provider.
 
