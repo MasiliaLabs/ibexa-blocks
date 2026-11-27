@@ -28,9 +28,9 @@ final class SubscriptionsTest extends TestCase
     private array $sent = [];
     private int $saves = 0;
 
-    private function subscriptions(?string $from = 'news@example.org', string $list = 'default'): Subscriptions
+    private function storeOf(): SubscriberStore
     {
-        $store = new class($this->subscribers, $this->saves) implements SubscriberStore {
+        return new class($this->subscribers, $this->saves) implements SubscriberStore {
             public function __construct(private array &$subscribers, private int &$saves) {}
 
             public function byEmail(string $email, string $listId = 'default'): ?Subscriber { return $this->subscribers[$listId . '|' . $email] ?? null; }
@@ -46,14 +46,19 @@ final class SubscriptionsTest extends TestCase
                 return null;
             }
 
-            public function count(): int { return count($this->subscribers); }
+            public function count(?string $listId = null): int { return count(array_filter($this->subscribers, static fn (Subscriber $s): bool => $listId === null || $s->getListId() === $listId)); }
 
-            public function latest(int $limit): array { return array_slice(array_reverse(array_values($this->subscribers)), 0, $limit); }
+            public function latest(int $limit, ?string $listId = null): array { return array_slice(array_reverse(array_values(array_filter($this->subscribers, static fn (Subscriber $s): bool => $listId === null || $s->getListId() === $listId))), 0, $limit); }
 
             public function add(Subscriber $subscriber): void { $this->subscribers[$subscriber->getListId() . '|' . $subscriber->getEmail()] = $subscriber; }
 
             public function save(): void { ++$this->saves; }
         };
+    }
+
+    private function subscriptions(?string $from = 'news@example.org', string $list = 'default'): Subscriptions
+    {
+        $store = $this->storeOf();
         $mailer = new class($this->sent) implements MailerInterface {
             public function __construct(private array &$sent) {}
 
@@ -187,5 +192,19 @@ final class SubscriptionsTest extends TestCase
         self::assertFalse($this->subscribers['imal|ada@example.org']->isConfirmed());
         self::assertTrue($this->subscriptions(list: 'imal')->confirm($token)->success);
         self::assertFalse($this->subscriptions(list: 'fossil')->canUnsubscribe($token));
+    }
+
+    public function testTheAssistantCountsAndListsAllTheListsOrOne(): void
+    {
+        $this->subscriptions(list: 'imal')->subscribe(['email' => 'ada@example.org']);
+        $this->subscriptions(list: 'fossil')->subscribe(['email' => 'bob@example.org']);
+        $this->subscriptions(list: 'fossil')->subscribe(['email' => 'eve@example.org']);
+        array_map(static fn (Subscriber $s) => $s->onPrePersist(), $this->subscribers); // what Doctrine does when it keeps them
+        $subscribers = new \Masilia\Bundle\IbexaBlocks\Newsletter\StoredSubscribers($this->storeOf());
+
+        self::assertSame(3, $subscribers->count());
+        self::assertSame(2, $subscribers->count('fossil'));
+        self::assertSame(['imal'], array_column($subscribers->latest(10, 'imal'), 'list'));
+        self::assertSame(['fossil', 'fossil', 'imal'], array_column($subscribers->latest(10), 'list'));
     }
 }

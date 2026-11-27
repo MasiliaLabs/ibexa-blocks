@@ -39,6 +39,12 @@ final class Version20261127000000 extends AbstractMigration
 
     public function down(Schema $schema): void
     {
-        // The subscribers are the project's data: a rollback does not merge the lists back into one.
+        $this->abortIf($this->connection->getDatabasePlatform()->getName() !== 'mysql', 'This table is for MySQL / MariaDB.');
+        // The lists are merged back into one: an address that is in two of them cannot stay twice under a unique address, so
+        // the oldest row of each address is kept (refusing is the other way: this one says what it drops).
+        $this->addSql('DELETE s FROM app_subscriber s INNER JOIN app_subscriber o ON o.email = s.email AND o.id < s.id');
+        $this->addSql('DROP INDEX UNIQ_SUBSCRIBER_EMAIL_LIST ON app_subscriber');
+        $this->addSql('CREATE UNIQUE INDEX UNIQ_SUBSCRIBER_EMAIL ON app_subscriber (email)');
+        $this->addSql('ALTER TABLE app_subscriber DROP list_id');
     }
 }

@@ -33,8 +33,8 @@ final class ScopesWithIbexaResolverTest extends TestCase
      */
     private function build(array $system, string $siteaccess): array
     {
-        $groups = ['fossil_group' => ['fossil', 'fossil_fr'], 'imal_group' => ['imal']];
-        $byAccess = ['fossil' => ['fossil_group'], 'fossil_fr' => ['fossil_group'], 'imal' => ['imal_group']];
+        $groups = ['fossil_group' => ['fossil', 'fossil_fr'], 'imal_group' => ['imal'], 'extra_group' => ['fossil_fr']];
+        $byAccess = ['fossil' => ['fossil_group'], 'fossil_fr' => ['fossil_group', 'extra_group'], 'imal' => ['imal_group']];
         $container = new ContainerBuilder();
         $container->setParameter('kernel.project_dir', sys_get_temp_dir());
         $container->setParameter('kernel.environment', 'test');
@@ -129,10 +129,32 @@ final class ScopesWithIbexaResolverTest extends TestCase
         self::assertSame(['value' => 'Group subject', 'from' => 'fossil_group'], $values['newsletter.subject']);
         self::assertSame(['value' => true, 'from' => 'default'], $values['newsletter.enabled']);
         self::assertSame(['value' => 'build/icons', 'from' => 'fossil_fr'], $values['favicons']);
-        self::assertArrayNotHasKey('newsletter.list_name', $values, 'what nobody says is left to the code');
+        self::assertSame(['value' => null, 'from' => 'code'], $values['newsletter.list_name'], 'what nobody says is left to the code');
         self::assertSame(['fosil_group'], $report->unknownScopes());
         self::assertContains('newsletter.subject', \Masilia\Bundle\IbexaBlocks\Site\SettingsReport::names());
         self::assertContains('blocks.lists.auto_items.types', \Masilia\Bundle\IbexaBlocks\Site\SettingsReport::names());
         self::assertContains('conventions.items_field_by_type', \Masilia\Bundle\IbexaBlocks\Site\SettingsReport::names());
+    }
+
+    public function testASecondGroupAndTheRegistryAreInTheValueTheSiteReallyHas(): void
+    {
+        $system = [
+            'default' => ['newsletter' => ['subject' => 'Default subject', 'from_address' => 'default@example.org']],
+            'extra_group' => ['newsletter' => ['list_name' => 'the extra list']],
+        ];
+        [$chain, $accesses, $container] = $this->build($system, 'fossil_fr');
+        $container->setParameter('masilia_ibexa_sites.fossil_fr.site_email', 'hello@fossil.example');
+        $container->setParameter('masilia_ibexa_sites.fossil_fr.site_name', 'Fossil Exit');
+        $report = new \Masilia\Bundle\IbexaBlocks\Site\SettingsReport($chain, $accesses, []);
+
+        $values = $report->of('fossil_fr')['values'];
+        self::assertSame(['value' => 'hello@fossil.example', 'from' => 'registry (site_email)'], $values['newsletter.from_address']);
+        self::assertSame(['value' => 'Confirm your subscription — Fossil Exit', 'from' => 'registry (site_name)'], $values['newsletter.subject']);
+        self::assertSame(['value' => 'the Fossil Exit newsletter', 'from' => 'registry (site_name)'], $values['newsletter.list_name']);
+
+        $plain = $this->build($system, 'fossil_fr');
+        $report = new \Masilia\Bundle\IbexaBlocks\Site\SettingsReport($plain[0], $plain[1], []);
+        self::assertSame(['value' => 'the extra list', 'from' => 'extra_group'], $report->of('fossil_fr')['values']['newsletter.list_name'], 'a value of the second group is the group\'s, not the siteaccess\'');
+        self::assertSame('default', $report->of('imal')['values']['newsletter.subject']['from']);
     }
 }

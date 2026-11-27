@@ -13,7 +13,8 @@ use Masilia\IbexaBlocks\Search\SearchSettings;
 use Symfony\Contracts\Service\ResetInterface;
 
 /**
- * The settings of the current site, read when they are used (a worker serves several sites: nothing is kept between two calls).
+ * The settings of the current site, read when they are used. What the resolver of Ibexa said is kept for the request being served
+ * only: it is forgotten when the scope changes (see ScopeChangeListener) and between two requests (a worker serves several sites).
  *
  * Each setting is a parameter of the namespace "masilia_ibexa_blocks" under its dotted name ("forms.from_address"): the config
  * resolver of Ibexa gives the value of the siteaccess, else of its group, else of "default"; a setting nobody says keeps the
@@ -152,20 +153,28 @@ final class SettingsProvider implements ResetInterface
         $name = $this->siteName();
         $subject = (string) $this->get('newsletter.subject', null);
         $listName = (string) $this->get('newsletter.list_name', null);
-        $text = static fn (string $configured, string $default, string $named): string => match (true) {
-            $name === null => $configured !== '' ? $configured : $default,
-            str_contains($configured, '{site_name}') => str_replace('{site_name}', $name, $configured),
-            default => $named,
-        };
 
         return new NewsletterSettings(
             fromAddress: $this->address('newsletter.from_address') ?? $this->address('forms.from_address'),
-            subject: $text($subject, $d->subject, $d->subject . ' — ' . $name),
-            listName: $text($listName, $d->listName, 'the ' . $name . ' newsletter'),
+            subject: self::newsletterText($name, $subject, $d->subject, $d->subject . ' — ' . $name),
+            listName: self::newsletterText($name, $listName, $d->listName, 'the ' . $name . ' newsletter'),
             confirmationTemplate: (string) $this->get('newsletter.confirmation_template', $d->confirmationTemplate),
             statusTemplate: (string) $this->get('newsletter.status_template', $d->statusTemplate),
             listId: (string) $this->get('newsletter.list_id', $d->listId),
         );
+    }
+
+    /**
+     * A text of the newsletter: the one the registry names (`$named`) when the site has a name there, unless the configured text
+     * says `{site_name}` (where the name goes); the configured one (or the default) without a name.
+     */
+    public static function newsletterText(?string $name, string $configured, string $default, string $named): string
+    {
+        return match (true) {
+            $name === null => $configured !== '' ? $configured : $default,
+            str_contains($configured, '{site_name}') => str_replace('{site_name}', $name, $configured),
+            default => $named,
+        };
     }
 
     /** The name of the site in the registry of the sites, when it has one. */

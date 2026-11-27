@@ -14,12 +14,12 @@ final readonly class StoredSubscribers implements Subscribers
     {
     }
 
-    public function count(): int
+    public function count(?string $list = null): int
     {
-        return $this->store->count();
+        return $this->store->count($list);
     }
 
-    public function latest(int $limit): array
+    public function latest(int $limit, ?string $list = null): array
     {
         return array_map(static fn (Subscriber $subscriber): array => [
             'email' => $subscriber->getEmail(),
@@ -28,6 +28,6 @@ final readonly class StoredSubscribers implements Subscribers
             'confirmed' => $subscriber->isConfirmed(),
             'active' => $subscriber->isActive(),
             'subscribed_at' => $subscriber->getCreatedAt()->format(\DATE_ATOM),
-        ], $this->store->latest($limit));
+        ], $this->store->latest($limit, $list));
     }
 }

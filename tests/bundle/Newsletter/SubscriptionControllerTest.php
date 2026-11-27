@@ -40,9 +40,9 @@ final class SubscriptionControllerTest extends TestCase
 
             public function byToken(string $token, string $listId = 'default'): ?Subscriber { return $token === $this->subscriber->getConfirmationToken() ? $this->subscriber : null; }
 
-            public function count(): int { return 1; }
+            public function count(?string $listId = null): int { return 1; }
 
-            public function latest(int $limit): array { return [$this->subscriber]; }
+            public function latest(int $limit, ?string $listId = null): array { return [$this->subscriber]; }
 
             public function add(Subscriber $subscriber): void {}
 

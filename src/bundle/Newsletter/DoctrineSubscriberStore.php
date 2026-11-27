@@ -23,14 +23,14 @@ final readonly class DoctrineSubscriberStore implements SubscriberStore
         return $this->em->getRepository(Subscriber::class)->findOneBy(['confirmationToken' => $token, 'listId' => $listId]);
     }
 
-    public function count(): int
+    public function count(?string $listId = null): int
     {
-        return $this->em->getRepository(Subscriber::class)->count([]);
+        return $this->em->getRepository(Subscriber::class)->count($listId === null ? [] : ['listId' => $listId]);
     }
 
-    public function latest(int $limit): array
+    public function latest(int $limit, ?string $listId = null): array
     {
-        return $this->em->getRepository(Subscriber::class)->findBy([], ['createdAt' => 'DESC', 'id' => 'DESC'], max(1, $limit));
+        return $this->em->getRepository(Subscriber::class)->findBy($listId === null ? [] : ['listId' => $listId], ['createdAt' => 'DESC', 'id' => 'DESC'], max(1, $limit));
     }
 
     public function add(Subscriber $subscriber): void

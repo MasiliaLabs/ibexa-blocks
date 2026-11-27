@@ -60,35 +60,47 @@ final readonly class SettingsReport
             if ($this->config->hasParameter($name, self::NAMESPACE, 'default')) {
                 [$from, $value] = ['default', $this->config->getParameter($name, self::NAMESPACE, 'default')];
             }
-            // Asked for a group, Ibexa answers with "default" when the group says nothing: a group has a value of its own only if it
-            // differs from the one of "default".
+            // Asked for a group, Ibexa answers with "default" when the group says nothing: a group has a value of its own only if
+            // it differs from the one of "default" (the first of the groups that does, as Ibexa does for a siteaccess).
             foreach ($groups as $scope) {
                 if ($this->config->hasParameter($name, self::NAMESPACE, $scope)) {
                     $own = $this->config->getParameter($name, self::NAMESPACE, $scope);
                     if ($from === null || $own !== $value) {
                         [$from, $value] = [$scope, $own];
+                        break;
                     }
-                    break;
                 }
             }
-            // Asked for a siteaccess, Ibexa answers with what its groups say too: the siteaccess has a value of its own only if it
-            // differs from the one of its groups (a siteaccess that repeats it says nothing new).
+            // Asked for a siteaccess, Ibexa answers with what its groups say too: it has a value of its own only if it differs.
             if ($this->config->hasParameter($name, self::NAMESPACE, $siteaccess)) {
                 $own = $this->config->getParameter($name, self::NAMESPACE, $siteaccess);
                 if ($from === null || $own !== $value) {
                     [$from, $value] = [$siteaccess, $own];
                 }
             }
-            if ($from !== null) {
-                $values[$name] = ['value' => $value, 'from' => $from];
-            }
+            $values[$name] = ['value' => $value, 'from' => $from ?? 'code'];
         }
 
+        // What the registry of the sites says comes before the settings: the value the site really has.
         $registry = [];
         foreach (self::REGISTRY as $name => $replaces) {
             if ($this->config->hasParameter($name, 'masilia_ibexa_sites', $siteaccess)) {
                 $registry[$name] = ['value' => $this->config->getParameter($name, 'masilia_ibexa_sites', $siteaccess), 'replaces' => $replaces];
             }
+        }
+        $email = $registry['site_email']['value'] ?? null;
+        if (is_string($email) && $email !== '') {
+            foreach (['forms.from_address', 'newsletter.from_address'] as $name) {
+                $values[$name] = ['value' => $email, 'from' => 'registry (site_email)'];
+            }
+        }
+        $siteName = $registry['site_name']['value'] ?? null;
+        if (is_string($siteName) && $siteName !== '') {
+            $defaults = new \Masilia\IbexaBlocks\Newsletter\NewsletterSettings();
+            $subject = (string) ($values['newsletter.subject']['value'] ?? '');
+            $list = (string) ($values['newsletter.list_name']['value'] ?? '');
+            $values['newsletter.subject'] = ['value' => SettingsProvider::newsletterText($siteName, $subject, $defaults->subject, $defaults->subject . ' — ' . $siteName), 'from' => 'registry (site_name)'];
+            $values['newsletter.list_name'] = ['value' => SettingsProvider::newsletterText($siteName, $list, $defaults->listName, 'the ' . $siteName . ' newsletter'), 'from' => 'registry (site_name)'];
         }
 
         return ['values' => $values, 'registry' => $registry];

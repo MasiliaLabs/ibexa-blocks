@@ -15,10 +15,11 @@ interface SubscriberStore
     /** The link of a mail is for the list of the site that sent it. */
     public function byToken(string $token, string $listId = 'default'): ?Subscriber;
 
-    public function count(): int;
+    /** @param string|null $listId Only this list (all of them when null) */
+    public function count(?string $listId = null): int;
 
     /** @return list<Subscriber> The latest first */
-    public function latest(int $limit): array;
+    public function latest(int $limit, ?string $listId = null): array;
 
     /** Keeps a new subscriber. */
     public function add(Subscriber $subscriber): void;
