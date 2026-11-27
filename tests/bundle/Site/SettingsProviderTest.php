@@ -65,9 +65,13 @@ final class SettingsProviderTest extends TestCase
         self::assertNull($provider->forms()->fromAddress);
     }
 
-    public function testTheNameOfTheSiteInTheRegistryIsInTheDefaultTextsAndInThoseThatSayIt(): void
+    public function testTheNameOfTheSiteInTheRegistryComesBeforeTheConfiguredTexts(): void
     {
-        $named = TestSettings::fromParameters(['masilia_ibexa_sites:site_name' => 'Fossil Exit']);
+        $named = TestSettings::fromParameters([
+            'masilia_ibexa_sites:site_name' => 'Fossil Exit',
+            'masilia_ibexa_blocks:newsletter.subject' => 'Confirm — IMAL',
+            'masilia_ibexa_blocks:newsletter.list_name' => 'the IMAL newsletter',
+        ]);
         self::assertSame('Confirm your subscription — Fossil Exit', $named->newsletter()->subject);
         self::assertSame('the Fossil Exit newsletter', $named->newsletter()->listName);
 
@@ -76,10 +80,16 @@ final class SettingsProviderTest extends TestCase
             'masilia_ibexa_blocks:newsletter.subject' => '[{site_name}] Please confirm',
             'masilia_ibexa_blocks:newsletter.list_name' => 'the letter of {site_name}',
         ]);
-        self::assertSame('[Fossil Exit] Please confirm', $says->newsletter()->subject);
+        self::assertSame('[Fossil Exit] Please confirm', $says->newsletter()->subject, 'the configured text says where the name goes');
         self::assertSame('the letter of Fossil Exit', $says->newsletter()->listName);
+    }
 
-        $literal = TestSettings::fromParameters(['masilia_ibexa_sites:site_name' => 'Fossil Exit', 'masilia_ibexa_blocks:newsletter.subject' => 'Confirm — IMAL']);
-        self::assertSame('Confirm — IMAL', $literal->newsletter()->subject, 'a text without the placeholder is the site\'s own');
+    public function testWithoutANameInTheRegistryTheConfiguredTextsApplyAsTheyAre(): void
+    {
+        $provider = TestSettings::fromParameters(['masilia_ibexa_blocks:newsletter.subject' => 'Confirm — IMAL', 'masilia_ibexa_blocks:newsletter.list_name' => 'the IMAL newsletter']);
+
+        self::assertSame('Confirm — IMAL', $provider->newsletter()->subject);
+        self::assertSame('the IMAL newsletter', $provider->newsletter()->listName);
+        self::assertSame('our newsletter', TestSettings::fromParameters([])->newsletter()->listName);
     }
 }

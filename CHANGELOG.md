@@ -10,7 +10,7 @@ All notable changes to `masilia/ibexa-blocks` are documented here. The format fo
 - The newsletter routes answer `404` for a site that does not turn the newsletter on; the list providers and the contact form answer only for the block types of the site; the rate limit is that of the site and a missing `symfony/rate-limiter` is reported at the first request, not at compilation.
 
 ### Added
-- `{site_name}` (the name of the site in the registry of the sites) in `newsletter.subject` and `newsletter.list_name`, and as their default.
+- The name of the site in the registry of the sites names the site in the newsletter (subject and list) before the configured texts; `{site_name}` in them says where it goes.
 - `Masilia\Bundle\IbexaBlocks\Site\SettingsProvider`: the settings of the current site (`forms()`, `contact()`, `newsletter()`, `conventions()`, `search()`, `get($name)`). `Conventions`, `SearchSettings`, `FormSettings`, `ContactSettings` and `NewsletterSettings` are no longer services: ask the provider.
 
 ## [0.7.0] - 2026-11-27

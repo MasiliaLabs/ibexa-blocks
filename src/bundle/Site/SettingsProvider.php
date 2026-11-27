@@ -116,19 +116,26 @@ final readonly class SettingsProvider
     }
 
     /**
-     * The subject and the name of the list may say `{site_name}`, the name of the site in the registry of the sites; a site that
-     * says neither gets "Confirm your subscription — <name>" and "the <name> newsletter" when the registry has a name.
+     * The name of the site in the registry of the sites comes first, as its address does: a site that has one is named in the
+     * texts whatever the configuration says ("<subject> — <name>", "the <name> newsletter"), unless the configured text says
+     * `{site_name}`, which is where the name goes. Without a name in the registry the configured texts apply as they are.
      */
     public function newsletter(): NewsletterSettings
     {
         $d = new NewsletterSettings();
         $name = $this->siteName();
-        $with = static fn (string $text): string => str_replace('{site_name}', (string) $name, $text);
+        $subject = (string) $this->get('newsletter.subject', null);
+        $listName = (string) $this->get('newsletter.list_name', null);
+        $text = static fn (string $configured, string $default, string $named): string => match (true) {
+            $name === null => $configured !== '' ? $configured : $default,
+            str_contains($configured, '{site_name}') => str_replace('{site_name}', $name, $configured),
+            default => $named,
+        };
 
         return new NewsletterSettings(
             fromAddress: $this->address('newsletter.from_address') ?? $this->address('forms.from_address'),
-            subject: $with((string) $this->get('newsletter.subject', $name !== null ? $d->subject . ' — {site_name}' : $d->subject)),
-            listName: $with((string) $this->get('newsletter.list_name', $name !== null ? 'the {site_name} newsletter' : $d->listName)),
+            subject: $text($subject, $d->subject, $d->subject . ' — ' . $name),
+            listName: $text($listName, $d->listName, 'the ' . $name . ' newsletter'),
             confirmationTemplate: (string) $this->get('newsletter.confirmation_template', $d->confirmationTemplate),
             statusTemplate: (string) $this->get('newsletter.status_template', $d->statusTemplate),
         );
