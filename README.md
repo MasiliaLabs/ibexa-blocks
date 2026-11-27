@@ -323,7 +323,7 @@ New versions are announced as **GitHub releases**, with their notes taken from t
         - dependency-name: "masilia/*"
   ```
 
-- **Before updating**: the CHANGELOG says what changes; a change that breaks something is marked **Breaking** and explained in `UPGRADE.md` when there is one. Before 1.0, a minor version (`0.x`) may contain breaking changes: read the notes of the versions you skip. Security problems are announced as GitHub security advisories (see [SECURITY.md](SECURITY.md)).
+- **Before updating**: the CHANGELOG says what changes; a change that breaks something is marked **Breaking** and explained in [UPGRADE.md](UPGRADE.md). Before 1.0, a minor version (`0.x`) may contain breaking changes: read the notes of the versions you skip. Security problems are announced as GitHub security advisories (see [SECURITY.md](SECURITY.md)).
 
 ## Support, contributing and security
 
