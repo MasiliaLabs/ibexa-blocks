@@ -24,6 +24,8 @@ masilia_ibexa_blocks:
 
 The sections are `conventions`, `model`, `themes`, `blocks`, `search`, `fields`, `forms`, `newsletter` and `rate_limit`. A project that already uses `system` for `favicons`, `layout_remote_id` or `layout_menus` only adds `default`.
 
+- **Icons belong to the site**: a `favicons` key in a `theme.yaml` is refused (`Theme "x": the icons are those of the site…`). Move it to the settings of each site that used the theme: `masilia_ibexa_blocks: { system: { <identifier>_group: { favicons: build/images/<site>/icons } } }` (same forms: a folder, a list of links or `''`). `theme:check` then checks the icons of the site. A theme layout that overrides the `favicons` block keeps working.
+
 What to know:
 
 - **Order**: registry of the sites (`site_email` is the sender of the forms and of the newsletter) → siteaccess → group → `default` → default of the code, setting by setting. A list or a table (`sorts`, `facets`, `variations`, `items_field_by_type`, `auto_item_sort_fields`) is replaced as a whole by the more specific scope, not merged. With `masilia/ibexa-sites`, a site whose registry has an email now sends its mails from it: before, every site sent from `forms.from_address`.
@@ -57,7 +59,7 @@ A theme that overrode `seo_metas` to change the icons or the fonts overrides `fa
 {% endblock %}
 ```
 
-A site that only wants other icons does not need Twig: it says `favicons` in its settings (see 2).
+A theme that only wants other icons does not need Twig any more: say `favicons` in its `theme.yaml` (see 2).
 
 ### 2. `theme_layout('favicons')` is a list of links
 
@@ -73,7 +75,7 @@ It was the path of the folder of icons; it is now the list of the links to draw 
 {% endfor %}
 ```
 
-The icons are the **site's**, not the theme's: `masilia_ibexa_blocks.system.<siteaccess or group>.favicons` is a folder (only the files that are there are linked, under their exact name), a list of links, or `''` for no icon at all. A `favicons` key in a `theme.yaml` is refused: move it to the settings of the sites that use the theme (two sites of one design can then have their own).
+In `theme.yaml`, `favicons` is still a folder (only the files that are there are linked, under their exact name), and can also be a list of links, or `''` for no icon at all. A site can have its own with `masilia_ibexa_blocks.system.<siteaccess or group>.favicons`.
 
 ### 3. The preconnect links are the theme's to say
 

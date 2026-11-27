@@ -4,7 +4,10 @@ All notable changes to `masilia/ibexa-blocks` are documented here. The format fo
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-11-27
+
 ### Changed
+- **Breaking:** the icons are the site's, not the theme's. `favicons` of a theme.yaml (added in 0.7.0) is refused, with a message saying where it goes: `masilia_ibexa_blocks.system.<siteaccess or group>.favicons` (a folder of `public/`, a list of links, or `''`), so that two sites that share a design have their own icons. `theme:check` checks the icons of the site, not of the themes, and `masilia:blocks:themes` and the theme scaffold no longer mention them.
 - **Breaking:** every setting is per site. `conventions`, `model`, `themes`, `blocks`, `search`, `fields`, `forms`, `newsletter` and `rate_limit` move from the root of `masilia_ibexa_blocks` to `system.default` (all the sites), `system.<group>` or `system.<siteaccess>` (what differs); a setting at the root is refused. See UPGRADE.md.
 - Each setting is read when it is used, for the site of the request: siteaccess, then group, then `default`, then the default of the code, setting by setting (a list or a table is one setting that a more specific scope replaces). The `site_email` of the registry of the sites (`masilia/ibexa-sites`), when the site has one, is the address of the forms and of the newsletter before the configured one.
 - The newsletter routes answer `404` for a site that does not turn the newsletter on; the list providers and the contact form answer only for the block types of the site; the rate limit is that of the site and a missing `symfony/rate-limiter` is reported at the first request, not at compilation.
@@ -21,7 +24,8 @@ All notable changes to `masilia/ibexa-blocks` are documented here. The format fo
 
 ### Added
 - The layout no longer names a font provider. The origins to connect to early are listed by the theme, explicitly, in the new `preconnect` key of `theme.yaml` (a URL, or `{origin, crossorigin}`; `[]` for none), found like the other keys: the first theme of the design that has one. They are linked in the new `preconnect` block, before `fonts`. An entry of `fonts:` can now be a path in `public/` (`build/fonts/fonts.css`) as well as an https URL, so fonts can be self-hosted. `theme_layout('preconnect')` gives the origins.
-- The icons are the site's, not the theme's: the setting `masilia_ibexa_blocks.system.<siteaccess or group>.favicons` is a folder of `public/` or a list of links (`{rel, href, sizes, type}`, for an icon set the convention does not know: an SVG logo, say), `''` for none. Two sites that share a design have their own icons. A `favicons` key in a theme.yaml is refused, with a message saying where it goes.
+- `favicons` of a theme.yaml can be a list of links (`{rel, href, sizes, type}`) for an icon set the convention does not know (an SVG logo, say), as well as a folder; `favicons: ''` means no icons and still stops the themes below.
+- The setting `masilia_ibexa_blocks.system.<siteaccess or group>.favicons` gives a site its own icons over those of its theme (two sites that share a design no longer share their icons).
 - `theme:check` checks the icons once the assets are built: an error for a declared file that is missing or spelled with another case (a 404 on a server that tells the two apart), for a folder that is not in `public/`, a notice for a standard icon the folder lacks.
 
 - The public search is bounded: `search.api.max_term_length` (200 characters) cuts the term, the category and each tag, `search.api.max_tags` (10) drops the tags beyond it; a request used to send them to the index as they came.
@@ -149,7 +153,8 @@ First release.
 - Search and forms by mail, driven by configuration.
 - Themes as a mechanism: base layout, theme tooling, asset discovery.
 
-[Unreleased]: https://github.com/MasiliaLabs/ibexa-blocks/compare/0.7.0...HEAD
+[Unreleased]: https://github.com/MasiliaLabs/ibexa-blocks/compare/0.8.0...HEAD
+[0.8.0]: https://github.com/MasiliaLabs/ibexa-blocks/compare/0.7.0...0.8.0
 [0.7.0]: https://github.com/MasiliaLabs/ibexa-blocks/compare/0.6.4...0.7.0
 [0.6.4]: https://github.com/MasiliaLabs/ibexa-blocks/compare/0.6.3...0.6.4
 [0.6.3]: https://github.com/MasiliaLabs/ibexa-blocks/compare/0.6.2...0.6.3
