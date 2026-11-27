@@ -17,32 +17,33 @@ use Masilia\IbexaBlocks\Block\ViewState;
  */
 final readonly class AutoItemsParameters implements BlockViewParameters
 {
-    /**
-     * @param array{source_field: string, source_value: string, type_field: string, count_field: string, default_count: int} $settings
-     */
     public function __construct(
         private ContentLister $latest,
-        private array $settings,
         private SettingsProvider $provider,
     ) {
     }
 
     public function parameters(RenderableContent $block, array $fields, ViewState $view): array
     {
+        if (!in_array($block->type(), $this->provider->listTypes('auto_items'), true)) {
+            return [];
+        }
+
+        $settings = $this->provider->autoItems();
         $conventions = $this->provider->conventions();
         $itemsField = $conventions->itemsFieldByType === [] ? $conventions->itemsField : $conventions->itemsFieldFor($block->type());
         if (!empty($fields[$itemsField])) {
             return [];
         }
 
-        $source = array_values((array) ($fields[$this->settings['source_field']] ?? []))[0] ?? null;
-        $type = array_values((array) ($fields[$this->settings['type_field']] ?? []))[0] ?? null;
-        if ($source !== $this->settings['source_value'] || empty($type)) {
+        $source = array_values((array) ($fields[$settings['source_field']] ?? []))[0] ?? null;
+        $type = array_values((array) ($fields[$settings['type_field']] ?? []))[0] ?? null;
+        if ($source !== $settings['source_value'] || empty($type)) {
             return [];
         }
 
-        $count = (int) ($fields[$this->settings['count_field']] ?? 0);
+        $count = (int) ($fields[$settings['count_field']] ?? 0);
 
-        return [$itemsField => $this->latest->of((string) $type, $count > 0 ? $count : $this->settings['default_count'])];
+        return [$itemsField => $this->latest->of((string) $type, $count > 0 ? $count : $settings['default_count'])];
     }
 }

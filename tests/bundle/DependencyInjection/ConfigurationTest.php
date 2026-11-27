@@ -44,7 +44,7 @@ final class ConfigurationTest extends TestCase
         self::assertArrayNotHasKey('conventions', $config);
         $conventions = \Masilia\IbexaBlocks\Tests\Support\TestSettings::fromParameters([])->conventions();
         self::assertSame(['page', 'blocks', 'items'], [$conventions->pageType, $conventions->blocksField, $conventions->itemsField]);
-        self::assertContains('blocks', $config['blocks']['view_types']);
+        self::assertContains('blocks', \Masilia\IbexaBlocks\Tests\Support\TestSettings::fromParameters([])->viewTypes());
     }
 
     public function testASiteSaysItsIconsAsAFolderOrAsLinks(): void
@@ -109,7 +109,7 @@ final class ConfigurationTest extends TestCase
 
         (new MasiliaIbexaBlocksExtension())->load([[]], $container);
 
-        foreach (['masilia_blocks.themes.directories', 'masilia_blocks.blocks.view_types'] as $parameter) {
+        foreach (['masilia_blocks.themes.directories', 'masilia_blocks.model.directories', 'masilia_blocks.configured_templates'] as $parameter) {
             self::assertTrue($container->hasParameter($parameter), $parameter);
         }
         self::assertTrue($container->has(\Masilia\Bundle\IbexaBlocks\Theme\ThemeSettings::class));

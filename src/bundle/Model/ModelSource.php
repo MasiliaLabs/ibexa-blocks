@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Masilia\Bundle\IbexaBlocks\Model;
 
+use Masilia\Bundle\IbexaBlocks\Site\SettingsProvider;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Yaml\Exception\ParseException;
 use Symfony\Component\Yaml\Yaml;
@@ -16,12 +17,13 @@ use Symfony\Component\Yaml\Yaml;
 final readonly class ModelSource
 {
     /**
-     * @param list<string> $directories Directories of *.yaml definitions; a directory that does not exist is ignored
+     * @param list<string> $directories Directories of *.yaml definitions that are always read (the site adds its own: model.directories); a directory that does not exist is ignored
      */
     public function __construct(
         #[Autowire('%masilia_blocks.model.directories%')]
         private array $directories = [],
         private string $socleDirectory = __DIR__ . '/../Resources/config/model',
+        private ?SettingsProvider $settings = null,
     ) {
     }
 
@@ -44,7 +46,7 @@ final readonly class ModelSource
     {
         $types = [];
         $seen = [];
-        foreach ($this->directories as $directory) {
+        foreach ($this->settings?->modelDirectories($this->directories) ?? $this->directories as $directory) {
             if (!is_dir($directory)) {
                 continue;
             }

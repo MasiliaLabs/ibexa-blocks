@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Masilia\Bundle\IbexaBlocks\View;
 
+use Masilia\Bundle\IbexaBlocks\Site\SettingsProvider;
 use Ibexa\Core\MVC\Symfony\View\ContentView;
 use Ibexa\Core\MVC\Symfony\View\View;
 use Ibexa\Core\MVC\Symfony\View\ViewProvider;
@@ -20,18 +21,16 @@ use Symfony\Component\HttpKernel\Controller\ControllerReference;
 final readonly class BlockViewProvider implements ViewProvider
 {
     /**
-     * @param list<string> $viewTypes
      */
     public function __construct(
         private BlockRegistry $registry,
-        #[Autowire('%masilia_blocks.blocks.view_types%')]
-        private array $viewTypes,
+        private SettingsProvider $provider,
     ) {
     }
 
     public function getView(View $view): ?View
     {
-        if (!$view instanceof ContentView || !in_array($view->getViewType(), $this->viewTypes, true)) {
+        if (!$view instanceof ContentView || !in_array($view->getViewType(), $this->provider->viewTypes(), true)) {
             return null;
         }
 

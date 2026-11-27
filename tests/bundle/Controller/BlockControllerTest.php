@@ -86,7 +86,7 @@ final class BlockControllerTest extends TestCase
             $byType['grid'][] = ['id' => $id, 'viewTypes' => [], 'priority' => 0];
         }
 
-        return new BlockController($factory, $blocks, new BlockProviders($locator, $byType), TestSettings::fromParameters([]), $flatten);
+        return new BlockController($factory, $blocks, new BlockProviders($locator, $byType), TestSettings::fromParameters(['masilia_ibexa_blocks:blocks.flatten_fields' => $flatten]));
     }
 
     private function view(string $type, string $viewType = 'blocks', array $parameters = []): ContentView

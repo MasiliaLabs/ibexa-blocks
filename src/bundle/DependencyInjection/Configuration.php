@@ -32,100 +32,15 @@ final class Configuration extends SiteAccessAware\Configuration
                 ->end()
             ->end()
             // No default in these nodes: a scope that does not say a setting leaves it to the scope below (siteaccess, group, default).
+            ->append($this->model())
+            ->append($this->themes())
+            ->append($this->blocks())
+            ->append($this->rateLimit())
             ->append($this->conventions())
             ->append($this->search())
             ->append($this->fields())
             ->append($this->forms())
             ->append($this->newsletter());
-
-        $root
-            ->children()
-                ->arrayNode('model')
-                    ->info('Where the content types of the project are (the socle of the package is always installed)')
-                    ->addDefaultsIfNotSet()
-                    ->children()
-                        ->arrayNode('directories')
-                            ->info('Directories of *.yaml content type definitions, besides config/content_model of the project. A package adds its own by prepending this setting.')
-                            ->scalarPrototype()->end()
-                            ->defaultValue([])
-                        ->end()
-                    ->end()
-                ->end()
-                ->arrayNode('themes')
-                    ->info('Where the themes are')
-                    ->addDefaultsIfNotSet()
-                    ->children()
-                        ->arrayNode('directories')
-                            ->info('Directories with one folder per theme, each with a theme.yaml: <directory>/<theme>/theme.yaml')
-                            ->scalarPrototype()->end()
-                            ->defaultValue(['%kernel.project_dir%/templates/themes'])
-                        ->end()
-                    ->end()
-                ->end()
-                ->arrayNode('blocks')
-                    ->info('How blocks are shown')
-                    ->addDefaultsIfNotSet()
-                    ->children()
-                        ->arrayNode('view_types')
-                            ->info('The view types that this bundle shows for any content type that a theme.yaml names. A view the project configures itself (content_view) wins over it.')
-                            ->scalarPrototype()->end()
-                            ->defaultValue(['blocks', 'block_item', 'line'])
-                        ->end()
-                        ->arrayNode('handled_by_project')
-                            ->info('Block types whose view the project configures itself (content_view with a controller): the theme check does not expect a theme to show them')
-                            ->scalarPrototype()->end()
-                            ->defaultValue([])
-                        ->end()
-                        ->booleanNode('flatten_fields')
-                            ->info('Also give each field to the template as a variable of its own (hero_banner.twig reads `title`), as well as in `fields`')
-                            ->defaultFalse()
-                        ->end()
-                        ->arrayNode('lists')
-                            ->info('Blocks that list contents, ready to use: name the block types and, if they differ from the Masilia ones, their fields. Nothing is on until its types are named.')
-                            ->addDefaultsIfNotSet()
-                            ->children()
-                                ->arrayNode('auto_items')
-                                    ->info('A block with no items whose source is "auto" lists the latest contents of a type chosen in its fields')
-                                    ->addDefaultsIfNotSet()
-                                    ->children()
-                                        ->arrayNode('types')->info('The block types, e.g. [grid_cards, slider]')->scalarPrototype()->end()->defaultValue([])->end()
-                                        ->scalarNode('source_field')->defaultValue('item_source')->info('A selection: the value below asks for the automatic list')->end()
-                                        ->scalarNode('source_value')->defaultValue('auto')->end()
-                                        ->scalarNode('type_field')->defaultValue('item_type')->info('A selection: the content type to list')->end()
-                                        ->scalarNode('count_field')->defaultValue('items_count')->end()
-                                        ->integerNode('default_count')->defaultValue(3)->min(1)->end()
-                                    ->end()
-                                ->end()
-                                ->arrayNode('featured')
-                                    ->info('A block whose view type has a given value is shown by another template (the "Featured" grid as the latest news)')
-                                    ->addDefaultsIfNotSet()
-                                    ->children()
-                                        ->arrayNode('types')->info('The block types, e.g. [grid_cards]')->scalarPrototype()->end()->defaultValue([])->end()
-                                        ->scalarNode('field')->defaultValue('view_type')->end()
-                                        ->scalarNode('value')->defaultValue('Featured')->end()
-                                        ->scalarNode('template')->defaultValue('blocks/latest_news.twig')->info('Relative to the templates of a theme')->end()
-                                    ->end()
-                                ->end()
-                                ->arrayNode('all_posts')
-                                    ->info('The block that lists the posts of the site with their filters (its first posts, its filters, the search app configuration)')
-                                    ->addDefaultsIfNotSet()
-                                    ->children()
-                                        ->arrayNode('types')->info('The block types, e.g. [all_posts]')->scalarPrototype()->end()->defaultValue([])->end()
-                                    ->end()
-                                ->end()
-                            ->end()
-                        ->end()
-                    ->end()
-                ->end()
-                ->arrayNode('rate_limit')
-                    ->info('How often a visitor may use the public endpoints that send a mail (needs symfony/rate-limiter). Nothing is limited by default.')
-                    ->addDefaultsIfNotSet()
-                    ->children()
-                        ->append($this->limit('forms_submit', 'POST /api/forms/submit'))
-                        ->append($this->limit('subscribe', 'POST /api/subscribe'))
-                    ->end()
-                ->end()
-            ->end();
 
         return $tree;
     }
@@ -286,6 +201,102 @@ final class Configuration extends SiteAccessAware\Configuration
                             ->info('Field types that are never rendered (they give null, without a log)')
                             ->scalarPrototype()->end()
                         ->end()
+                    ->end();
+
+        return $node;
+    }
+
+    private function model(): ArrayNodeDefinition
+    {
+        $node = (new TreeBuilder('model'))->getRootNode();
+        $node
+                    ->info('Where the content types of the project are (the socle of the package is always installed)')
+                    ->children()
+                        ->arrayNode('directories')
+                            ->info('Directories of *.yaml content type definitions, besides config/content_model of the project. A package adds its own by prepending this setting.')
+                            ->scalarPrototype()->end()
+                        ->end()
+                    ->end();
+
+        return $node;
+    }
+
+    private function themes(): ArrayNodeDefinition
+    {
+        $node = (new TreeBuilder('themes'))->getRootNode();
+        $node
+                    ->info('Where the themes are')
+                    ->children()
+                        ->arrayNode('directories')
+                            ->info('Directories with one folder per theme, each with a theme.yaml: <directory>/<theme>/theme.yaml')
+                            ->scalarPrototype()->end()
+                        ->end()
+                    ->end();
+
+        return $node;
+    }
+
+    private function blocks(): ArrayNodeDefinition
+    {
+        $node = (new TreeBuilder('blocks'))->getRootNode();
+        $node
+                    ->info('How blocks are shown')
+                    ->children()
+                        ->arrayNode('view_types')
+                            ->info('The view types that this bundle shows for any content type that a theme.yaml names. A view the project configures itself (content_view) wins over it.')
+                            ->scalarPrototype()->end()
+                        ->end()
+                        ->arrayNode('handled_by_project')
+                            ->info('Block types whose view the project configures itself (content_view with a controller): the theme check does not expect a theme to show them')
+                            ->scalarPrototype()->end()
+                        ->end()
+                        ->booleanNode('flatten_fields')
+                            ->info('Also give each field to the template as a variable of its own (hero_banner.twig reads `title`), as well as in `fields`')
+                        ->end()
+                        ->arrayNode('lists')
+                            ->info('Blocks that list contents, ready to use: name the block types and, if they differ from the Masilia ones, their fields. Nothing is on until its types are named.')
+                            ->children()
+                                ->arrayNode('auto_items')
+                                    ->info('A block with no items whose source is "auto" lists the latest contents of a type chosen in its fields')
+                                    ->children()
+                                        ->arrayNode('types')->info('The block types, e.g. [grid_cards, slider]')->scalarPrototype()->end()->end()
+                                        ->scalarNode('source_field')->info('A selection: the value below asks for the automatic list')->end()
+                                        ->scalarNode('source_value')->end()
+                                        ->scalarNode('type_field')->info('A selection: the content type to list')->end()
+                                        ->scalarNode('count_field')->end()
+                                        ->integerNode('default_count')->min(1)->end()
+                                    ->end()
+                                ->end()
+                                ->arrayNode('featured')
+                                    ->info('A block whose view type has a given value is shown by another template (the "Featured" grid as the latest news)')
+                                    ->children()
+                                        ->arrayNode('types')->info('The block types, e.g. [grid_cards]')->scalarPrototype()->end()->end()
+                                        ->scalarNode('field')->end()
+                                        ->scalarNode('value')->end()
+                                        ->scalarNode('template')->info('Relative to the templates of a theme')->end()
+                                    ->end()
+                                ->end()
+                                ->arrayNode('all_posts')
+                                    ->info('The block that lists the posts of the site with their filters (its first posts, its filters, the search app configuration)')
+                                    ->children()
+                                        ->arrayNode('types')->info('The block types, e.g. [all_posts]')->scalarPrototype()->end()->end()
+                                    ->end()
+                                ->end()
+                            ->end()
+                        ->end()
+                    ->end();
+
+        return $node;
+    }
+
+    private function rateLimit(): ArrayNodeDefinition
+    {
+        $node = (new TreeBuilder('rate_limit'))->getRootNode();
+        $node
+                    ->info('How often a visitor may use the public endpoints that send a mail (needs symfony/rate-limiter). Nothing is limited by default.')
+                    ->children()
+                        ->append($this->limit('forms_submit', 'POST /api/forms/submit'))
+                        ->append($this->limit('subscribe', 'POST /api/subscribe'))
                     ->end();
 
         return $node;

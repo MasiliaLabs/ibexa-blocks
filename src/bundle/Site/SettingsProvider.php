@@ -22,6 +22,8 @@ final readonly class SettingsProvider
 {
     private const NAMESPACE = 'masilia_ibexa_blocks';
 
+    public const FEATURED_TEMPLATE = 'blocks/latest_news.twig';
+
     public function __construct(private ConfigResolverInterface $config)
     {
     }
@@ -124,6 +126,79 @@ final readonly class SettingsProvider
             confirmationTemplate: (string) $this->get('newsletter.confirmation_template', $d->confirmationTemplate),
             statusTemplate: (string) $this->get('newsletter.status_template', $d->statusTemplate),
         );
+    }
+
+    /** @return list<string> The block types of a list ("auto_items", "featured", "all_posts") that the current site turns on */
+    public function listTypes(string $list): array
+    {
+        return array_values(array_map('strval', (array) $this->get('blocks.lists.' . $list . '.types', [])));
+    }
+
+    /**
+     * @return array{source_field: string, source_value: string, type_field: string, count_field: string, default_count: int}
+     */
+    public function autoItems(): array
+    {
+        $p = 'blocks.lists.auto_items.';
+
+        return [
+            'source_field' => (string) $this->get($p . 'source_field', 'item_source'),
+            'source_value' => (string) $this->get($p . 'source_value', 'auto'),
+            'type_field' => (string) $this->get($p . 'type_field', 'item_type'),
+            'count_field' => (string) $this->get($p . 'count_field', 'items_count'),
+            'default_count' => max(1, (int) $this->get($p . 'default_count', 3)),
+        ];
+    }
+
+    /**
+     * @return array{field: string, value: string, template: string}
+     */
+    public function featured(): array
+    {
+        $p = 'blocks.lists.featured.';
+
+        return [
+            'field' => (string) $this->get($p . 'field', 'view_type'),
+            'value' => (string) $this->get($p . 'value', 'Featured'),
+            'template' => (string) $this->get($p . 'template', self::FEATURED_TEMPLATE),
+        ];
+    }
+
+    /** @return list<string> The view types the bundle shows for the block types a theme names */
+    public function viewTypes(): array
+    {
+        return array_values(array_map('strval', (array) $this->get('blocks.view_types', ['blocks', 'block_item', 'line'])));
+    }
+
+    /** @return list<string> Block types the project renders itself */
+    public function handledByProject(): array
+    {
+        return array_values(array_map('strval', (array) $this->get('blocks.handled_by_project', [])));
+    }
+
+    public function flattenFields(): bool
+    {
+        return (bool) $this->get('blocks.flatten_fields', false);
+    }
+
+    /**
+     * @param list<string> $default
+     *
+     * @return list<string> Where the themes are
+     */
+    public function themeDirectories(array $default): array
+    {
+        return array_values(array_map('strval', (array) $this->get('themes.directories', $default)));
+    }
+
+    /**
+     * @param list<string> $always
+     *
+     * @return list<string> The directories of content types: those that are always read, then those of the site
+     */
+    public function modelDirectories(array $always): array
+    {
+        return array_values(array_unique([...$always, ...array_map('strval', (array) $this->get('model.directories', []))]));
     }
 
     /** Whether the newsletter is on for the current site. */

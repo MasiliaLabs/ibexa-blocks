@@ -29,8 +29,6 @@ final readonly class BlockController
         private BlockRegistry $registry,
         private BlockProviders $providers,
         private SettingsProvider $provider,
-        #[Autowire('%masilia_blocks.blocks.flatten_fields%')]
-        private bool $flattenFields = false,
     ) {
     }
 
@@ -67,7 +65,7 @@ final readonly class BlockController
         $page = $viewType === 'full' ? ['breadcrumb' => $block->breadcrumb(), 'link' => $block->link(), 'admin_meta' => $block->adminMeta(), 'blocks_field' => $this->conventions()->blocksField] : [];
 
         $view->addParameters(array_merge(
-            $this->flattenFields ? $fields : [],
+            $this->provider->flattenFields() ? $fields : [],
             $parameters,
             $page,
             ['block' => $block, 'fields' => $fields, 'item_link' => $block->link()],

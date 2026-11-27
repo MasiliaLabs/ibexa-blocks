@@ -16,6 +16,7 @@ use Masilia\Bundle\IbexaBlocks\MasiliaIbexaBlocksBundle;
 use Masilia\Bundle\IbexaBlocks\Search\LatestContents;
 use Masilia\Bundle\IbexaBlocks\Search\SearchService;
 use Masilia\Bundle\IbexaBlocks\Site\IbexaCacheTagger;
+use Masilia\Bundle\IbexaBlocks\RateLimit\RequestRateLimits;
 use Masilia\Bundle\IbexaBlocks\Site\SettingsProvider;
 use Masilia\Bundle\IbexaBlocks\Site\NovactiveMenuProvider;
 use Masilia\Bundle\IbexaBlocks\Site\ToolboxAdminMetaProvider;
@@ -71,11 +72,9 @@ final class MasiliaIbexaBlocksExtension extends Extension implements PrependExte
     {
         $config = $this->processConfiguration(new Configuration(), $configs);
 
-        $container->setParameter('masilia_blocks.blocks.view_types', $config['blocks']['view_types']);
-        $container->setParameter('masilia_blocks.model.directories', array_values(array_unique(['%kernel.project_dir%/config/content_model', ...$config['model']['directories']])));
-        $container->setParameter('masilia_blocks.themes.directories', $config['themes']['directories']);
-        $container->setParameter('masilia_blocks.blocks.handled_by_project', $config['blocks']['handled_by_project']);
-        $container->setParameter('masilia_blocks.blocks.flatten_fields', $config['blocks']['flatten_fields']);
+        // What a site that says nothing looks in; the settings of a site (themes.directories, model.directories) come over it.
+        $container->setParameter('masilia_blocks.model.directories', ['%kernel.project_dir%/config/content_model']);
+        $container->setParameter('masilia_blocks.themes.directories', ['%kernel.project_dir%/templates/themes']);
 
         $loader = new YamlFileLoader($container, new FileLocator(__DIR__ . '/../Resources/config'));
         $loader->load('default_settings.yaml');
@@ -87,9 +86,8 @@ final class MasiliaIbexaBlocksExtension extends Extension implements PrependExte
             $loader->load('newsletter.yaml');
         }
 
-        $container->setParameter('masilia_blocks.configured_templates', array_filter([(string) ($config['blocks']['lists']['featured']['template'] ?? '')]));
-        $this->registerLists($container, $config);
-        $this->registerRateLimits($container, $config['rate_limit']);
+        $this->registerLists($container, $scopes);
+        $container->register(RequestRateLimits::class, RequestRateLimits::class)->setArguments([new Reference(SettingsProvider::class), new Reference('cache.app')]);
 
         // The settings that change from one site to the next: read with the ConfigResolver, in the "masilia_ibexa_blocks" namespace.
         $processor = new ConfigurationProcessor($container, 'masilia_ibexa_blocks');
@@ -98,7 +96,7 @@ final class MasiliaIbexaBlocksExtension extends Extension implements PrependExte
         $processor->mapSetting('favicons', $config);
         // The sections read setting by setting, so that a site that says one leaves the others to its group or to "default".
         foreach ($scopes as $scope => $settings) {
-            foreach (['conventions', 'search', 'fields', 'forms', 'newsletter'] as $section) {
+            foreach (['conventions', 'search', 'fields', 'forms', 'newsletter', 'blocks', 'themes', 'model', 'rate_limit'] as $section) {
                 foreach (self::leaves((array) ($settings[$section] ?? []), $section) as $name => $value) {
                     $processor->getContextualizer()->setContextualParameter($name, $scope, $value);
                 }
@@ -129,14 +127,17 @@ final class MasiliaIbexaBlocksExtension extends Extension implements PrependExte
     }
 
     /**
-     * The blocks that list contents are on for the block types the project names: the providers are made here, with the field
-     * names of the settings, instead of being found by an attribute that could not know them.
+     * The providers of the blocks that list contents are always there, for the block types any scope names: each one answers
+     * only for the types (and with the field names) of the site the request is for.
      *
-     * @param array<string, mixed> $config
+     * @param array<string, array<string, mixed>> $scopes
      */
-    private function registerLists(ContainerBuilder $container, array $config): void
+    private function registerLists(ContainerBuilder $container, array $scopes): void
     {
-        $lists = $config['blocks']['lists'];
+        $typesOf = static fn (string $path): array => array_values(array_unique(array_merge([], ...array_map(
+            static fn (array $scope): array => array_values((array) (self::at($scope, $path) ?? [])),
+            array_values($scopes),
+        ))));
         $provide = static function (string $class, array $arguments, array $types, int $priority) use ($container): void {
             if ($types === []) {
                 return;
@@ -147,44 +148,40 @@ final class MasiliaIbexaBlocksExtension extends Extension implements PrependExte
             ]));
         };
 
-        $auto = $lists['auto_items'];
-        $provide(AutoItemsParameters::class, [new Reference(LatestContents::class), array_diff_key($auto, ['types' => 1]), new Reference(SettingsProvider::class)], $auto['types'], 10);
-        $featured = $lists['featured'];
-        $provide(FeaturedParameters::class, [array_diff_key($featured, ['types' => 1])], $featured['types'], 0);
-        $provide(AllPostsParameters::class, [new Reference(SearchService::class), new Reference(UrlGeneratorInterface::class)], $lists['all_posts']['types'], 0);
+        $settings = new Reference(SettingsProvider::class);
+        $provide(AutoItemsParameters::class, [new Reference(LatestContents::class), $settings], $typesOf('blocks.lists.auto_items.types'), 10);
+        $provide(FeaturedParameters::class, [$settings], $typesOf('blocks.lists.featured.types'), 0);
+        $provide(AllPostsParameters::class, [new Reference(SearchService::class), new Reference(UrlGeneratorInterface::class), $settings], $typesOf('blocks.lists.all_posts.types'), 0);
 
         // Contact forms: the provider builds the form from the block's matrix and mails the answers.
-        // The types of every scope: the provider answers only for the types of the current site.
-        $contact = array_values(array_unique(array_merge([], ...array_map(static fn (array $scope): array => array_values((array) ($scope['forms']['contact']['content_types'] ?? [])), array_values($config['system'] ?? [])))));
+        $contact = $typesOf('forms.contact.content_types');
         if ($contact !== []) {
             $container->setDefinition(ContactFormParameters::class, (new Definition(ContactFormParameters::class))
                 ->setAutowired(true)
                 ->addTag(MasiliaIbexaBlocksBundle::TAG_BLOCK_PARAMETERS, ['types' => implode(',', $contact), 'priority' => 0]));
         }
+
+        // The templates the theme check expects to find: the featured one of any scope.
+        $templates = [];
+        foreach ($scopes as $scope) {
+            if (self::at($scope, 'blocks.lists.featured.types')) {
+                $templates[] = (string) (self::at($scope, 'blocks.lists.featured.template') ?? SettingsProvider::FEATURED_TEMPLATE);
+            }
+        }
+        $container->setParameter('masilia_blocks.configured_templates', array_values(array_unique($templates)));
     }
 
-    /**
-     * The limits of the public endpoints that send a mail: a limiter for each one the site configures, kept in the application cache.
-     *
-     * @param array<string, array{limit?: int, interval?: string}> $limits
-     */
-    private function registerRateLimits(ContainerBuilder $container, array $limits): void
+    /** @param array<string, mixed> $scope */
+    private static function at(array $scope, string $path): mixed
     {
-        $factories = [];
-        foreach ($limits as $name => $limit) {
-            if ($limit === []) {
-                continue;
+        foreach (explode('.', $path) as $part) {
+            if (!is_array($scope) || !array_key_exists($part, $scope)) {
+                return null;
             }
-            if (!class_exists(\Symfony\Component\RateLimiter\RateLimiterFactory::class)) {
-                throw new \LogicException('masilia_ibexa_blocks.rate_limit needs symfony/rate-limiter: composer require symfony/rate-limiter');
-            }
-            $factories[$name] = new Definition(\Symfony\Component\RateLimiter\RateLimiterFactory::class, [
-                ['id' => 'masilia_blocks_' . $name, 'policy' => 'sliding_window', 'limit' => $limit['limit'], 'interval' => $limit['interval']],
-                new Definition(\Symfony\Component\RateLimiter\Storage\CacheStorage::class, [new Reference('cache.app')]),
-            ]);
+            $scope = $scope[$part];
         }
 
-        $container->register(\Masilia\Bundle\IbexaBlocks\RateLimit\RequestRateLimits::class, \Masilia\Bundle\IbexaBlocks\RateLimit\RequestRateLimits::class)->setArguments([$factories]);
+        return $scope;
     }
 
     /**

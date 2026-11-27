@@ -29,7 +29,7 @@ final class BlockViewProviderTest extends TestCase
         $loader = new ArrayLoader(array_combine(array_map(static fn (string $t) => '@ibexadesign/' . $t, $templates), array_fill(0, count($templates), '')));
         $registry = new BlockRegistry(new ThemeRegistry([]), new DesignChain($config, ['standard' => ['standard']]), $loader, TestSettings::fromParameters([]));
 
-        return new BlockViewProvider($registry, ['blocks', 'block_item', 'line']);
+        return new BlockViewProvider($registry, TestSettings::fromParameters([]));
     }
 
     private function view(string $type, string $viewType): ContentView

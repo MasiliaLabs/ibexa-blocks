@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Masilia\Bundle\IbexaBlocks\Block\Provider;
 
+use Masilia\Bundle\IbexaBlocks\Site\SettingsProvider;
 use Masilia\Bundle\IbexaBlocks\Content\RenderableContent;
 use Masilia\Bundle\IbexaBlocks\Search\SearchService;
 use Masilia\Contracts\IbexaBlocks\BlockViewParameters;
@@ -21,11 +22,16 @@ final readonly class AllPostsParameters implements BlockViewParameters
     public function __construct(
         private SearchService $search,
         private UrlGeneratorInterface $urls,
+        private SettingsProvider $provider,
     ) {
     }
 
     public function parameters(RenderableContent $block, array $fields, ViewState $view): array
     {
+        if (!in_array($block->type(), $this->provider->listTypes('all_posts'), true)) {
+            return [];
+        }
+
         $subtree = (string) ($view->parameters['parentSubtree'] ?? '');
         $contentTypes = array_values((array) ($fields['content_types'] ?? ['article']));
         $defaultSort = array_values((array) ($fields['default_sort'] ?? []))[0] ?? 'published_desc';

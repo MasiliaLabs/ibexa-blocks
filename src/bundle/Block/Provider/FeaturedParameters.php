@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Masilia\Bundle\IbexaBlocks\Block\Provider;
 
+use Masilia\Bundle\IbexaBlocks\Site\SettingsProvider;
 use Masilia\Bundle\IbexaBlocks\Content\RenderableContent;
 use Masilia\Contracts\IbexaBlocks\BlockViewParameters;
 use Masilia\IbexaBlocks\Block\ViewState;
@@ -14,17 +15,19 @@ use Masilia\IbexaBlocks\Block\ViewState;
  */
 final readonly class FeaturedParameters implements BlockViewParameters
 {
-    /**
-     * @param array{field: string, value: string, template: string} $settings The template is relative to the templates of a theme ("blocks/latest_news.twig")
-     */
-    public function __construct(private array $settings)
+    public function __construct(private SettingsProvider $provider)
     {
     }
 
     public function parameters(RenderableContent $block, array $fields, ViewState $view): array
     {
-        if ((array_values((array) ($fields[$this->settings['field']] ?? []))[0] ?? null) === $this->settings['value']) {
-            $view->useTemplate($this->settings['template']);
+        if (!in_array($block->type(), $this->provider->listTypes('featured'), true)) {
+            return [];
+        }
+
+        $settings = $this->provider->featured();
+        if ((array_values((array) ($fields[$settings['field']] ?? []))[0] ?? null) === $settings['value']) {
+            $view->useTemplate($settings['template']);
         }
 
         return [];

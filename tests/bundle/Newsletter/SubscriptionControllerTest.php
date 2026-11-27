@@ -141,7 +141,7 @@ final class SubscriptionControllerTest extends TestCase
 
     public function testTooManyRequestsFromOneAddressAreRefusedWithHowLongToWait(): void
     {
-        $limits = new \Masilia\Bundle\IbexaBlocks\RateLimit\RequestRateLimits(['subscribe' => new \Symfony\Component\RateLimiter\RateLimiterFactory(['id' => 's', 'policy' => 'sliding_window', 'limit' => 1, 'interval' => '1 hour'], new \Symfony\Component\RateLimiter\Storage\InMemoryStorage())]);
+        $limits = new \Masilia\Bundle\IbexaBlocks\RateLimit\RequestRateLimits(TestSettings::fromParameters(['masilia_ibexa_blocks:rate_limit.subscribe.limit' => 1, 'masilia_ibexa_blocks:rate_limit.subscribe.interval' => '1 hour']), new \Symfony\Component\Cache\Adapter\ArrayAdapter());
         $controller = $this->controller([], $limits);
         $request = static fn (): \Symfony\Component\HttpFoundation\Request => \Symfony\Component\HttpFoundation\Request::create('/api/subscribe', 'POST', server: ['REMOTE_ADDR' => '203.0.113.5'], content: 'not json');
 

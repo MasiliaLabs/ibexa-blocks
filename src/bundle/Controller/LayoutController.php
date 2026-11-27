@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Masilia\Bundle\IbexaBlocks\Controller;
 
+use Masilia\Bundle\IbexaBlocks\Site\SettingsProvider;
 use Ibexa\Contracts\Core\Repository\Exceptions\NotFoundException;
 use Ibexa\Contracts\Core\Repository\Exceptions\UnauthorizedException;
 use Ibexa\Contracts\Core\Repository\LocationService;
@@ -30,8 +31,7 @@ final readonly class LayoutController
         private LocationService $locations,
         private ConfigResolverInterface $config,
         private Environment $twig,
-        #[Autowire('%masilia_blocks.blocks.flatten_fields%')]
-        private bool $flattenFields = false,
+        private ?SettingsProvider $provider = null,
     ) {
     }
 
@@ -85,7 +85,7 @@ final readonly class LayoutController
         $fields = $layout?->fields()->all() ?? [];
 
         return new Response($this->twig->render($template, array_merge(
-            $this->flattenFields ? $fields : [],
+            ($this->provider?->flattenFields() ?? false) ? $fields : [],
             $parameters,
             ['content' => $this->layout->content(), 'layout' => $layout, 'fields' => $fields, 'admin_meta' => $layout?->adminMeta() ?? []],
         )));

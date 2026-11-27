@@ -33,14 +33,30 @@ final class ListProvidersTest extends TestCase
         };
     }
 
-    private function block(): RenderableContent
+    /** @param array<string, mixed> $more */
+    private function settings(array $more = []): \Masilia\Bundle\IbexaBlocks\Site\SettingsProvider
     {
-        return (new \ReflectionClass(RenderableContent::class))->newInstanceWithoutConstructor();
+        $p = ['masilia_ibexa_blocks:blocks.lists.auto_items.types' => ['grid_cards'], 'masilia_ibexa_blocks:blocks.lists.featured.types' => ['grid_cards']];
+        foreach ($more as $name => $value) {
+            $p['masilia_ibexa_blocks:' . $name] = $value;
+        }
+
+        return TestSettings::fromParameters($p);
+    }
+
+    private function block(string $type = 'grid_cards'): RenderableContent
+    {
+        $block = (new \ReflectionClass(RenderableContent::class))->newInstanceWithoutConstructor();
+        $content = $this->createStub(\Ibexa\Contracts\Core\Repository\Values\Content\Content::class);
+        $content->method('getContentType')->willReturn(new \Ibexa\Core\Repository\Values\ContentType\ContentType(['identifier' => $type]));
+        (new \ReflectionProperty(RenderableContent::class, 'content'))->setValue($block, $content);
+
+        return $block;
     }
 
     public function testABlockWithNoItemsAndAnAutomaticSourceListsTheLatestOfItsType(): void
     {
-        $provider = new AutoItemsParameters($this->lister(), self::AUTO, TestSettings::fromParameters([]));
+        $provider = new AutoItemsParameters($this->lister(), $this->settings());
 
         $parameters = $provider->parameters($this->block(), ['items' => [], 'item_source' => ['auto'], 'item_type' => ['article'], 'items_count' => 6], new ViewState('blocks'));
 
@@ -50,7 +66,7 @@ final class ListProvidersTest extends TestCase
 
     public function testTheDefaultCountIsUsedWhenTheBlockHasNone(): void
     {
-        $provider = new AutoItemsParameters($this->lister(), self::AUTO, TestSettings::fromParameters([]));
+        $provider = new AutoItemsParameters($this->lister(), $this->settings());
 
         $provider->parameters($this->block(), ['item_source' => ['auto'], 'item_type' => ['event']], new ViewState('blocks'));
 
@@ -59,7 +75,7 @@ final class ListProvidersTest extends TestCase
 
     public function testItemsOfItsOwnAManualSourceOrNoTypeLeaveTheBlockAlone(): void
     {
-        $provider = new AutoItemsParameters($this->lister(), self::AUTO, TestSettings::fromParameters([]));
+        $provider = new AutoItemsParameters($this->lister(), $this->settings());
         $view = new ViewState('blocks');
 
         self::assertSame([], $provider->parameters($this->block(), ['items' => ['x'], 'item_source' => ['auto'], 'item_type' => ['article']], $view));
@@ -70,7 +86,7 @@ final class ListProvidersTest extends TestCase
 
     public function testTheFieldsAreTheSettingsOnes(): void
     {
-        $provider = new AutoItemsParameters($this->lister(), ['source_field' => 'from', 'source_value' => 'latest', 'type_field' => 'what', 'count_field' => 'how_many', 'default_count' => 2], TestSettings::fromParameters(['masilia_ibexa_blocks:conventions.items_field' => 'cards']));
+        $provider = new AutoItemsParameters($this->lister(), $this->settings(['conventions.items_field' => 'cards', 'blocks.lists.auto_items.source_field' => 'from', 'blocks.lists.auto_items.source_value' => 'latest', 'blocks.lists.auto_items.type_field' => 'what', 'blocks.lists.auto_items.count_field' => 'how_many', 'blocks.lists.auto_items.default_count' => 2]));
 
         $parameters = $provider->parameters($this->block(), ['cards' => [], 'from' => ['latest'], 'what' => ['post'], 'how_many' => 4], new ViewState('blocks'));
 
@@ -80,7 +96,7 @@ final class ListProvidersTest extends TestCase
 
     public function testAFeaturedBlockIsShownByTheTemplateOfTheSettings(): void
     {
-        $provider = new FeaturedParameters(['field' => 'view_type', 'value' => 'Featured', 'template' => 'blocks/latest_news.twig']);
+        $provider = new FeaturedParameters($this->settings());
 
         $featured = new ViewState('blocks');
         self::assertSame([], $provider->parameters($this->block(), ['view_type' => ['Featured']], $featured));
@@ -89,5 +105,20 @@ final class ListProvidersTest extends TestCase
         $plain = new ViewState('blocks');
         $provider->parameters($this->block(), ['view_type' => ['Grid']], $plain);
         self::assertNull($plain->template());
+    }
+
+    public function testASiteAnswersOnlyForTheBlockTypesItNames(): void
+    {
+        $auto = new AutoItemsParameters($this->lister(), $this->settings());
+        $none = new AutoItemsParameters($this->lister(), TestSettings::fromParameters([]));
+        $fields = ['items' => [], 'item_source' => ['auto'], 'item_type' => ['article'], 'items_count' => 6];
+
+        self::assertSame(['items'], array_keys($auto->parameters($this->block(), $fields, new ViewState('blocks'))));
+        self::assertSame([], $auto->parameters($this->block('slider'), $fields, new ViewState('blocks')), 'a type the site does not name');
+        self::assertSame([], $none->parameters($this->block(), $fields, new ViewState('blocks')), 'a site that names none');
+
+        $state = new ViewState('blocks');
+        (new FeaturedParameters(TestSettings::fromParameters([])))->parameters($this->block(), ['view_type' => ['Featured']], $state);
+        self::assertNull($state->template(), 'the featured template is only for the sites that turn it on');
     }
 }

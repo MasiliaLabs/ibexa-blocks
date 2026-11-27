@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Masilia\Bundle\IbexaBlocks\Theme;
 
+use Masilia\Bundle\IbexaBlocks\Site\SettingsProvider;
 use Masilia\IbexaBlocks\Theme\InvalidThemeManifest;
 use Masilia\IbexaBlocks\Theme\ThemeManifest;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -22,28 +23,31 @@ final class ThemeRegistry
     private array $manifests = [];
 
     /**
-     * @param list<string> $directories Where the themes are: <directory>/<theme>/theme.yaml
+     * @param list<string> $directories Where the themes are when the site does not say (themes.directories): <directory>/<theme>/theme.yaml
      */
     public function __construct(
         #[Autowire('%masilia_blocks.themes.directories%')]
         private readonly array $directories,
+        private readonly ?SettingsProvider $settings = null,
     ) {
     }
 
     /** @return list<string> */
     public function directories(): array
     {
-        return $this->directories;
+        return $this->settings?->themeDirectories($this->directories) ?? $this->directories;
     }
 
     /** The manifest of a theme; null for a theme that has none (it then only overrides templates, which needs nothing said). */
     public function manifest(string $theme): ?ThemeManifest
     {
-        if (!array_key_exists($theme, $this->manifests)) {
-            $this->manifests[$theme] = $this->load($theme);
+        // Kept by the directories too: a worker serves sites that do not look in the same places.
+        $key = implode('|', $this->directories()) . '#' . $theme;
+        if (!array_key_exists($key, $this->manifests)) {
+            $this->manifests[$key] = $this->load($theme);
         }
 
-        return $this->manifests[$theme];
+        return $this->manifests[$key];
     }
 
     /**
@@ -52,7 +56,7 @@ final class ThemeRegistry
     public function names(): array
     {
         $names = [];
-        foreach ($this->directories as $directory) {
+        foreach ($this->directories() as $directory) {
             foreach (glob($directory . '/*/' . self::FILE) ?: [] as $file) {
                 $names[basename(dirname($file))] = true;
             }
@@ -65,7 +69,7 @@ final class ThemeRegistry
 
     private function load(string $theme): ?ThemeManifest
     {
-        foreach ($this->directories as $directory) {
+        foreach ($this->directories() as $directory) {
             $file = sprintf('%s/%s/%s', rtrim($directory, '/'), $theme, self::FILE);
             if (!is_file($file)) {
                 continue;

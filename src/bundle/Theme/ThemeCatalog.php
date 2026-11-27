@@ -16,7 +16,6 @@ final readonly class ThemeCatalog implements Themes
 {
     /**
      * @param array<string, list<string>> $designs
-     * @param list<string>                $handledByProject Block types the project renders itself: not required of a theme
      */
     public function __construct(
         private ThemeChecker $checker,
@@ -25,8 +24,6 @@ final readonly class ThemeCatalog implements Themes
         private SettingsProvider $provider,
         #[Autowire('%ibexa.design.list%')]
         private array $designs,
-        #[Autowire('%masilia_blocks.blocks.handled_by_project%')]
-        private array $handledByProject = [],
     ) {
     }
 
@@ -51,7 +48,7 @@ final readonly class ThemeCatalog implements Themes
         $blockTypes = [];
         try {
             foreach ($this->types->loadContentTypes($this->types->loadContentTypeGroupByIdentifier($this->conventions()->blockGroup)) as $type) {
-                if (!in_array($type->identifier, $this->handledByProject, true)) {
+                if (!in_array($type->identifier, $this->provider->handledByProject(), true)) {
                     $blockTypes[] = $type->identifier;
                 }
             }

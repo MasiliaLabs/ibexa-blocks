@@ -37,8 +37,6 @@ final class ThemeCheckCommand extends Command
         private readonly string $projectDir,
         #[Autowire('%ibexa.design.list%')]
         private readonly array $designs,
-        #[Autowire('%masilia_blocks.blocks.handled_by_project%')]
-        private readonly array $handledByProject = [],
     ) {
         parent::__construct();
     }
@@ -60,7 +58,7 @@ final class ThemeCheckCommand extends Command
         $blockTypes = [];
         try {
             foreach ($this->types->loadContentTypes($this->types->loadContentTypeGroupByIdentifier($this->conventions()->blockGroup)) as $type) {
-                if (!in_array($type->identifier, $this->handledByProject, true)) {
+                if (!in_array($type->identifier, $this->provider->handledByProject(), true)) {
                     $blockTypes[] = $type->identifier;
                 }
             }

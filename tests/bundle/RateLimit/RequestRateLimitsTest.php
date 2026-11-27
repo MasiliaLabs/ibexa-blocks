@@ -4,19 +4,20 @@ declare(strict_types=1);
 
 namespace Masilia\IbexaBlocks\Tests\bundle\RateLimit;
 
-use Masilia\Bundle\IbexaBlocks\DependencyInjection\MasiliaIbexaBlocksExtension;
 use Masilia\Bundle\IbexaBlocks\RateLimit\RequestRateLimits;
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Masilia\IbexaBlocks\Tests\Support\TestSettings;
+use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\RateLimiter\RateLimiterFactory;
-use Symfony\Component\RateLimiter\Storage\InMemoryStorage;
 
 final class RequestRateLimitsTest extends TestCase
 {
     private function limits(int $limit = 2): RequestRateLimits
     {
-        return new RequestRateLimits(['subscribe' => new RateLimiterFactory(['id' => 'subscribe', 'policy' => 'sliding_window', 'limit' => $limit, 'interval' => '10 minutes'], new InMemoryStorage())]);
+        return new RequestRateLimits(
+            TestSettings::fromParameters(['masilia_ibexa_blocks:rate_limit.subscribe.limit' => $limit, 'masilia_ibexa_blocks:rate_limit.subscribe.interval' => '10 minutes']),
+            new ArrayAdapter(),
+        );
     }
 
     private function from(string $address): Request
@@ -57,30 +58,15 @@ final class RequestRateLimitsTest extends TestCase
         }
     }
 
-    private function load(array $config): ContainerBuilder
+    public function testTheLimitIsThatOfTheSiteOfTheRequest(): void
     {
-        $container = new ContainerBuilder();
-        $container->setParameter('kernel.project_dir', sys_get_temp_dir());
-        $container->setParameter('kernel.environment', 'test');
-        $container->setParameter('ibexa.site_access.list', ['site']);
-        $container->setParameter('ibexa.site_access.groups', ['site_group' => ['site']]);
-        $container->setParameter('ibexa.site_access.groups_by_site_access', ['site' => ['site_group']]);
-        $container->setParameter('ibexa.site_access.config', []);
-        (new MasiliaIbexaBlocksExtension())->load([$config], $container);
+        $cache = new ArrayAdapter();
+        $strict = new RequestRateLimits(TestSettings::fromParameters(['masilia_ibexa_blocks:rate_limit.subscribe.limit' => 1, 'masilia_ibexa_blocks:rate_limit.subscribe.interval' => '1 hour']), $cache);
+        $free = new RequestRateLimits(TestSettings::fromParameters([]), $cache);
+        $request = $this->from('203.0.113.8');
 
-        return $container;
-    }
-
-    public function testTheExtensionBuildsALimiterForEachConfiguredName(): void
-    {
-        $limits = $this->load(['rate_limit' => ['subscribe' => ['limit' => 3, 'interval' => '1 hour']]])->getDefinition(RequestRateLimits::class);
-
-        self::assertSame(['subscribe'], array_keys($limits->getArgument(0)));
-        self::assertSame(3, $limits->getArgument(0)['subscribe']->getArgument(0)['limit']);
-    }
-
-    public function testNothingIsLimitedUnlessTheSiteSaysSo(): void
-    {
-        self::assertSame([], $this->load([])->getDefinition(RequestRateLimits::class)->getArgument(0));
+        self::assertNull($strict->check('subscribe', $request));
+        self::assertNotNull($strict->check('subscribe', $request));
+        self::assertNull($free->check('subscribe', $request), 'a site that sets no limit is never held up');
     }
 }
