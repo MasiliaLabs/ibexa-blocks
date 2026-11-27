@@ -10,6 +10,7 @@ use Masilia\IbexaBlocks\Form\ContactSettings;
 use Masilia\IbexaBlocks\Form\FormSettings;
 use Masilia\IbexaBlocks\Newsletter\NewsletterSettings;
 use Masilia\IbexaBlocks\Search\SearchSettings;
+use Symfony\Contracts\Service\ResetInterface;
 
 /**
  * The settings of the current site, read when they are used (a worker serves several sites: nothing is kept between two calls).
@@ -18,20 +19,44 @@ use Masilia\IbexaBlocks\Search\SearchSettings;
  * resolver of Ibexa gives the value of the siteaccess, else of its group, else of "default"; a setting nobody says keeps the
  * default of the value object. The address a site has in the registry of the sites comes before the configured one.
  */
-final readonly class SettingsProvider
+final class SettingsProvider implements ResetInterface
 {
     private const NAMESPACE = 'masilia_ibexa_blocks';
 
     public const FEATURED_TEMPLATE = 'blocks/latest_news.twig';
 
-    public function __construct(private ConfigResolverInterface $config)
+    /** @var array<string, array{0: bool, 1: mixed}> What the resolver said, for the request being served (see reset()) */
+    private array $found = [];
+
+    public function __construct(private readonly ConfigResolverInterface $config)
     {
+    }
+
+    /**
+     * Forgotten between two requests (Symfony resets the services tagged kernel.reset): a worker serves several sites, and the
+     * answer of the resolver is the one of the siteaccess of the request, which does not change while it is served.
+     */
+    public function reset(): void
+    {
+        $this->found = [];
+    }
+
+    /**
+     * @return array{0: bool, 1: mixed} Whether the setting is said for the site, and its value
+     */
+    private function lookup(string $name, string $namespace = self::NAMESPACE): array
+    {
+        return $this->found[$namespace . ':' . $name] ??= $this->config->hasParameter($name, $namespace)
+            ? [true, $this->config->getParameter($name, $namespace)]
+            : [false, null];
     }
 
     /** The value of a setting, or $default when no scope says it. */
     public function get(string $name, mixed $default = null): mixed
     {
-        return $this->config->hasParameter($name, self::NAMESPACE) ? $this->config->getParameter($name, self::NAMESPACE) : $default;
+        [$found, $value] = $this->lookup($name);
+
+        return $found ? $value : $default;
     }
 
     /** The settings (dotted names) of the section "conventions", each one a leaf; the tables are leaves as a whole. */
@@ -67,14 +92,15 @@ final readonly class SettingsProvider
     {
         $settings = [];
         foreach ($names as $name) {
-            if (!$this->config->hasParameter($section . '.' . $name, self::NAMESPACE)) {
+            [$found, $value] = $this->lookup($section . '.' . $name);
+            if (!$found) {
                 continue;
             }
             $target = &$settings;
             foreach (explode('.', $name) as $part) {
                 $target = &$target[$part];
             }
-            $target = $this->config->getParameter($section . '.' . $name, self::NAMESPACE);
+            $target = $value;
             unset($target);
         }
 
@@ -145,11 +171,9 @@ final readonly class SettingsProvider
     /** The name of the site in the registry of the sites, when it has one. */
     public function siteName(): ?string
     {
-        if ($this->config->hasParameter('site_name', 'masilia_ibexa_sites')) {
-            $name = $this->config->getParameter('site_name', 'masilia_ibexa_sites');
-            if (is_string($name) && $name !== '') {
-                return $name;
-            }
+        [$found, $name] = $this->lookup('site_name', 'masilia_ibexa_sites');
+        if ($found && is_string($name) && $name !== '') {
+            return $name;
         }
 
         return null;
@@ -244,8 +268,8 @@ final readonly class SettingsProvider
     private function address(string $name): ?string
     {
         foreach ([['site_email', 'masilia_ibexa_sites'], [$name, self::NAMESPACE]] as [$parameter, $namespace]) {
-            if ($this->config->hasParameter($parameter, $namespace)) {
-                $value = $this->config->getParameter($parameter, $namespace);
+            [$found, $value] = $this->lookup($parameter, $namespace);
+            if ($found) {
                 if (is_string($value) && $value !== '') {
                     return $value;
                 }

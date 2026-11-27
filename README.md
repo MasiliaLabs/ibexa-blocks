@@ -130,6 +130,7 @@ Each setting is read **when it is used**, for the site of the request, in this o
 - `newsletter.list_id` names the list of subscribers of a site (`default`): sites that give the same one share them, the others have their own, and the same address can subscribe to both.
 - The newsletter, the list blocks and the contact forms are always there once one scope turns them on; a site that did not answers `404` on the newsletter routes, and the list providers leave its blocks alone.
 - `themes.directories` and `model.directories` are those of the site; a command (`theme:check`, `model:install`) uses the default siteaccess, or `--siteaccess`. A package that adds directories writes them under `system.default`.
+- What the resolver says is kept for the request (the service is reset between two: `kernel.reset`), so reading a setting twice costs a lookup in an array; never keep a setting in a property of your own service.
 - Ibexa does not check the name of a scope: a typo is a setting no siteaccess reads. `bin/console masilia:blocks:settings [--siteaccess=<name> | --all] [--strict]` shows the value each setting has for a site and where it comes from (siteaccess, group or `default`; what nobody says is left to the code), what the registry of the sites says before them (`site_email`, `site_name`), warns of a scope that is no siteaccess nor group, and checks the icons of the site (`--strict` fails on a typo or a missing icon).
 
 ### A theme

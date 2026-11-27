@@ -92,4 +92,47 @@ final class SettingsProviderTest extends TestCase
         self::assertSame('the IMAL newsletter', $provider->newsletter()->listName);
         self::assertSame('our newsletter', TestSettings::fromParameters([])->newsletter()->listName);
     }
+
+    public function testWhatTheResolverSaidIsKeptForTheRequestAndForgottenAtTheNextOne(): void
+    {
+        $calls = 0;
+        $site = 'imal';
+        $resolver = new class($calls, $site) implements \Ibexa\Contracts\Core\SiteAccess\ConfigResolverInterface {
+            public function __construct(private int &$calls, private string &$site)
+            {
+            }
+
+            public function getParameter(string $paramName, ?string $namespace = null, ?string $scope = null): mixed
+            {
+                ++$this->calls;
+
+                return 'Subject of ' . $this->site;
+            }
+
+            public function hasParameter(string $paramName, ?string $namespace = null, ?string $scope = null): bool
+            {
+                return $paramName === 'newsletter.subject';
+            }
+
+            public function setDefaultNamespace(string $defaultNamespace): void
+            {
+            }
+
+            public function getDefaultNamespace(): string
+            {
+                return 'masilia_ibexa_blocks';
+            }
+        };
+        $provider = new \Masilia\Bundle\IbexaBlocks\Site\SettingsProvider($resolver);
+
+        self::assertSame('Subject of imal', $provider->newsletter()->subject);
+        $provider->newsletter();
+        $provider->newsletter();
+        self::assertSame(1, $calls, 'asked once for the request');
+
+        $site = 'fossil';
+        self::assertSame('Subject of imal', $provider->newsletter()->subject, 'the siteaccess does not change within a request');
+        $provider->reset();
+        self::assertSame('Subject of fossil', $provider->newsletter()->subject, 'a worker that serves another site starts again');
+    }
 }
