@@ -32,6 +32,12 @@ parameters:
             path: src/bundle/Form/MatrixFormBuilder.php
             reportUnmatched: false
 
+        # Ibexa documents the dates of a content as never null, but ContentDomainMapper gives null for one that was never published (the
+        # preview of a first draft): the return type stays nullable.
+        -
+            identifier: return.unusedType
+            path: src/bundle/Content/RenderableContent.php
+
         # The ORM sets the id, the code only reads it.
         -
             identifier: property.unusedType
