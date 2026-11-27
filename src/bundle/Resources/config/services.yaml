@@ -30,18 +30,12 @@ services:
     Masilia\Bundle\IbexaBlocks\Controller\SearchController: ~
 
     # Forms submitted by mail.
-    Masilia\IbexaBlocks\Form\FormSettings:
-        factory: ['Masilia\IbexaBlocks\Form\FormSettings', 'fromSettings']
-        arguments: ['%masilia_blocks.forms%']
     Masilia\Bundle\IbexaBlocks\Mail\:
         resource: '../../Mail/'
         exclude: '../../Mail/FormDefinition.php'
     Masilia\Bundle\IbexaBlocks\Controller\FormSubmitController: ~
 
     # Contact forms (a matrix of questions on the page): the settings, the builder; the provider is made by the extension.
-    Masilia\IbexaBlocks\Form\ContactSettings:
-        factory: ['Masilia\IbexaBlocks\Form\ContactSettings', 'fromSettings']
-        arguments: ['%masilia_blocks.forms%']
     Masilia\Bundle\IbexaBlocks\Form\MatrixFormBuilder: ~
 
     # `siteaccess_in_group('...')` in the `condition` of a route (the search page is not matched on the admin siteaccesses).

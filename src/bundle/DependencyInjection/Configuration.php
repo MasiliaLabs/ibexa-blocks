@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Masilia\Bundle\IbexaBlocks\DependencyInjection;
 
 use Ibexa\Bundle\Core\DependencyInjection\Configuration\SiteAccessAware;
+use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
 final class Configuration extends SiteAccessAware\Configuration
@@ -29,7 +30,10 @@ final class Configuration extends SiteAccessAware\Configuration
                     ->scalarNode('footer')->end()
                     ->scalarNode('footer_bottom')->end()
                 ->end()
-            ->end();
+            ->end()
+            // No default in these nodes: a scope that does not say a setting leaves it to the scope below (siteaccess, group, default).
+            ->append($this->forms())
+            ->append($this->newsletter());
 
         $root
             ->children()
@@ -187,47 +191,6 @@ final class Configuration extends SiteAccessAware\Configuration
                         ->scalarNode('auto_item_default_sort_field')->defaultValue('title')->end()
                     ->end()
                 ->end()
-                ->arrayNode('forms')
-                    ->info('The forms of the site that visitors can submit by mail. Nothing is accepted for a content type not listed here.')
-                    ->addDefaultsIfNotSet()
-                    ->children()
-                        ->arrayNode('content_types')->info('Content types of the forms (a block that holds recipients and a sender)')->scalarPrototype()->end()->end()
-                        ->scalarNode('recipients_field')->defaultValue('recipients_email')->end()
-                        ->scalarNode('sender_field')->defaultValue('sender_email')->end()
-                        ->scalarNode('title_field')->defaultValue('title')->end()
-                        ->scalarNode('from_address')->defaultNull()->info('Used when a form has no valid sender of its own')->end()
-                        ->scalarNode('template')->defaultValue('emails/form_submission.html.twig')->info('Relative to the templates of the theme')->end()
-                        ->integerNode('max_fields')->defaultValue(60)->end()
-                        ->integerNode('max_length')->defaultValue(5000)->end()
-                        ->arrayNode('contact')
-                            ->info('Contact forms: a block whose matrix of questions is a form on the page, mailed to the recipients the block names')
-                            ->addDefaultsIfNotSet()
-                            ->children()
-                                ->arrayNode('content_types')->info('The block types that are contact forms, e.g. [form]')->scalarPrototype()->end()->defaultValue([])->end()
-                                ->scalarNode('fields_field')->defaultValue('fields')->info('The matrix: label, type (text, email, textarea, select, radio, checkbox, tel, number, date, file), is_required, values')->end()
-                                ->scalarNode('recipients_field')->defaultValue('recipients')->end()
-                                ->scalarNode('sender_field')->defaultValue('sender')->end()
-                                ->scalarNode('success_field')->defaultValue('success_message')->end()
-                                ->scalarNode('error_field')->defaultValue('error_message')->end()
-                                ->scalarNode('template')->defaultValue('emails/contact.twig')->info('Mail to the recipients (blocks subject and body), relative to the templates of the theme')->end()
-                                ->scalarNode('confirmation_template')->defaultValue('emails/confirmation.twig')->info('Mail to the visitor, when one answer is an email address')->end()
-                                ->booleanNode('captcha')->defaultTrue()->info('Needs gregwar/captcha-bundle; ignored without it')->end()
-                            ->end()
-                        ->end()
-                    ->end()
-                ->end()
-                ->arrayNode('newsletter')
-                    ->info('Subscribing to a newsletter with a confirmation mail (POST /api/subscribe, /subscription/confirm/{token}, /subscription/unsubscribe/{token}). Needs doctrine/orm and the routes of routing_newsletter.yaml.')
-                    ->addDefaultsIfNotSet()
-                    ->children()
-                        ->booleanNode('enabled')->defaultFalse()->end()
-                        ->scalarNode('from_address')->defaultNull()->info('The confirmation mail is sent from it (forms.from_address when null)')->end()
-                        ->scalarNode('subject')->defaultValue('Confirm your subscription')->end()
-                        ->scalarNode('list_name')->defaultValue('our newsletter')->info('What the visitor subscribed to, in the page that confirms it')->end()
-                        ->scalarNode('confirmation_template')->defaultValue('emails/subscription_confirmation.html.twig')->info('Relative to the templates of the theme: has confirmUrl and subscriber')->end()
-                        ->scalarNode('status_template')->defaultValue('emails/subscription_status.html.twig')->info('The page of the links of the mails: has status (success|info|error), title and message')->end()
-                    ->end()
-                ->end()
                 ->arrayNode('fields')
                     ->info('How the values of fields reach the templates')
                     ->addDefaultsIfNotSet()
@@ -263,6 +226,56 @@ final class Configuration extends SiteAccessAware\Configuration
                 ->integerNode('limit')->isRequired()->min(1)->end()
                 ->scalarNode('interval')->isRequired()->cannotBeEmpty()->end()
             ->end();
+
+        return $node;
+    }
+
+    private function forms(): ArrayNodeDefinition
+    {
+        $node = (new TreeBuilder('forms'))->getRootNode();
+        $node
+                ->info('The forms of the site that visitors can submit by mail. Nothing is accepted for a content type not listed here.')
+                ->children()
+                    ->arrayNode('content_types')->info('Content types of the forms (a block that holds recipients and a sender)')->scalarPrototype()->end()->end()
+                    ->scalarNode('recipients_field')->end()
+                    ->scalarNode('sender_field')->end()
+                    ->scalarNode('title_field')->end()
+                    ->scalarNode('from_address')->info('Used when a form has no valid sender of its own')->end()
+                    ->scalarNode('template')->info('Relative to the templates of the theme')->end()
+                    ->integerNode('max_fields')->end()
+                    ->integerNode('max_length')->end()
+                    ->arrayNode('contact')
+                        ->info('Contact forms: a block whose matrix of questions is a form on the page, mailed to the recipients the block names')
+                        ->children()
+                            ->arrayNode('content_types')->info('The block types that are contact forms, e.g. [form]')->scalarPrototype()->end()->end()
+                            ->scalarNode('fields_field')->info('The matrix: label, type (text, email, textarea, select, radio, checkbox, tel, number, date, file), is_required, values')->end()
+                            ->scalarNode('recipients_field')->end()
+                            ->scalarNode('sender_field')->end()
+                            ->scalarNode('success_field')->end()
+                            ->scalarNode('error_field')->end()
+                            ->scalarNode('template')->info('Mail to the recipients (blocks subject and body), relative to the templates of the theme')->end()
+                            ->scalarNode('confirmation_template')->info('Mail to the visitor, when one answer is an email address')->end()
+                            ->booleanNode('captcha')->info('Needs gregwar/captcha-bundle; ignored without it')->end()
+                        ->end()
+                    ->end()
+                ->end();
+
+        return $node;
+    }
+
+    private function newsletter(): ArrayNodeDefinition
+    {
+        $node = (new TreeBuilder('newsletter'))->getRootNode();
+        $node
+                ->info('Subscribing to a newsletter with a confirmation mail (POST /api/subscribe, /subscription/confirm/{token}, /subscription/unsubscribe/{token}). Needs doctrine/orm and the routes of routing_newsletter.yaml.')
+                ->children()
+                    ->booleanNode('enabled')->end()
+                    ->scalarNode('from_address')->info('The confirmation mail is sent from it (forms.from_address when null)')->end()
+                    ->scalarNode('subject')->end()
+                    ->scalarNode('list_name')->info('What the visitor subscribed to, in the page that confirms it')->end()
+                    ->scalarNode('confirmation_template')->info('Relative to the templates of the theme: has confirmUrl and subscriber')->end()
+                    ->scalarNode('status_template')->info('The page of the links of the mails: has status (success|info|error), title and message')->end()
+                ->end();
 
         return $node;
     }

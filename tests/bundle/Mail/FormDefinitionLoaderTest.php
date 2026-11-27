@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Masilia\IbexaBlocks\Tests\bundle\Mail;
 
+use Masilia\IbexaBlocks\Tests\Support\TestSettings;
 use Ibexa\Contracts\Core\Repository\ContentService;
 use Ibexa\Contracts\Core\Repository\LocationService;
 use Ibexa\Core\Base\Exceptions\NotFoundException;
@@ -28,7 +29,7 @@ final class FormDefinitionLoaderTest extends TestCase
         $contents->method('loadContent')->willThrowException($failure);
         $services = new RenderableServices(new FieldRendererRegistry(new ServiceLocator([])), $this->createStub(LinkProvider::class), $this->createStub(BreadcrumbProvider::class), $this->createStub(AdminMetaProvider::class), $this->createStub(CacheTagger::class));
 
-        return new FormDefinitionLoader(new ContentFactory($contents, $this->createStub(LocationService::class), $services), new FormSettings(['form']), $logger);
+        return new FormDefinitionLoader(new ContentFactory($contents, $this->createStub(LocationService::class), $services), TestSettings::provider(new FormSettings(['form'])), $logger);
     }
 
     public function testAFormThatIsNotThereIsUnknownWithoutAFuss(): void

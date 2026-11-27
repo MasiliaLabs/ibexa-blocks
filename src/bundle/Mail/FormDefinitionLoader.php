@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Masilia\Bundle\IbexaBlocks\Mail;
 
+use Masilia\Bundle\IbexaBlocks\Site\SettingsProvider;
 use Masilia\Bundle\IbexaBlocks\Content\ContentFactory;
 use Masilia\IbexaBlocks\Form\FormSettings;
 use Psr\Log\LoggerInterface;
@@ -18,7 +19,7 @@ final readonly class FormDefinitionLoader
 {
     public function __construct(
         private ContentFactory $factory,
-        private FormSettings $settings,
+        private SettingsProvider $provider,
         private LoggerInterface $logger = new NullLogger(),
     ) {
     }
@@ -27,13 +28,13 @@ final readonly class FormDefinitionLoader
     {
         try {
             $form = $this->factory->fromContentId($formId);
-            if ($form->isHidden() || $form->isTrashed() || !in_array($form->type(), $this->settings->contentTypes, true)) {
+            if ($form->isHidden() || $form->isTrashed() || !in_array($form->type(), $this->settings()->contentTypes, true)) {
                 return null;
             }
             $fields = $form->fields();
-            $recipients = self::emails($fields->get($this->settings->recipientsField));
-            $sender = self::emails($fields->get($this->settings->senderField))[0] ?? $this->settings->fromAddress;
-            $title = $fields->get($this->settings->titleField);
+            $recipients = self::emails($fields->get($this->settings()->recipientsField));
+            $sender = self::emails($fields->get($this->settings()->senderField))[0] ?? $this->settings()->fromAddress;
+            $title = $fields->get($this->settings()->titleField);
         } catch (\Ibexa\Contracts\Core\Repository\Exceptions\NotFoundException|\Ibexa\Contracts\Core\Repository\Exceptions\UnauthorizedException) {
             return null;
         } catch (Throwable $e) {
@@ -65,5 +66,10 @@ final readonly class FormDefinitionLoader
         }
 
         return array_values(array_unique($found));
+    }
+
+    private function settings(): FormSettings
+    {
+        return $this->provider->forms();
     }
 }

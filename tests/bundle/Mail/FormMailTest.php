@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Masilia\IbexaBlocks\Tests\bundle\Mail;
 
+use Masilia\IbexaBlocks\Tests\Support\TestSettings;
 use Ibexa\Contracts\Core\Repository\ContentService;
 use Ibexa\Contracts\Core\Repository\LocationService;
 use Masilia\Bundle\IbexaBlocks\Content\ContentFactory;
@@ -61,7 +62,7 @@ final class FormMailTest extends TestCase
         $contents->method('loadContent')->willReturn($content);
         $factory = new ContentFactory($contents, $this->createMock(LocationService::class), new RenderableServices($registry, $links, $trail, new NullAdminMetaProvider(), new NullCacheTagger()));
 
-        $settings = new FormSettings(contentTypes: ['steps_form'], fromAddress: 'fallback@site.org');
+        $settings = TestSettings::provider(new FormSettings(contentTypes: ['steps_form'], fromAddress: 'fallback@site.org'));
         $mailer = $this->createMock(MailerInterface::class);
         $mailer->method('send')->willReturnCallback(function (Email $email): void { $this->sent[] = $email; });
         $twig = new Environment(new ArrayLoader(['@ibexadesign/emails/form_submission.html.twig' => '<h1>{{ formTitle }}</h1>{% for k, v in formData %}<p>{{ k }}: {{ v }}</p>{% endfor %}']));
@@ -118,8 +119,8 @@ final class FormMailTest extends TestCase
     {
         $controller = $this->controller();
         $ref = new \ReflectionProperty($controller, 'mailer');
-        $failing = new FormMailer(new class() implements MailerInterface { public function send(\Symfony\Component\Mime\RawMessage $message, ?\Symfony\Component\Mailer\Envelope $envelope = null): void { throw new \RuntimeException('smtp password is hunter2'); } }, new Environment(new ArrayLoader(['@ibexadesign/emails/form_submission.html.twig' => 'x'])), new FormSettings());
-        $broken = new FormSubmitController((new \ReflectionProperty($controller, 'forms'))->getValue($controller), $failing, new FormSettings(), new NullLogger());
+        $failing = new FormMailer(new class() implements MailerInterface { public function send(\Symfony\Component\Mime\RawMessage $message, ?\Symfony\Component\Mailer\Envelope $envelope = null): void { throw new \RuntimeException('smtp password is hunter2'); } }, new Environment(new ArrayLoader(['@ibexadesign/emails/form_submission.html.twig' => 'x'])), TestSettings::provider(new FormSettings()));
+        $broken = new FormSubmitController((new \ReflectionProperty($controller, 'forms'))->getValue($controller), $failing, TestSettings::provider(new FormSettings()), new NullLogger());
 
         $response = $broken->submit($this->post(['formId' => 42, 'formData' => ['a' => 'b']]));
 

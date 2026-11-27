@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Masilia\IbexaBlocks\Tests\bundle\Newsletter;
 
+use Masilia\IbexaBlocks\Tests\Support\TestSettings;
 use Masilia\Bundle\IbexaBlocks\Entity\Subscriber;
 use Masilia\Bundle\IbexaBlocks\Newsletter\SubscriberStore;
 use Masilia\Bundle\IbexaBlocks\Newsletter\SubscriptionMailer;
@@ -69,7 +70,7 @@ final class SubscriptionsTest extends TestCase
 
             public function getContext(): \Symfony\Component\Routing\RequestContext { return new \Symfony\Component\Routing\RequestContext(); }
         };
-        $settings = new NewsletterSettings($from, 'Confirm please', 'the Example newsletter');
+        $settings = TestSettings::provider(newsletter: new NewsletterSettings($from, 'Confirm please', 'the Example newsletter'));
 
         return new Subscriptions($store, new SubscriptionMailer($mailer, $twig, $settings), $urls, $settings, new NullLogger());
     }

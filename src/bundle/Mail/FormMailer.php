@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Masilia\Bundle\IbexaBlocks\Mail;
 
+use Masilia\Bundle\IbexaBlocks\Site\SettingsProvider;
 use Masilia\IbexaBlocks\Form\FormSettings;
 use Masilia\IbexaBlocks\Form\FormSubmission;
 use Symfony\Component\Mailer\MailerInterface;
@@ -17,13 +18,13 @@ final readonly class FormMailer
     public function __construct(
         private MailerInterface $mailer,
         private Environment $twig,
-        private FormSettings $settings,
+        private SettingsProvider $provider,
     ) {
     }
 
     public function send(FormDefinition $form, FormSubmission $submission): void
     {
-        $html = $this->twig->render('@ibexadesign/' . ltrim($this->settings->template, '/'), [
+        $html = $this->twig->render('@ibexadesign/' . ltrim($this->settings()->template, '/'), [
             'formTitle' => $form->title,
             'formData' => $submission->answers,
             'submittedAt' => new \DateTimeImmutable(),
@@ -37,5 +38,10 @@ final readonly class FormMailer
             ->html($html);
 
         $this->mailer->send($email);
+    }
+
+    private function settings(): FormSettings
+    {
+        return $this->provider->forms();
     }
 }

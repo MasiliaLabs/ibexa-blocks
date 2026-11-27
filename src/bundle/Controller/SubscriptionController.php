@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Masilia\Bundle\IbexaBlocks\Controller;
 
+use Masilia\Bundle\IbexaBlocks\Site\SettingsProvider;
 use Masilia\Bundle\IbexaBlocks\Newsletter\Subscriptions;
 use Masilia\Bundle\IbexaBlocks\Newsletter\SubscriptionResult;
 use Masilia\Bundle\IbexaBlocks\RateLimit\RequestRateLimits;
@@ -12,6 +13,7 @@ use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Attribute\Route;
 use Twig\Environment;
 
@@ -20,7 +22,7 @@ final readonly class SubscriptionController
 {
     public function __construct(
         private Subscriptions $subscriptions,
-        private NewsletterSettings $settings,
+        private SettingsProvider $provider,
         private Environment $twig,
         private LoggerInterface $logger,
         private RequestRateLimits $limits = new RequestRateLimits(),
@@ -30,6 +32,7 @@ final readonly class SubscriptionController
     #[Route('/api/subscribe', name: 'api_subscribe', methods: ['POST'])]
     public function subscribe(Request $request): JsonResponse
     {
+        $this->assertEnabled();
         if (($wait = $this->limits->check('subscribe', $request)) !== null) {
             return new JsonResponse(['success' => false, 'message' => 'Too many requests. Please try again later.'], Response::HTTP_TOO_MANY_REQUESTS, ['Retry-After' => (string) $wait]);
         }
@@ -57,6 +60,7 @@ final readonly class SubscriptionController
     #[Route('/subscription/confirm/{token}', name: 'subscription_confirm', methods: ['GET'])]
     public function confirm(string $token): Response
     {
+        $this->assertEnabled();
         $result = $this->subscriptions->confirm($token);
 
         return $this->page($result, $result->success ? 'Subscription Confirmed!' : 'Invalid Link');
@@ -69,6 +73,7 @@ final readonly class SubscriptionController
     #[Route('/subscription/unsubscribe/{token}', name: 'subscription_unsubscribe', methods: ['GET'])]
     public function confirmUnsubscribe(string $token): Response
     {
+        $this->assertEnabled();
         if (!$this->subscriptions->canUnsubscribe($token)) {
             return $this->page($this->subscriptions->unsubscribe($token), 'Invalid Link', 'info');
         }
@@ -78,7 +83,7 @@ final readonly class SubscriptionController
 
         return new Response($template->render([
             'title' => 'Unsubscribe',
-            'message' => sprintf('Do you want to stop receiving %s?', $this->settings->listName),
+            'message' => sprintf('Do you want to stop receiving %s?', $this->settings()->listName),
             'button' => 'Yes, unsubscribe me',
         ]));
     }
@@ -86,6 +91,7 @@ final readonly class SubscriptionController
     #[Route('/subscription/unsubscribe/{token}', name: 'subscription_unsubscribe_confirmed', methods: ['POST'])]
     public function unsubscribe(string $token): Response
     {
+        $this->assertEnabled();
         $result = $this->subscriptions->unsubscribe($token);
 
         return $this->page($result, $result->success ? 'Unsubscribed' : 'Invalid Link', 'info');
@@ -93,10 +99,23 @@ final readonly class SubscriptionController
 
     private function page(SubscriptionResult $result, string $title, string $successStatus = 'success'): Response
     {
-        return new Response($this->twig->render('@ibexadesign/' . ltrim($this->settings->statusTemplate, '/'), [
+        return new Response($this->twig->render('@ibexadesign/' . ltrim($this->settings()->statusTemplate, '/'), [
             'status' => $result->success ? $successStatus : 'error',
             'title' => $title,
             'message' => $result->message,
         ]), $result->status);
+    }
+
+    private function settings(): NewsletterSettings
+    {
+        return $this->provider->newsletter();
+    }
+
+    /** The routes exist for every site once one turns the newsletter on: the others answer as if there were none. */
+    private function assertEnabled(): void
+    {
+        if (!$this->provider->newsletterEnabled()) {
+            throw new NotFoundHttpException();
+        }
     }
 }

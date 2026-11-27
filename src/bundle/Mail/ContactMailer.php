@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Masilia\Bundle\IbexaBlocks\Mail;
 
+use Masilia\Bundle\IbexaBlocks\Site\SettingsProvider;
 use Masilia\IbexaBlocks\Form\ContactSettings;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -24,7 +25,7 @@ final readonly class ContactMailer
         private MailerInterface $mailer,
         private Environment $twig,
         private RequestStack $requests,
-        private ContactSettings $settings,
+        private SettingsProvider $provider,
         private LoggerInterface $logger,
     ) {
     }
@@ -37,13 +38,13 @@ final readonly class ContactMailer
     public function send(array $recipients, ?string $sender, array $fields, array $answers): void
     {
         $recipients = array_values(array_filter(array_map('trim', $recipients), static fn (string $r): bool => $r !== ''));
-        $sender ??= $this->settings->fromAddress;
+        $sender ??= $this->settings()->fromAddress;
         if ($recipients === [] || $sender === null) {
             return;
         }
 
         $parameters = $fields + ['form_data' => $answers, 'full_name' => self::contactName($answers)];
-        $template = $this->twig->load('@ibexadesign/' . ltrim($this->settings->template, '/'));
+        $template = $this->twig->load('@ibexadesign/' . ltrim($this->settings()->template, '/'));
 
         $email = (new Email())
             ->from(new Address($sender))
@@ -55,7 +56,7 @@ final readonly class ContactMailer
         $confirmation = null;
         $visitor = self::visitorEmail($answers);
         if ($visitor !== null) {
-            $confirmationTemplate = $this->twig->load('@ibexadesign/' . ltrim($this->settings->confirmationTemplate, '/'));
+            $confirmationTemplate = $this->twig->load('@ibexadesign/' . ltrim($this->settings()->confirmationTemplate, '/'));
             $confirmation = (new Email())
                 ->from(new Address($sender))
                 ->to(new Address($visitor))
@@ -68,10 +69,10 @@ final readonly class ContactMailer
             if ($confirmation !== null) {
                 $this->mailer->send($confirmation);
             }
-            $this->flash('email_success', $fields[$this->settings->successField] ?? null);
+            $this->flash('email_success', $fields[$this->settings()->successField] ?? null);
         } catch (TransportExceptionInterface $e) {
             $this->logger->error('Contact form not sent: {message}', ['message' => $e->getMessage(), 'exception' => $e]);
-            $this->flash('email_error', $fields[$this->settings->errorField] ?? null);
+            $this->flash('email_error', $fields[$this->settings()->errorField] ?? null);
         }
     }
 
@@ -119,5 +120,10 @@ final readonly class ContactMailer
         $ascii = iconv('UTF-8', 'ASCII//TRANSLIT', $cleaned);
 
         return strtolower(trim($ascii === false ? $cleaned : $ascii));
+    }
+
+    private function settings(): ContactSettings
+    {
+        return $this->provider->contact();
     }
 }

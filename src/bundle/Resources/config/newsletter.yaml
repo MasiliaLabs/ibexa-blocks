@@ -1,13 +1,9 @@
-# Loaded when masilia_ibexa_blocks.newsletter.enabled is true.
+# Loaded when masilia_ibexa_blocks.system.<scope>.newsletter.enabled is true for one scope at least.
 services:
     _defaults:
         autowire: true
         autoconfigure: true
         public: false
-
-    Masilia\IbexaBlocks\Newsletter\NewsletterSettings:
-        factory: ['Masilia\IbexaBlocks\Newsletter\NewsletterSettings', 'fromSettings']
-        arguments: ['%masilia_blocks.newsletter%']
 
     Masilia\Bundle\IbexaBlocks\Newsletter\:
         resource: '../../Newsletter/'

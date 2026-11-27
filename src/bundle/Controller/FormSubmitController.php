@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Masilia\Bundle\IbexaBlocks\Controller;
 
+use Masilia\Bundle\IbexaBlocks\Site\SettingsProvider;
 use Masilia\Bundle\IbexaBlocks\Mail\FormDefinitionLoader;
 use Masilia\Bundle\IbexaBlocks\Mail\FormMailer;
 use Masilia\Bundle\IbexaBlocks\RateLimit\RequestRateLimits;
@@ -24,7 +25,7 @@ final readonly class FormSubmitController
     public function __construct(
         private FormDefinitionLoader $forms,
         private FormMailer $mailer,
-        private FormSettings $settings,
+        private SettingsProvider $provider,
         private LoggerInterface $logger,
         private RequestRateLimits $limits = new RequestRateLimits(),
     ) {
@@ -39,7 +40,7 @@ final readonly class FormSubmitController
 
         try {
             $body = json_decode($request->getContent(), true, 512, JSON_THROW_ON_ERROR);
-            $submission = FormSubmission::fromArray(is_array($body) ? $body : [], $this->settings);
+            $submission = FormSubmission::fromArray(is_array($body) ? $body : [], $this->settings());
         } catch (\JsonException) {
             return new JsonResponse(['success' => false, 'message' => 'Invalid request data'], Response::HTTP_BAD_REQUEST);
         } catch (\InvalidArgumentException $e) {
@@ -61,5 +62,10 @@ final readonly class FormSubmitController
         $this->logger->info('Form submitted', ['form' => $form->id, 'answers' => count($submission->answers)]);
 
         return new JsonResponse(['success' => true, 'message' => 'Form submitted successfully']);
+    }
+
+    private function settings(): FormSettings
+    {
+        return $this->provider->forms();
     }
 }

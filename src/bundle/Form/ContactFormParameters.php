@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Masilia\Bundle\IbexaBlocks\Form;
 
+use Masilia\Bundle\IbexaBlocks\Site\SettingsProvider;
 use Masilia\Bundle\IbexaBlocks\Content\RenderableContent;
 use Masilia\Bundle\IbexaBlocks\Mail\ContactMailer;
 use Masilia\Contracts\IbexaBlocks\BlockViewParameters;
@@ -26,14 +27,18 @@ final readonly class ContactFormParameters implements BlockViewParameters
         private MatrixFormBuilder $builder,
         private ContactMailer $mailer,
         private RequestStack $requests,
-        private ContactSettings $settings,
+        private SettingsProvider $provider,
     ) {
     }
 
     public function parameters(RenderableContent $block, array $fields, ViewState $view): array
     {
+        if (!in_array($block->type(), $this->settings()->contentTypes, true)) {
+            return [];
+        }
+
         $rows = [];
-        foreach ((array) ($fields[$this->settings->fieldsField] ?? []) as $row) {
+        foreach ((array) ($fields[$this->settings()->fieldsField] ?? []) as $row) {
             if (!is_array($row) || !isset($row['label'])) {
                 continue;
             }
@@ -48,15 +53,15 @@ final readonly class ContactFormParameters implements BlockViewParameters
         $form = $this->builder->build($rows, [
             'attr' => ['id' => 'contact-form', 'name' => 'contact', 'novalidate' => 'novalidate', 'class' => 'contact-page__form', 'label' => false, 'compound' => true],
             'csrf_protection' => true,
-        ], $this->settings->captcha);
+        ], $this->settings()->captcha);
 
         $request = $this->requests->getMainRequest();
         if ($request !== null) {
             $form->handleRequest($request);
             if ($form->isSubmitted() && $form->isValid()) {
                 $this->mailer->send(
-                    ContactAddresses::from($fields[$this->settings->recipientsField] ?? null),
-                    ContactAddresses::from($fields[$this->settings->senderField] ?? null)[0] ?? null,
+                    ContactAddresses::from($fields[$this->settings()->recipientsField] ?? null),
+                    ContactAddresses::from($fields[$this->settings()->senderField] ?? null)[0] ?? null,
                     $fields,
                     $this->answers($form),
                 );
@@ -82,5 +87,10 @@ final readonly class ContactFormParameters implements BlockViewParameters
         }
 
         return $answers;
+    }
+
+    private function settings(): ContactSettings
+    {
+        return $this->provider->contact();
     }
 }

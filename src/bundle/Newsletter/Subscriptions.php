@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Masilia\Bundle\IbexaBlocks\Newsletter;
 
+use Masilia\Bundle\IbexaBlocks\Site\SettingsProvider;
 use Masilia\Bundle\IbexaBlocks\Entity\Subscriber;
 use Masilia\IbexaBlocks\Newsletter\NewsletterSettings;
 use Psr\Log\LoggerInterface;
@@ -19,7 +20,7 @@ final readonly class Subscriptions
         private SubscriberStore $store,
         private SubscriptionMailer $mailer,
         private UrlGeneratorInterface $urls,
-        private NewsletterSettings $settings,
+        private SettingsProvider $provider,
         private LoggerInterface $logger,
     ) {
     }
@@ -89,7 +90,7 @@ final readonly class Subscriptions
         $this->store->save();
         $this->logger->info('Subscriber confirmed');
 
-        return new SubscriptionResult(true, sprintf('Thank you, %s! You are now subscribed to %s.', $subscriber->getName() ?: 'subscriber', $this->settings->listName));
+        return new SubscriptionResult(true, sprintf('Thank you, %s! You are now subscribed to %s.', $subscriber->getName() ?: 'subscriber', $this->settings()->listName));
     }
 
     /** Whether the link of an unsubscribe belongs to a subscriber: it changes nothing, it is what the confirmation page asks first. */
@@ -127,5 +128,10 @@ final readonly class Subscriptions
     private function sendConfirmation(Subscriber $subscriber): void
     {
         $this->mailer->sendConfirmation($subscriber, $this->urls->generate('subscription_confirm', ['token' => $subscriber->getConfirmationToken()], UrlGeneratorInterface::ABSOLUTE_URL));
+    }
+
+    private function settings(): NewsletterSettings
+    {
+        return $this->provider->newsletter();
     }
 }

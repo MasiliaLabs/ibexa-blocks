@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Masilia\IbexaBlocks\Tests\bundle\Newsletter;
 
+use Masilia\IbexaBlocks\Tests\Support\TestSettings;
 use Masilia\Bundle\IbexaBlocks\Controller\SubscriptionController;
 use Masilia\Bundle\IbexaBlocks\Entity\Subscriber;
 use Masilia\Bundle\IbexaBlocks\Newsletter\SubscriberStore;
@@ -27,7 +28,7 @@ final class SubscriptionControllerTest extends TestCase
     /**
      * @param array<string, string> $templates Added to the templates of the page of the package and of the status page
      */
-    private function controller(array $templates = [], ?\Masilia\Bundle\IbexaBlocks\RateLimit\RequestRateLimits $limits = null): SubscriptionController
+    private function controller(array $templates = [], ?\Masilia\Bundle\IbexaBlocks\RateLimit\RequestRateLimits $limits = null, ?\Masilia\Bundle\IbexaBlocks\Site\SettingsProvider $provider = null): SubscriptionController
     {
         $this->subscriber = (new Subscriber())->setEmail('ada@example.org')->setName('Ada');
         $this->subscriber->generateConfirmationToken();
@@ -57,13 +58,34 @@ final class SubscriptionControllerTest extends TestCase
 
             public function getContext(): RequestContext { return new RequestContext(); }
         };
-        $settings = new NewsletterSettings('news@example.org', 'Confirm', 'the Example newsletter');
+        $settings = $provider ?? TestSettings::provider(newsletter: new NewsletterSettings('news@example.org', 'Confirm', 'the Example newsletter'));
         $twig = new Environment(new ArrayLoader($templates + [
             '@MasiliaIbexaBlocks/newsletter/unsubscribe.html.twig' => 'package page: {{ message }} [{{ button }}]',
             '@ibexadesign/emails/subscription_status.html.twig' => '{{ status }}/{{ title }}: {{ message }}',
         ]));
 
         return new SubscriptionController(new Subscriptions($store, new SubscriptionMailer($mailer, $twig, $settings), $urls, $settings, new NullLogger()), $settings, $twig, new NullLogger(), $limits ?? new \Masilia\Bundle\IbexaBlocks\RateLimit\RequestRateLimits());
+    }
+
+    public function testASiteThatDoesNotTurnTheNewsletterOnAnswersNotFoundOnEveryRoute(): void
+    {
+        $controller = $this->controller(provider: TestSettings::fromParameters([]));
+        $token = (string) $this->subscriber->getConfirmationToken();
+
+        foreach ([
+            static fn () => $controller->subscribe(\Symfony\Component\HttpFoundation\Request::create('/api/subscribe', 'POST')),
+            static fn () => $controller->confirm($token),
+            static fn () => $controller->confirmUnsubscribe($token),
+            static fn () => $controller->unsubscribe($token),
+        ] as $call) {
+            try {
+                $call();
+                self::fail('the route of a site without newsletter must not answer');
+            } catch (\Symfony\Component\HttpKernel\Exception\NotFoundHttpException) {
+                $this->addToAssertionCount(1);
+            }
+        }
+        self::assertTrue($this->subscriber->isActive());
     }
 
     public function testTheLinkOfTheMailOnlyAsksAndUnsubscribesNobody(): void

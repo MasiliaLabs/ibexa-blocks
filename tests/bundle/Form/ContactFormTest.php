@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Masilia\IbexaBlocks\Tests\bundle\Form;
 
+use Masilia\IbexaBlocks\Tests\Support\TestSettings;
 use Masilia\Bundle\IbexaBlocks\Content\RenderableContent;
 use Masilia\Bundle\IbexaBlocks\Form\ContactAddresses;
 use Masilia\Bundle\IbexaBlocks\Form\ContactFormParameters;
@@ -77,7 +78,7 @@ final class ContactFormTest extends TestCase
             '@ibexadesign/emails/contact.twig' => '{% block subject %} New message from {{ full_name }} {% endblock %}{% block body %}{% for label, value in form_data %}{{ label }}={{ value }};{% endfor %}{% endblock %}',
             '@ibexadesign/emails/confirmation.twig' => '{% block subject %}Thank you{% endblock %}{% block body %}Dear {{ full_name }}{% endblock %}',
         ]));
-        $settings = new ContactSettings(['form'], captcha: false, fromAddress: 'noreply@example.org');
+        $settings = TestSettings::provider(contact: new ContactSettings(['form'], captcha: false, fromAddress: 'noreply@example.org'));
 
         return new ContactFormParameters(new MatrixFormBuilder($factory), new ContactMailer($mailer, $twig, $this->requests, $settings, new NullLogger()), $this->requests, $settings);
     }
@@ -103,7 +104,12 @@ final class ContactFormTest extends TestCase
 
     private function block(): RenderableContent
     {
-        return (new \ReflectionClass(RenderableContent::class))->newInstanceWithoutConstructor();
+        $block = (new \ReflectionClass(RenderableContent::class))->newInstanceWithoutConstructor();
+        $content = $this->createStub(\Ibexa\Contracts\Core\Repository\Values\Content\Content::class);
+        $content->method('getContentType')->willReturn(new \Ibexa\Core\Repository\Values\ContentType\ContentType(['identifier' => 'form']));
+        (new \ReflectionProperty(RenderableContent::class, 'content'))->setValue($block, $content);
+
+        return $block;
     }
 
     private function post(array $data, array $query = []): Request
