@@ -337,7 +337,7 @@ final class ThemeToolsTest extends TestCase
         $without = $text((new ThemeChecker($this->registry(), $this->project))->check(['standard'], ['hero']));
         self::assertStringContainsString('blocks/latest_news.twig is named after no content type', $without);
 
-        $with = $text((new ThemeChecker($this->registry(), $this->project, [], ['blocks/latest_news.twig']))->check(['standard'], ['hero']));
+        $with = $text((new ThemeChecker($this->registry(), $this->project, [], \Masilia\IbexaBlocks\Tests\Support\TestSettings::fromParameters(['masilia_ibexa_blocks:blocks.lists.featured.types' => ['grid_cards']])))->check(['standard'], ['hero']));
         self::assertStringNotContainsString('latest_news.twig', $with, 'the Featured list of the bundle settings names it');
         self::assertStringContainsString('blocks/dead.twig is named after no content type', $with, 'the others are still checked');
     }

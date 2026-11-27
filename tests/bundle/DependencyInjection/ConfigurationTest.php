@@ -103,14 +103,14 @@ final class ConfigurationTest extends TestCase
         self::assertFalse($container->hasParameter('masilia_ibexa_blocks.admin_group.favicons'), 'a scope the setting was not given under has none');
     }
 
-    public function testTheExtensionDeclaresTheParametersTheServicesRead(): void
+    public function testNoSettingIsKeptAsAContainerParameter(): void
     {
         $container = $this->container();
 
         (new MasiliaIbexaBlocksExtension())->load([[]], $container);
 
-        foreach (['masilia_blocks.themes.directories', 'masilia_blocks.model.directories', 'masilia_blocks.configured_templates'] as $parameter) {
-            self::assertTrue($container->hasParameter($parameter), $parameter);
+        foreach (['conventions', 'search', 'forms', 'newsletter', 'model.directories', 'themes.directories', 'configured_templates', 'blocks.view_types'] as $gone) {
+            self::assertFalse($container->hasParameter('masilia_blocks.' . $gone), 'a setting is read for the site of the request, never kept at compilation: ' . $gone);
         }
         self::assertTrue($container->has(\Masilia\Bundle\IbexaBlocks\Theme\ThemeSettings::class));
     }

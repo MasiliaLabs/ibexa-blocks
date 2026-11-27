@@ -20,7 +20,7 @@ final readonly class ModelSource
      * @param list<string> $directories Directories of *.yaml definitions that are always read (the site adds its own: model.directories); a directory that does not exist is ignored
      */
     public function __construct(
-        #[Autowire('%masilia_blocks.model.directories%')]
+        #[Autowire(value: ['%kernel.project_dir%/config/content_model'])]
         private array $directories = [],
         private string $socleDirectory = __DIR__ . '/../Resources/config/model',
         private ?SettingsProvider $settings = null,

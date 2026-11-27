@@ -72,10 +72,6 @@ final class MasiliaIbexaBlocksExtension extends Extension implements PrependExte
     {
         $config = $this->processConfiguration(new Configuration(), $configs);
 
-        // What a site that says nothing looks in; the settings of a site (themes.directories, model.directories) come over it.
-        $container->setParameter('masilia_blocks.model.directories', ['%kernel.project_dir%/config/content_model']);
-        $container->setParameter('masilia_blocks.themes.directories', ['%kernel.project_dir%/templates/themes']);
-
         $loader = new YamlFileLoader($container, new FileLocator(__DIR__ . '/../Resources/config'));
         $loader->load('default_settings.yaml');
         $loader->load('services.yaml');
@@ -160,15 +156,6 @@ final class MasiliaIbexaBlocksExtension extends Extension implements PrependExte
                 ->setAutowired(true)
                 ->addTag(MasiliaIbexaBlocksBundle::TAG_BLOCK_PARAMETERS, ['types' => implode(',', $contact), 'priority' => 0]));
         }
-
-        // The templates the theme check expects to find: the featured one of any scope.
-        $templates = [];
-        foreach ($scopes as $scope) {
-            if (self::at($scope, 'blocks.lists.featured.types')) {
-                $templates[] = (string) (self::at($scope, 'blocks.lists.featured.template') ?? SettingsProvider::FEATURED_TEMPLATE);
-            }
-        }
-        $container->setParameter('masilia_blocks.configured_templates', array_values(array_unique($templates)));
     }
 
     /** @param array<string, mixed> $scope */

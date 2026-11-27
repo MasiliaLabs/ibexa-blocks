@@ -68,7 +68,6 @@ services:
         arguments:
             $projectDir: '%kernel.project_dir%'
             $referenceDirs: ['%kernel.project_dir%/src', '%kernel.project_dir%/config/packages']
-            $configuredTemplates: '%masilia_blocks.configured_templates%'
 
     Masilia\Bundle\IbexaBlocks\Controller\:
         resource: '../../Controller/'

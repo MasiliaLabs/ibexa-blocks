@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Masilia\Bundle\IbexaBlocks\Theme;
 
+use Masilia\Bundle\IbexaBlocks\Site\SettingsProvider;
 use Masilia\Bundle\IbexaBlocks\Block\BlockRegistry;
 use Masilia\IbexaBlocks\Theme\InvalidThemeManifest;
 
@@ -22,8 +23,8 @@ final readonly class ThemeChecker
         private string $projectDir,
         /** Directories (besides the themes) whose files may refer to templates: the code of providers, say */
         private array $referenceDirs = [],
-        /** Templates a setting of the bundle names (the one of the Featured list): used, though no file says so */
-        private array $configuredTemplates = [],
+        /** The settings of the site: the templates they name (the one of the Featured list) are used, though no file says so */
+        private ?SettingsProvider $settings = null,
     ) {
     }
 
@@ -113,7 +114,7 @@ final readonly class ThemeChecker
         }
 
         // Files that nothing refers to: not named by a theme.yaml, not the template of a content type, not included by a template.
-        $mentions = $this->mentions($chain) . "\n" . implode("\n", $this->configuredTemplates);
+        $mentions = $this->mentions($chain) . "\n" . implode("\n", $this->settings?->configuredTemplates() ?? []);
         foreach ($chain as $theme) {
             $dynamic = $this->dynamicFolders($theme);
             foreach (['blocks', 'cards', 'line', 'embed', 'full'] as $folder) {

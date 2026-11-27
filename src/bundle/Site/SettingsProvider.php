@@ -115,17 +115,36 @@ final readonly class SettingsProvider
         );
     }
 
+    /**
+     * The subject and the name of the list may say `{site_name}`, the name of the site in the registry of the sites; a site that
+     * says neither gets "Confirm your subscription — <name>" and "the <name> newsletter" when the registry has a name.
+     */
     public function newsletter(): NewsletterSettings
     {
         $d = new NewsletterSettings();
+        $name = $this->siteName();
+        $with = static fn (string $text): string => str_replace('{site_name}', (string) $name, $text);
 
         return new NewsletterSettings(
             fromAddress: $this->address('newsletter.from_address') ?? $this->address('forms.from_address'),
-            subject: (string) $this->get('newsletter.subject', $d->subject),
-            listName: (string) $this->get('newsletter.list_name', $d->listName),
+            subject: $with((string) $this->get('newsletter.subject', $name !== null ? $d->subject . ' — {site_name}' : $d->subject)),
+            listName: $with((string) $this->get('newsletter.list_name', $name !== null ? 'the {site_name} newsletter' : $d->listName)),
             confirmationTemplate: (string) $this->get('newsletter.confirmation_template', $d->confirmationTemplate),
             statusTemplate: (string) $this->get('newsletter.status_template', $d->statusTemplate),
         );
+    }
+
+    /** The name of the site in the registry of the sites, when it has one. */
+    public function siteName(): ?string
+    {
+        if ($this->config->hasParameter('site_name', 'masilia_ibexa_sites')) {
+            $name = $this->config->getParameter('site_name', 'masilia_ibexa_sites');
+            if (is_string($name) && $name !== '') {
+                return $name;
+            }
+        }
+
+        return null;
     }
 
     /** @return list<string> The block types of a list ("auto_items", "featured", "all_posts") that the current site turns on */
@@ -162,6 +181,12 @@ final readonly class SettingsProvider
             'value' => (string) $this->get($p . 'value', 'Featured'),
             'template' => (string) $this->get($p . 'template', self::FEATURED_TEMPLATE),
         ];
+    }
+
+    /** @return list<string> The templates a setting names, used though no file says so (the one of the Featured list, when the site turns it on) */
+    public function configuredTemplates(): array
+    {
+        return $this->listTypes('featured') === [] ? [] : [(string) $this->featured()['template']];
     }
 
     /** @return list<string> The view types the bundle shows for the block types a theme names */

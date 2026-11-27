@@ -26,7 +26,7 @@ final class ThemeRegistry
      * @param list<string> $directories Where the themes are when the site does not say (themes.directories): <directory>/<theme>/theme.yaml
      */
     public function __construct(
-        #[Autowire('%masilia_blocks.themes.directories%')]
+        #[Autowire(value: ['%kernel.project_dir%/templates/themes'])]
         private readonly array $directories,
         private readonly ?SettingsProvider $settings = null,
     ) {
