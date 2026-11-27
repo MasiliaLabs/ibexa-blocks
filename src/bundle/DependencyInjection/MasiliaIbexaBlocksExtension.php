@@ -94,6 +94,7 @@ final class MasiliaIbexaBlocksExtension extends Extension implements PrependExte
         $processor = new ConfigurationProcessor($container, 'masilia_ibexa_blocks');
         $processor->mapSetting('layout_remote_id', $config);
         $processor->mapSetting('layout_menus', $config);
+        $processor->mapSetting('favicons', $config);
 
         // The HTTP cache of Ibexa is optional too: without it there is nothing to tell.
         if (class_exists(TagHandler::class)) {

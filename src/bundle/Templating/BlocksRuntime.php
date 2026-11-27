@@ -22,13 +22,13 @@ final readonly class BlocksRuntime implements RuntimeExtensionInterface
     }
 
     /**
-     * What the themes of the design say about the layout: "assets" (entry, styles, extra), "favicons", "fonts", "notifications".
+     * What the themes of the design say about the layout: "assets" (entry, styles, extra), "favicons" (the icon links: rel, href, sizes, type), "fonts", "notifications".
      */
     public function layout(string $name): mixed
     {
         return match ($name) {
             'assets' => $this->settings->assets(),
-            'favicons' => $this->settings->favicons(),
+            'favicons' => $this->settings->faviconLinks(),
             'fonts' => $this->settings->fonts(),
             'notifications' => $this->settings->notifications(),
             default => throw new \InvalidArgumentException(sprintf('The layout has no "%s" (known: assets, favicons, fonts, notifications).', $name)),

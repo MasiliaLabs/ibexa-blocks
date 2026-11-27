@@ -13,7 +13,8 @@ namespace Masilia\IbexaBlocks\Theme;
  *
  *     name: my_site            # optional, the folder name when absent
  *     assets: { directory: assets/themes/my_site, entry: my_site, styles: [fa-icons], extra: [admin-toolbar.js] }
- *     favicons: build/images/my_site/icons   # android-chrome-192x192.png, favicon-32x32.png, favicon-16x16.png, favicon.ico, site.webmanifest
+ *     favicons: build/images/my_site/icons   # a folder (android-chrome-192x192.png, favicon-32x32.png, favicon-16x16.png, favicon.ico,
+ *                                            # site.webmanifest: the ones it holds are linked), '' for none, or a list of links, see ThemeFavicons
  *     fonts: [https://fonts.googleapis.com/css2?family=Inter&display=swap]
  *     layout: { notifications: false }
  *     views:
@@ -46,6 +47,8 @@ final readonly class ThemeManifest
         public ?string $favicons = null,
         public array $fonts = [],
         public ?bool $notifications = null,
+        /** @var list<array{rel: string, href: string, sizes?: string, type?: string}>|null The explicit links of `favicons` (then $favicons is null) */
+        public ?array $faviconLinks = null,
     ) {
     }
 
@@ -81,13 +84,16 @@ final readonly class ThemeManifest
             }
         }
 
+        $favicons = isset($data['favicons']) ? ThemeFavicons::fromValue(sprintf('Theme "%s"', $theme), $data['favicons']) : null;
+
         return new self(
             (string) ($data['name'] ?? $theme),
             $views,
             isset($data['assets']) ? self::assets($theme, $data['assets']) : null,
-            isset($data['favicons']) ? trim((string) $data['favicons'], '/') : null,
+            $favicons?->directory,
             array_values($fonts),
             isset($layout['notifications']) ? (bool) $layout['notifications'] : null,
+            $favicons?->links,
         );
     }
 

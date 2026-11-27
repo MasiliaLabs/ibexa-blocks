@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Masilia\Bundle\IbexaBlocks\Theme;
 
+use Ibexa\Contracts\Core\SiteAccess\ConfigResolverInterface;
 use Masilia\IbexaBlocks\Theme\ThemeAssets;
+use Masilia\IbexaBlocks\Theme\ThemeFavicons;
 
 /**
  * What the themes of the current design say about the layout: the first theme of the chain that says each thing wins, as for the
@@ -15,6 +17,8 @@ final readonly class ThemeSettings
     public function __construct(
         private ThemeRegistry $themes,
         private DesignChain $design,
+        private ?FaviconSet $faviconSet = null,
+        private ?ConfigResolverInterface $config = null,
     ) {
     }
 
@@ -26,6 +30,39 @@ final readonly class ThemeSettings
     public function favicons(): ?string
     {
         return $this->first(static fn ($manifest) => $manifest->favicons);
+    }
+
+    /**
+     * The icon links of the site: the setting `favicons` of the site if it has one, else what the first theme of the chain says (a
+     * folder, of which only the files that are there are linked, or explicit links).
+     *
+     * @return list<array{rel: string, href: string, sizes?: string, type?: string}>
+     */
+    public function faviconLinks(): array
+    {
+        if ($this->config !== null && $this->config->hasParameter('favicons', 'masilia_ibexa_blocks')) {
+            $site = ThemeFavicons::fromValue('masilia_ibexa_blocks.favicons', $this->config->getParameter('favicons', 'masilia_ibexa_blocks'));
+
+            return $this->links($site->directory, $site->links);
+        }
+        foreach ($this->design->themes() as $theme) {
+            $manifest = $this->themes->manifest($theme);
+            if ($manifest !== null && ($manifest->favicons !== null || $manifest->faviconLinks !== null)) {
+                return $this->links($manifest->favicons, $manifest->faviconLinks);
+            }
+        }
+
+        return [];
+    }
+
+    /** @return list<array{rel: string, href: string, sizes?: string, type?: string}> */
+    private function links(?string $directory, ?array $links): array
+    {
+        if ($links !== null) {
+            return $links;
+        }
+
+        return $directory === null || $directory === '' || $this->faviconSet === null ? [] : $this->faviconSet->links($directory);
     }
 
     /** @return list<string> */

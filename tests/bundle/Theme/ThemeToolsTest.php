@@ -8,6 +8,7 @@ use Ibexa\Contracts\Core\SiteAccess\ConfigResolverInterface;
 use Masilia\Bundle\IbexaBlocks\Command\ThemeCreateCommand;
 use Masilia\Bundle\IbexaBlocks\Command\ThemesCommand;
 use Masilia\Bundle\IbexaBlocks\Theme\DesignChain;
+use Masilia\Bundle\IbexaBlocks\Theme\FaviconSet;
 use Masilia\Bundle\IbexaBlocks\Theme\ThemeChecker;
 use Masilia\Bundle\IbexaBlocks\Theme\ThemeRegistry;
 use Masilia\Bundle\IbexaBlocks\Theme\ThemeScaffold;
@@ -235,5 +236,81 @@ final class ThemeToolsTest extends TestCase
         self::assertFalse($settings->notifications());
         self::assertSame(['https://fonts.googleapis.com/css2?family=X'], $settings->fonts());
         self::assertSame('standard', $settings->assets()->entry, 'what acme does not say comes from standard');
+    }
+
+    /** @param array<string, mixed> $site The setting `favicons` of the site, when it has one */
+    private function settingsOf(string $design, array|string|null $site = null): ThemeSettings
+    {
+        $config = $this->createMock(ConfigResolverInterface::class);
+        $config->method('hasParameter')->willReturn($site !== null);
+        $config->method('getParameter')->willReturnCallback(static fn (string $name) => $name === 'favicons' ? $site : $design);
+
+        return new ThemeSettings($this->registry(), new DesignChain($config, [$design => [$design, 'standard']]), new FaviconSet($this->project . '/public'), $config);
+    }
+
+    private function icons(string ...$files): void
+    {
+        foreach ($files as $file) {
+            $this->write('public/build/images/acme/icons/' . $file, 'x');
+        }
+    }
+
+    public function testOnlyTheIconsThatAreThereAreLinked(): void
+    {
+        $this->standardTheme();
+        $this->write('templates/themes/acme/theme.yaml', "favicons: build/images/acme/icons\n");
+        $this->icons('favicon.ico', 'favicon-32x32.png', 'Favicon-16x16.png');
+
+        $links = $this->settingsOf('acme')->faviconLinks();
+
+        self::assertSame(['icon', 'shortcut icon', 'icon'], array_column($links, 'rel'), 'favicon-16x16.png is spelled Favicon-16x16.png: no link, the exact name is what a server serves');
+        self::assertSame('build/images/acme/icons/favicon-32x32.png', $links[0]['href']);
+        self::assertSame('image/x-icon', $links[2]['type']);
+    }
+
+    public function testExplicitLinksNoIconsAndTheSiteSetting(): void
+    {
+        $this->standardTheme();
+        $this->write('templates/themes/acme/theme.yaml', "favicons:\n  - { rel: icon, type: image/svg+xml, href: build/images/acme/logo.svg }\n");
+        $this->write('templates/themes/bare/theme.yaml', "favicons: ''\n");
+        $this->write('templates/themes/standard/theme.yaml', "favicons: build/images/std/icons\n");
+        $this->write('public/build/images/std/icons/favicon.ico', 'x');
+        $this->icons('favicon.ico');
+
+        self::assertSame([['rel' => 'icon', 'href' => 'build/images/acme/logo.svg', 'type' => 'image/svg+xml']], $this->settingsOf('acme')->faviconLinks());
+        self::assertSame([], $this->settingsOf('bare')->faviconLinks(), 'an empty value stops the icons of the theme below');
+        self::assertSame('build/images/std/icons/favicon.ico', $this->settingsOf('nothing')->faviconLinks()[0]['href'], 'a theme that says nothing takes the next one');
+        self::assertSame('build/images/acme/icons/favicon.ico', $this->settingsOf('acme', 'build/images/acme/icons')->faviconLinks()[0]['href'], 'the setting of the site wins over its theme');
+    }
+
+    public function testTheCheckerSaysACaseMismatchAMissingFileAndAFolderThatIsNotThere(): void
+    {
+        $this->standardTheme();
+        $this->write('templates/themes/acme/theme.yaml', "favicons: build/images/acme/icons\n");
+        $this->write('templates/themes/logo/theme.yaml', "favicons:\n  - { rel: icon, href: build/images/logo/Logo.svg }\n  - { rel: icon, href: build/images/logo/none.svg }\n");
+        $this->write('templates/themes/gone/theme.yaml', "favicons: build/images/gone\n");
+        $this->icons('Favicon.ico', 'favicon-32x32.png');
+        $this->write('public/build/images/logo/logo.svg', 'x');
+        $checker = new ThemeChecker($this->registry(), $this->project);
+        $messages = static fn (array $issues): array => array_map(static fn (array $i): string => $i['level'] . ' ' . $i['message'], $issues);
+
+        $acme = implode("\n", $messages($checker->check(['acme', 'standard'], [])));
+        self::assertStringContainsString('error favicons: "build/images/acme/icons/favicon.ico" is there as "Favicon.ico"', $acme);
+        self::assertStringContainsString('notice favicons: build/images/acme/icons/site.webmanifest is not there', $acme);
+        self::assertStringNotContainsString('favicon-32x32.png', $acme);
+
+        $logo = implode("\n", $messages($checker->check(['logo', 'standard'], [])));
+        self::assertStringContainsString('"build/images/logo/Logo.svg" is there as "logo.svg"', $logo);
+        self::assertStringContainsString('error favicons: build/images/logo/none.svg is not a file of public/', $logo);
+
+        self::assertStringContainsString('error favicons: build/images/gone is not a folder of public/', implode("\n", $messages($checker->check(['gone', 'standard'], []))));
+    }
+
+    public function testTheCheckerSaysNothingOfFaviconsBeforeTheBuild(): void
+    {
+        $this->standardTheme();
+        $this->write('templates/themes/acme/theme.yaml', "favicons: build/images/acme/icons\n");
+
+        self::assertSame([], array_filter((new ThemeChecker($this->registry(), $this->project))->check(['acme', 'standard'], []), static fn (array $i): bool => str_contains($i['message'], 'favicons')));
     }
 }

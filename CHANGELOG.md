@@ -4,7 +4,13 @@ All notable changes to `masilia/ibexa-blocks` are documented here. The format fo
 
 ## [Unreleased]
 
+### Added
+- `favicons` of a theme.yaml can be a list of links (`{rel, href, sizes, type}`) for an icon set the convention does not know (an SVG logo, say), as well as a folder; `favicons: ''` means no icons and still stops the themes below.
+- The setting `masilia_ibexa_blocks.system.<siteaccess or group>.favicons` gives a site its own icons over those of its theme (two sites that share a design no longer share their icons).
+- `theme:check` checks the icons once the assets are built: an error for a declared file that is missing or spelled with another case (a 404 on a server that tells the two apart), for a folder that is not in `public/`, a notice for a standard icon the folder lacks.
+
 ### Changed
+- The layout links only the icon files that exist, under their exact name, where it linked all six whatever the folder held. `theme_layout('favicons')` now gives the list of links (`rel`, `href`, `sizes`, `type`) instead of the folder path, so a theme that overrides the `favicons` block and builds the paths itself must loop over that list.
 - **Breaking:** the base layout has no `seo_metas` block any more: it is replaced by three blocks of the `<head>`, `favicons`, `fonts` and `seo`, so a theme overrides only the part it needs (its own icons, say). A theme that overrides `seo_metas` must override these instead (`{{ parent() }}` of `favicons` and `fonts` keeps the icons and fonts of theme.yaml).
 
 ### Added

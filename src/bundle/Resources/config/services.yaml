@@ -75,6 +75,9 @@ services:
             $registry: '@?Masilia\Contracts\IbexaSites\SiteRegistry'
     Masilia\Bundle\IbexaBlocks\Command\:
         resource: '../../Command/'
+    Masilia\Bundle\IbexaBlocks\Theme\FaviconSet:
+        arguments:
+            $publicDir: '%kernel.project_dir%/public'
     Masilia\Bundle\IbexaBlocks\Theme\ThemeChecker:
         arguments:
             $projectDir: '%kernel.project_dir%'

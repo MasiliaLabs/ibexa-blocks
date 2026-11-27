@@ -89,6 +89,15 @@ final readonly class ThemeChecker
                 }
             }
         }
+        // Favicons: each icon a theme declares is a file of public/ under that exact name (checked once the assets were built).
+        if (is_dir($this->projectDir . '/public/build')) {
+            foreach ($manifests as $theme => $manifest) {
+                foreach ($this->faviconIssues($manifest) as $issue) {
+                    $add($issue[0], $theme, $issue[1]);
+                }
+            }
+        }
+
         if ($this->themes->manifest($chain[0] ?? '') === null && count($chain) > 0) {
             $add(self::NOTICE, $chain[0], 'This theme has no theme.yaml: it can only override the templates of the themes below it.');
         }
@@ -113,6 +122,52 @@ final readonly class ThemeChecker
                     $add(self::NOTICE, $theme, sprintf('%s is named after no content type, and no theme.yaml, template or provider refers to it (dead, a typo in the name, or included by a name built at run time).', $relative));
                 }
             }
+        }
+
+        return $issues;
+    }
+
+    /**
+     * @return list<array{0: string, 1: string}>
+     */
+    private function faviconIssues(?\Masilia\IbexaBlocks\Theme\ThemeManifest $manifest): array
+    {
+        $issues = [];
+        $public = new FaviconSet($this->projectDir . '/public');
+        $spelled = static function (array $files, string $name): ?string {
+            foreach ($files as $file) {
+                if (strcasecmp($file, $name) === 0) {
+                    return $file;
+                }
+            }
+
+            return null;
+        };
+        $mismatch = static fn (string $path, string $found): string => sprintf('favicons: "%s" is there as "%s": a server that tells upper and lower case apart answers 404; rename the file.', $path, $found);
+
+        $directory = $manifest?->favicons;
+        if ($directory !== null && $directory !== '') {
+            $files = $public->files($directory);
+            if ($files === []) {
+                $issues[] = [self::ERROR, sprintf('favicons: %s is not a folder of public/ (or is empty).', $directory)];
+            }
+            $wanted = array_values(array_unique(array_map(static fn (array $f): string => $f[0], FaviconSet::FILES)));
+            foreach ($files !== [] ? $wanted : [] as $file) {
+                if (in_array($file, $files, true)) {
+                    continue;
+                }
+                $found = $spelled($files, $file);
+                $issues[] = $found !== null ? [self::ERROR, $mismatch($directory . '/' . $file, $found)] : [self::NOTICE, sprintf('favicons: %s/%s is not there, its link is left out.', $directory, $file)];
+            }
+        }
+        foreach ($manifest?->faviconLinks ?? [] as $link) {
+            $folder = dirname($link['href']);
+            $files = $public->files($folder);
+            if (in_array(basename($link['href']), $files, true)) {
+                continue;
+            }
+            $found = $spelled($files, basename($link['href']));
+            $issues[] = $found !== null ? [self::ERROR, $mismatch($link['href'], $found)] : [self::ERROR, sprintf('favicons: %s is not a file of public/.', $link['href'])];
         }
 
         return $issues;
