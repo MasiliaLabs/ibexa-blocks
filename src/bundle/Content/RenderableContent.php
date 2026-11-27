@@ -82,12 +82,12 @@ final class RenderableContent
         return $this->content()->getContentType()->identifier;
     }
 
-    public function creationDate(): \DateTimeInterface
+    public function creationDate(): ?\DateTimeInterface
     {
         return $this->content()->getContentInfo()->publishedDate;
     }
 
-    public function modificationDate(): \DateTimeInterface
+    public function modificationDate(): ?\DateTimeInterface
     {
         return $this->content()->getContentInfo()->modificationDate;
     }

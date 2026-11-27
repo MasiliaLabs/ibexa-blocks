@@ -73,8 +73,8 @@ final readonly class SubscriptionController
             return $this->page($this->subscriptions->unsubscribe($token), 'Invalid Link', 'info');
         }
 
-        // A theme that wants its own page writes emails/subscription_confirm.html.twig; without it the page of the package is shown.
-        $template = $this->twig->resolveTemplate(['@ibexadesign/emails/subscription_confirm.html.twig', '@MasiliaIbexaBlocks/newsletter/unsubscribe.html.twig']);
+        // A theme that wants its own page writes emails/unsubscribe_confirm.html.twig; without it the page of the package is shown.
+        $template = $this->twig->resolveTemplate(['@ibexadesign/emails/unsubscribe_confirm.html.twig', '@MasiliaIbexaBlocks/newsletter/unsubscribe.html.twig']);
 
         return new Response($template->render([
             'title' => 'Unsubscribe',

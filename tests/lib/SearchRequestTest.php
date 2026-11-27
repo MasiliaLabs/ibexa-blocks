@@ -28,7 +28,7 @@ final class SearchRequestTest extends TestCase
         self::assertSame(10, strlen($request->category));
 
         $tags = SearchRequest::fromArray(['tags' => [str_repeat('t', 50), ['nested'], 7]], $settings)->tags;
-        self::assertSame([str_repeat('t', 10), '', '7'], $tags, 'what is not a string is not trusted');
+        self::assertSame([str_repeat('t', 10), '7'], $tags, 'what is not a scalar, or is empty, is dropped');
     }
 
     public function testASettingOfZeroTagsDropsThemAll(): void

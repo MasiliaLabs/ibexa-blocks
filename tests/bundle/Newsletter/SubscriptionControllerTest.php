@@ -27,7 +27,7 @@ final class SubscriptionControllerTest extends TestCase
     /**
      * @param array<string, string> $templates Added to the templates of the page of the package and of the status page
      */
-    private function controller(array $templates = []): SubscriptionController
+    private function controller(array $templates = [], ?\Masilia\Bundle\IbexaBlocks\RateLimit\RequestRateLimits $limits = null): SubscriptionController
     {
         $this->subscriber = (new Subscriber())->setEmail('ada@example.org')->setName('Ada');
         $this->subscriber->generateConfirmationToken();
@@ -63,7 +63,7 @@ final class SubscriptionControllerTest extends TestCase
             '@ibexadesign/emails/subscription_status.html.twig' => '{{ status }}/{{ title }}: {{ message }}',
         ]));
 
-        return new SubscriptionController(new Subscriptions($store, new SubscriptionMailer($mailer, $twig, $settings), $urls, $settings, new NullLogger()), $settings, $twig, new NullLogger());
+        return new SubscriptionController(new Subscriptions($store, new SubscriptionMailer($mailer, $twig, $settings), $urls, $settings, new NullLogger()), $settings, $twig, new NullLogger(), $limits ?? new \Masilia\Bundle\IbexaBlocks\RateLimit\RequestRateLimits());
     }
 
     public function testTheLinkOfTheMailOnlyAsksAndUnsubscribesNobody(): void
@@ -102,7 +102,7 @@ final class SubscriptionControllerTest extends TestCase
 
     public function testAThemeMayShowItsOwnConfirmationPage(): void
     {
-        $controller = $this->controller(['@ibexadesign/emails/subscription_confirm.html.twig' => 'themed: {{ button }}']);
+        $controller = $this->controller(['@ibexadesign/emails/unsubscribe_confirm.html.twig' => 'themed: {{ button }}']);
 
         self::assertSame('themed: Yes, unsubscribe me', $controller->confirmUnsubscribe((string) $this->subscriber->getConfirmationToken())->getContent());
     }
@@ -115,5 +115,19 @@ final class SubscriptionControllerTest extends TestCase
 
         self::assertSame(200, $response->getStatusCode());
         self::assertTrue($this->subscriber->isConfirmed());
+    }
+
+    public function testTooManyRequestsFromOneAddressAreRefusedWithHowLongToWait(): void
+    {
+        $limits = new \Masilia\Bundle\IbexaBlocks\RateLimit\RequestRateLimits(['subscribe' => new \Symfony\Component\RateLimiter\RateLimiterFactory(['id' => 's', 'policy' => 'sliding_window', 'limit' => 1, 'interval' => '1 hour'], new \Symfony\Component\RateLimiter\Storage\InMemoryStorage())]);
+        $controller = $this->controller([], $limits);
+        $request = static fn (): \Symfony\Component\HttpFoundation\Request => \Symfony\Component\HttpFoundation\Request::create('/api/subscribe', 'POST', server: ['REMOTE_ADDR' => '203.0.113.5'], content: 'not json');
+
+        self::assertSame(400, $controller->subscribe($request())->getStatusCode(), 'the first request is let through (and is bad)');
+        $refused = $controller->subscribe($request());
+
+        self::assertSame(429, $refused->getStatusCode());
+        self::assertGreaterThanOrEqual(1, (int) $refused->headers->get('Retry-After'));
+        self::assertFalse(json_decode((string) $refused->getContent(), true)['success']);
     }
 }

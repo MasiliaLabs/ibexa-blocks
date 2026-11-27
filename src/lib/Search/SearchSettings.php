@@ -20,7 +20,7 @@ final readonly class SearchSettings
      * @param array<string, string>              $facets              Facet name => the field of the search index that holds its values
      * @param list<string>                       $popularSearches
      * @param array<string, string>              $autoItemSortFields  Content type => the field its latest items are sorted by
-     * @param int                                $maxTermLength       A longer search term is cut to this length
+     * @param int                                $maxTermLength       A longer search term, category or tag is cut to this length
      * @param int                                $maxTags             The tags of a request beyond this many are dropped
      * @param int                                $suggestionsCacheTtl Seconds the suggestions may be cached (0: not)
      */
