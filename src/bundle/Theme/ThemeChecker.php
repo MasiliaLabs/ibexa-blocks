@@ -131,6 +131,21 @@ final readonly class ThemeChecker
     }
 
     /**
+     * The problems of the icons a site says (its setting `favicons`: a folder, a list of links or ''), once the assets are built.
+     *
+     * @return list<array{0: string, 1: string}>
+     */
+    public function faviconIssuesOf(mixed $value): array
+    {
+        if ($value === null || !is_dir($this->projectDir . '/public/build')) {
+            return [];
+        }
+        $site = \Masilia\IbexaBlocks\Theme\ThemeFavicons::fromValue('masilia_ibexa_blocks.favicons', $value);
+
+        return $this->faviconIssues($site->directory, $site->links);
+    }
+
+    /**
      * @param list<array{rel: string, href: string, sizes?: string, type?: string}>|null $links
      *
      * @return list<array{0: string, 1: string}>

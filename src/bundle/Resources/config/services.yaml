@@ -90,6 +90,10 @@ services:
     # meta or cache tags are made.
     Masilia\Bundle\IbexaBlocks\Site\:
         resource: '../../Site/'
+    Masilia\Bundle\IbexaBlocks\Site\SettingsReport:
+        arguments:
+            $accesses: '@Ibexa\Core\MVC\Symfony\SiteAccess\Provider\ChainSiteAccessProvider'
+            $scopes: '%masilia_blocks.scopes%'
     Masilia\Bundle\IbexaBlocks\Site\LayoutProvider:
         arguments:
             $config: '@ibexa.config.resolver'

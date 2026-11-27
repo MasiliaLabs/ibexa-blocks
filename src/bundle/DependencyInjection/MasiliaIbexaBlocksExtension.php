@@ -82,6 +82,8 @@ final class MasiliaIbexaBlocksExtension extends Extension implements PrependExte
             $loader->load('newsletter.yaml');
         }
 
+        // Which scopes the project gave settings to (for masilia:blocks:settings: a name that is no siteaccess nor group is a typo).
+        $container->setParameter('masilia_blocks.scopes', array_keys($scopes));
         $this->registerLists($container, $scopes);
         $container->register(RequestRateLimits::class, RequestRateLimits::class)->setArguments([new Reference(SettingsProvider::class), new Reference('cache.app')]);
 

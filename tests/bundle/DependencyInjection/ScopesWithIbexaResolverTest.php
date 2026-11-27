@@ -23,6 +23,16 @@ final class ScopesWithIbexaResolverTest extends TestCase
      */
     private function provider(array $system, string $siteaccess): SettingsProvider
     {
+        return new SettingsProvider($this->build($system, $siteaccess)[0]);
+    }
+
+    /**
+     * @param array<string, mixed> $system
+     *
+     * @return array{0: ChainConfigResolver, 1: StaticSiteAccessProvider, 2: ContainerBuilder}
+     */
+    private function build(array $system, string $siteaccess): array
+    {
         $groups = ['fossil_group' => ['fossil', 'fossil_fr'], 'imal_group' => ['imal']];
         $byAccess = ['fossil' => ['fossil_group'], 'fossil_fr' => ['fossil_group'], 'imal' => ['imal_group']];
         $container = new ContainerBuilder();
@@ -48,7 +58,7 @@ final class ScopesWithIbexaResolverTest extends TestCase
         $chain->addResolver($default, 0);
         $chain->setDefaultNamespace($namespace);
 
-        return new SettingsProvider($chain);
+        return [$chain, $accesses, $container];
     }
 
     public function testASettingComesFromTheSiteaccessThenItsGroupThenDefaultSettingBySetting(): void
@@ -102,5 +112,27 @@ final class ScopesWithIbexaResolverTest extends TestCase
         self::assertSame(['/always', '/m'], $imal->modelDirectories(['/always']));
         self::assertSame('cards', $fossil->conventions()->itemsFieldFor('info_cards'));
         self::assertSame('items', $imal->conventions()->itemsFieldFor('info_cards'));
+    }
+
+    public function testTheReportSaysWhereEachValueComesFromAndWhichScopesAreTypos(): void
+    {
+        $system = [
+            'default' => ['newsletter' => ['subject' => 'Default subject', 'enabled' => true]],
+            'fossil_group' => ['newsletter' => ['subject' => 'Group subject']],
+            'fossil_fr' => ['favicons' => 'build/icons'],
+            'fosil_group' => ['newsletter' => ['subject' => 'a typo']],
+        ];
+        [$chain, $accesses, $container] = $this->build($system, 'fossil_fr');
+        $report = new \Masilia\Bundle\IbexaBlocks\Site\SettingsReport($chain, $accesses, $container->getParameter('masilia_blocks.scopes'));
+
+        $values = $report->of('fossil_fr')['values'];
+        self::assertSame(['value' => 'Group subject', 'from' => 'fossil_group'], $values['newsletter.subject']);
+        self::assertSame(['value' => true, 'from' => 'default'], $values['newsletter.enabled']);
+        self::assertSame(['value' => 'build/icons', 'from' => 'fossil_fr'], $values['favicons']);
+        self::assertArrayNotHasKey('newsletter.list_name', $values, 'what nobody says is left to the code');
+        self::assertSame(['fosil_group'], $report->unknownScopes());
+        self::assertContains('newsletter.subject', \Masilia\Bundle\IbexaBlocks\Site\SettingsReport::names());
+        self::assertContains('blocks.lists.auto_items.types', \Masilia\Bundle\IbexaBlocks\Site\SettingsReport::names());
+        self::assertContains('conventions.items_field_by_type', \Masilia\Bundle\IbexaBlocks\Site\SettingsReport::names());
     }
 }
