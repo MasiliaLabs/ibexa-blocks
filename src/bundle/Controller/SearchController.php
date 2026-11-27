@@ -87,12 +87,12 @@ final readonly class SearchController
     #[Route('/api/posts/suggestions', name: 'api_posts_suggestions', methods: ['GET'])]
     public function suggestions(Request $request): JsonResponse
     {
-        $term = trim((string) $request->query->get('q', ''));
+        $term = mb_substr(trim((string) $request->query->get('q', '')), 0, $this->settings->maxTermLength);
         if (mb_strlen($term) < 2) {
             return new JsonResponse(['success' => true, 'data' => []]);
         }
 
-        return $this->json($request, function () use ($request, $term): array {
+        $response = $this->json($request, function () use ($request, $term): array {
             $result = $this->search->search(SearchRequest::fromArray([
                 'search' => $term,
                 'content_types' => explode(',', (string) $request->query->get('content_types', '')),
@@ -101,6 +101,13 @@ final readonly class SearchController
 
             return array_map(static fn (array $post): array => ['title' => $post['title'] ?? '', 'url' => $post['url'] ?? ($post['link']['uri'] ?? '')], $result['posts']);
         }, decode: false);
+
+        // The answer to the same question is the same for everyone: when the site says so, it may be kept for a while.
+        if ($this->settings->suggestionsCacheTtl > 0 && $response->isSuccessful()) {
+            $response->setPublic()->setMaxAge($this->settings->suggestionsCacheTtl)->setSharedMaxAge($this->settings->suggestionsCacheTtl);
+        }
+
+        return $response;
     }
 
     /**

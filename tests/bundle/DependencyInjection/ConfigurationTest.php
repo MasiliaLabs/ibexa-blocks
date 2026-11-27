@@ -90,4 +90,13 @@ final class ConfigurationTest extends TestCase
         }
         self::assertTrue($container->has(\Masilia\Bundle\IbexaBlocks\Theme\ThemeSettings::class));
     }
+
+    public function testTheLimitsOfThePublicSearchHaveSafeDefaultsAndAreChecked(): void
+    {
+        $api = $this->process([])['search']['api'];
+        self::assertSame([200, 10, 0], [$api['max_term_length'], $api['max_tags'], $api['suggestions_cache_ttl']]);
+
+        $this->expectException(InvalidConfigurationException::class);
+        $this->process(['search' => ['api' => ['max_term_length' => 0]]]);
+    }
 }

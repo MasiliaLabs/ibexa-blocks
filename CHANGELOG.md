@@ -10,6 +10,9 @@ All notable changes to `masilia/ibexa-blocks` are documented here. The format fo
 - The setting `masilia_ibexa_blocks.system.<siteaccess or group>.favicons` gives a site its own icons over those of its theme (two sites that share a design no longer share their icons).
 - `theme:check` checks the icons once the assets are built: an error for a declared file that is missing or spelled with another case (a 404 on a server that tells the two apart), for a folder that is not in `public/`, a notice for a standard icon the folder lacks.
 
+- The public search is bounded: `search.api.max_term_length` (200 characters) cuts the term and the category, `search.api.max_tags` (10) drops the tags beyond it; a request used to send them to the index as they came.
+- `search.api.suggestions_cache_ttl` (seconds, 0 by default: unchanged) lets the browser and the HTTP cache keep `GET /api/posts/suggestions`.
+
 ### Changed
 - **Breaking:** the layout no longer links `preconnect` to fonts.googleapis.com and fonts.gstatic.com by itself: a theme that has Google Fonts must say `preconnect: [https://fonts.googleapis.com, {origin: https://fonts.gstatic.com, crossorigin: true}]` in its theme.yaml, or the links are gone.
 - The layout links only the icon files that exist, under their exact name, where it linked all six whatever the folder held. `theme_layout('favicons')` now gives the list of links (`rel`, `href`, `sizes`, `type`) instead of the folder path, so a theme that overrides the `favicons` block and builds the paths itself must loop over that list.
@@ -17,6 +20,10 @@ All notable changes to `masilia/ibexa-blocks` are documented here. The format fo
 
 ### Added
 - `novactive/ezseobundle` is suggested in composer.json: the `seo_metas` block of the layout includes its head template and the page models have its `novaseometas` field. Both are optional: without the bundle the block is empty and `model:install` skips the field.
+
+### Fixed
+- A related content or a form that cannot be loaded for another reason than "not found / not allowed" is logged (warning) instead of vanishing: the block that should have shown it no longer disappears with no trace. The catches of the blocks-folder view provider and of the site tree initializer name the exceptions they expect, so a real fault is not taken for a normal answer.
+- The contact mailer reads the flash bag only from a session that has one.
 
 ## [0.6.4] - 2026-11-24
 

@@ -38,9 +38,9 @@ final readonly class SearchRequest
 
         return new self(
             contentTypes: $types === [] ? $settings->defaultContentTypes : $types,
-            term: trim((string) ($data['search'] ?? '')),
-            category: isset($data['category']) ? trim((string) $data['category']) : 'All',
-            tags: is_array($tags) ? array_values(array_map('strval', $tags)) : [],
+            term: mb_substr(trim((string) ($data['search'] ?? '')), 0, $settings->maxTermLength),
+            category: isset($data['category']) ? mb_substr(trim((string) $data['category']), 0, $settings->maxTermLength) : 'All',
+            tags: is_array($tags) ? array_slice(array_map(static fn (mixed $tag): string => mb_substr(is_scalar($tag) ? (string) $tag : '', 0, $settings->maxTermLength), array_values($tags)), 0, $settings->maxTags) : [],
             page: max(1, (int) ($data['page'] ?? 1)),
             limit: min($settings->maxItems, max(1, (int) ($data['limit'] ?? $settings->defaultItems))),
             sort: isset($settings->sorts[(string) ($data['sort'] ?? '')]) ? (string) $data['sort'] : $settings->defaultSort,

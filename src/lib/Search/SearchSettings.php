@@ -20,6 +20,9 @@ final readonly class SearchSettings
      * @param array<string, string>              $facets              Facet name => the field of the search index that holds its values
      * @param list<string>                       $popularSearches
      * @param array<string, string>              $autoItemSortFields  Content type => the field its latest items are sorted by
+     * @param int                                $maxTermLength       A longer search term is cut to this length
+     * @param int                                $maxTags             The tags of a request beyond this many are dropped
+     * @param int                                $suggestionsCacheTtl Seconds the suggestions may be cached (0: not)
      */
     public function __construct(
         public array $allowedContentTypes = ['article'],
@@ -37,6 +40,9 @@ final readonly class SearchSettings
         public array $popularSearches = [],
         public array $autoItemSortFields = [],
         public string $autoItemDefaultSortField = 'title',
+        public int $maxTermLength = 200,
+        public int $maxTags = 10,
+        public int $suggestionsCacheTtl = 0,
     ) {
     }
 
@@ -78,6 +84,9 @@ final readonly class SearchSettings
             popularSearches: array_values(array_map('strval', (array) ($settings['page']['popular_searches'] ?? []))),
             autoItemSortFields: array_map('strval', (array) ($settings['auto_item_sort_fields'] ?? [])),
             autoItemDefaultSortField: (string) ($settings['auto_item_default_sort_field'] ?? $d->autoItemDefaultSortField),
+            maxTermLength: max(1, (int) ($settings['api']['max_term_length'] ?? $d->maxTermLength)),
+            maxTags: max(0, (int) ($settings['api']['max_tags'] ?? $d->maxTags)),
+            suggestionsCacheTtl: max(0, (int) ($settings['api']['suggestions_cache_ttl'] ?? $d->suggestionsCacheTtl)),
         );
     }
 

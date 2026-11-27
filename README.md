@@ -139,6 +139,8 @@ The `layout.twig` of a theme is two lines, `{% extends "@MasiliaIbexaBlocks/layo
 
 Templates are found by the name of their content type; `theme.yaml` only needs `views:` for an exception. `php bin/console masilia:blocks:theme:check <design>` tells you which block type has no template, and `masilia:blocks:themes --json` gives your Encore build the entries to compile.
 
+The public search is bounded by the `search` node: `api.max_items` (page size), `api.max_term_length` and `api.max_tags` (what a request may send to the index) and, when you want `/api/posts/suggestions` kept by the browser and the HTTP cache, `api.suggestions_cache_ttl` in seconds.
+
 ## Showing pages and blocks
 
 A template is found by the **view type** and the name of the content type, in the themes of the design:
