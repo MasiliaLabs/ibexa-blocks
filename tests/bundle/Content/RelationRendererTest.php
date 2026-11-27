@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Masilia\IbexaBlocks\Tests\bundle\Content;
 
+use Masilia\IbexaBlocks\Tests\Support\TestSettings;
 use Ibexa\Contracts\Core\Repository\ContentService;
 use Ibexa\Core\Base\Exceptions\NotFoundException;
 use Ibexa\Contracts\Core\Repository\LocationService;
@@ -49,7 +50,7 @@ final class RelationRendererTest extends TestCase
             $this->createStub(CacheTagger::class),
         );
 
-        return new RelationRenderer(new ContentFactory($contents, $this->createStub(LocationService::class), $services), $summaryTypes, $logger ?? $this->createStub(LoggerInterface::class));
+        return new RelationRenderer(new ContentFactory($contents, $this->createStub(LocationService::class), $services), TestSettings::fromParameters(['masilia_ibexa_blocks:fields.summary_types' => $summaryTypes]), $logger ?? $this->createStub(LoggerInterface::class));
     }
 
     private function render(RelationRenderer $renderer, \Ibexa\Contracts\Core\FieldType\Value $value): mixed

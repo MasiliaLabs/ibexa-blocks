@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Masilia\IbexaBlocks\Tests\bundle\Content;
 
+use Masilia\IbexaBlocks\Tests\Support\TestSettings;
 use Ibexa\Contracts\Core\Repository\Values\Content\Content;
 use Ibexa\Contracts\Core\Repository\Values\ContentType\FieldDefinition;
 use Masilia\Bundle\IbexaBlocks\Content\FieldRendererRegistry;
@@ -31,7 +32,7 @@ final class FieldRendererRegistryTest extends TestCase
     {
         $locator = new ServiceLocator(['ibexa_string' => fn (): FieldRenderer => $this->renderer()]);
 
-        return new FieldRendererRegistry($locator, $unknown, $ignored, $debug, $logger ?? new \Psr\Log\NullLogger());
+        return new FieldRendererRegistry($locator, TestSettings::fromParameters(['masilia_ibexa_blocks:fields.unknown_type' => $unknown, 'masilia_ibexa_blocks:fields.ignored_types' => $ignored]), $debug, $logger ?? new \Psr\Log\NullLogger());
     }
 
     public function testAFieldIsRenderedByTheRendererOfItsType(): void

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Masilia\Tests\IbexaBlocks\Bundle\Model;
 
+use Masilia\IbexaBlocks\Tests\Support\TestSettings;
 use Ibexa\Contracts\Core\Repository\ContentTypeService;
 use Ibexa\Contracts\Core\Repository\FieldTypeService;
 use Ibexa\Contracts\Core\Repository\Repository;
@@ -202,6 +203,6 @@ final class ModelTest extends TestCase
         $repository = $this->createStub(Repository::class);
         $repository->method('sudo')->willReturnCallback(static fn (callable $c) => $c());
 
-        return new ModelPlanner($repository, $contentTypes, $fieldTypeService, new Conventions());
+        return new ModelPlanner($repository, $contentTypes, $fieldTypeService, TestSettings::fromParameters([]));
     }
 }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Masilia\IbexaBlocks\Tests\bundle\Block;
 
+use Masilia\IbexaBlocks\Tests\Support\TestSettings;
 use Masilia\Bundle\IbexaBlocks\Block\Provider\AutoItemsParameters;
 use Masilia\Bundle\IbexaBlocks\Block\Provider\FeaturedParameters;
 use Masilia\Bundle\IbexaBlocks\Content\RenderableContent;
@@ -13,7 +14,7 @@ use PHPUnit\Framework\TestCase;
 
 final class ListProvidersTest extends TestCase
 {
-    private const AUTO = ['items_field' => 'items', 'source_field' => 'item_source', 'source_value' => 'auto', 'type_field' => 'item_type', 'count_field' => 'items_count', 'default_count' => 3];
+    private const AUTO = ['source_field' => 'item_source', 'source_value' => 'auto', 'type_field' => 'item_type', 'count_field' => 'items_count', 'default_count' => 3];
 
     /** @var list<array{string, int}> */
     private array $asked = [];
@@ -39,7 +40,7 @@ final class ListProvidersTest extends TestCase
 
     public function testABlockWithNoItemsAndAnAutomaticSourceListsTheLatestOfItsType(): void
     {
-        $provider = new AutoItemsParameters($this->lister(), self::AUTO);
+        $provider = new AutoItemsParameters($this->lister(), self::AUTO, TestSettings::fromParameters([]));
 
         $parameters = $provider->parameters($this->block(), ['items' => [], 'item_source' => ['auto'], 'item_type' => ['article'], 'items_count' => 6], new ViewState('blocks'));
 
@@ -49,7 +50,7 @@ final class ListProvidersTest extends TestCase
 
     public function testTheDefaultCountIsUsedWhenTheBlockHasNone(): void
     {
-        $provider = new AutoItemsParameters($this->lister(), self::AUTO);
+        $provider = new AutoItemsParameters($this->lister(), self::AUTO, TestSettings::fromParameters([]));
 
         $provider->parameters($this->block(), ['item_source' => ['auto'], 'item_type' => ['event']], new ViewState('blocks'));
 
@@ -58,7 +59,7 @@ final class ListProvidersTest extends TestCase
 
     public function testItemsOfItsOwnAManualSourceOrNoTypeLeaveTheBlockAlone(): void
     {
-        $provider = new AutoItemsParameters($this->lister(), self::AUTO);
+        $provider = new AutoItemsParameters($this->lister(), self::AUTO, TestSettings::fromParameters([]));
         $view = new ViewState('blocks');
 
         self::assertSame([], $provider->parameters($this->block(), ['items' => ['x'], 'item_source' => ['auto'], 'item_type' => ['article']], $view));
@@ -69,7 +70,7 @@ final class ListProvidersTest extends TestCase
 
     public function testTheFieldsAreTheSettingsOnes(): void
     {
-        $provider = new AutoItemsParameters($this->lister(), ['items_field' => 'cards', 'source_field' => 'from', 'source_value' => 'latest', 'type_field' => 'what', 'count_field' => 'how_many', 'default_count' => 2]);
+        $provider = new AutoItemsParameters($this->lister(), ['source_field' => 'from', 'source_value' => 'latest', 'type_field' => 'what', 'count_field' => 'how_many', 'default_count' => 2], TestSettings::fromParameters(['masilia_ibexa_blocks:conventions.items_field' => 'cards']));
 
         $parameters = $provider->parameters($this->block(), ['cards' => [], 'from' => ['latest'], 'what' => ['post'], 'how_many' => 4], new ViewState('blocks'));
 

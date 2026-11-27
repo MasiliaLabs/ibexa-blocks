@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Masilia\Bundle\IbexaBlocks\Site;
 
+use Masilia\Bundle\IbexaBlocks\Site\SettingsProvider;
 use Ibexa\Contracts\Core\Repository\Exceptions\NotFoundException;
 use Ibexa\Contracts\Core\Repository\Repository;
 use Ibexa\Contracts\Core\SiteAccess\ConfigResolverInterface;
@@ -25,7 +26,7 @@ final readonly class SiteTreeInitializer
     public function __construct(
         private Repository $repository,
         private ConfigResolverInterface $config,
-        private Conventions $conventions,
+        private SettingsProvider $provider,
     ) {
     }
 
@@ -56,7 +57,7 @@ final readonly class SiteTreeInitializer
         $parentId ??= $this->configured('location_ids.content_structure');
         $mediaParentId ??= $this->configured('location_ids.media');
         $types = $this->repository->getContentTypeService();
-        foreach ([$this->conventions->siteType, self::LAYOUT_TYPE, $this->conventions->homeType] as $type) {
+        foreach ([$this->conventions()->siteType, self::LAYOUT_TYPE, $this->conventions()->homeType] as $type) {
             try {
                 $types->loadContentTypeByIdentifier($type);
             } catch (NotFoundException) {
@@ -68,16 +69,16 @@ final readonly class SiteTreeInitializer
         }
 
         $steps = [
-            ['site', $this->conventions->siteType, $slug . '_site', fn (): array => ['title' => $name, 'domain' => $domain], fn (array $made) => $parentId],
+            ['site', $this->conventions()->siteType, $slug . '_site', fn (): array => ['title' => $name, 'domain' => $domain], fn (array $made) => $parentId],
             ['layout', self::LAYOUT_TYPE, $slug . '_layout_config', fn (): array => ['bo_title' => $name . ' Layout Configuration', 'logo_text' => $this->richText($name)], null],
-            ['home page', $this->conventions->homeType, $slug . '_home', fn (): array => ['title' => 'Home', $this->conventions->blocksField => []], null],
+            ['home page', $this->conventions()->homeType, $slug . '_home', fn (): array => ['title' => 'Home', $this->conventions()->blocksField => []], null],
         ];
         // The blocks of the home page, in a folder under it (a page of the site gets its own the same way), when the home page can hold it.
         $skipped = [];
-        if ($types->loadContentTypeByIdentifier($this->conventions->homeType)->isContainer()) {
-            $steps[] = ['blocks folder', $this->conventions->folderType, BlocksFolder::remoteId($slug . '_home'), fn (): array => ['name' => BlocksFolder::name('Home', $this->conventions->blocksFolderSuffix)], fn (array $made) => $made['home page'] ?? null];
+        if ($types->loadContentTypeByIdentifier($this->conventions()->homeType)->isContainer()) {
+            $steps[] = ['blocks folder', $this->conventions()->folderType, BlocksFolder::remoteId($slug . '_home'), fn (): array => ['name' => BlocksFolder::name('Home', $this->conventions()->blocksFolderSuffix)], fn (array $made) => $made['home page'] ?? null];
         } else {
-            $skipped[] = ['what' => 'blocks folder', 'type' => $this->conventions->folderType, 'remoteId' => BlocksFolder::remoteId($slug . '_home'), 'exists' => false, 'contentId' => null, 'locationId' => null, 'skipped' => sprintf('"%s" is not a container: run masilia:blocks:model:install --allow-container, then this command again', $this->conventions->homeType)];
+            $skipped[] = ['what' => 'blocks folder', 'type' => $this->conventions()->folderType, 'remoteId' => BlocksFolder::remoteId($slug . '_home'), 'exists' => false, 'contentId' => null, 'locationId' => null, 'skipped' => sprintf('"%s" is not a container: run masilia:blocks:model:install --allow-container, then this command again', $this->conventions()->homeType)];
         }
         if ($mediaParentId !== null && $this->locationExists($mediaParentId) && $this->typeExists(self::FOLDER_TYPE)) {
             $steps[] = ['media folder', self::FOLDER_TYPE, $slug . '_media', fn (): array => ['name' => $name . ' Media'], fn (array $made) => $mediaParentId];
@@ -182,5 +183,10 @@ final readonly class SiteTreeInitializer
         } catch (\Ibexa\Core\MVC\Exception\ParameterNotFoundException) {
             return null;
         }
+    }
+
+    private function conventions(): Conventions
+    {
+        return $this->provider->conventions();
     }
 }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Masilia\Bundle\IbexaBlocks\Search;
 
+use Masilia\Bundle\IbexaBlocks\Site\SettingsProvider;
 use Ibexa\Contracts\Core\Repository\ContentTypeService;
 use Ibexa\Contracts\Core\Repository\Exceptions\NotFoundException;
 use Ibexa\Contracts\Core\Repository\LocationService;
@@ -28,7 +29,7 @@ final readonly class LatestContents implements ContentLister
         private LocationService $locations,
         private ContentFactory $factory,
         private ConfigResolverInterface $config,
-        private SearchSettings $settings,
+        private SettingsProvider $provider,
         private ContentTypeService $types,
     ) {
     }
@@ -39,7 +40,7 @@ final readonly class LatestContents implements ContentLister
     public function of(string $contentType, int $limit): array
     {
         $root = $this->locations->loadLocation((int) $this->config->getParameter('content.tree_root.location_id'));
-        $field = $this->settings->autoItemSortFields[$contentType] ?? $this->settings->autoItemDefaultSortField;
+        $field = $this->settings()->autoItemSortFields[$contentType] ?? $this->settings()->autoItemDefaultSortField;
 
         $result = $this->search->findLocations(new LocationQuery([
             'filter' => new Criterion\LogicalAnd([
@@ -75,5 +76,10 @@ final readonly class LatestContents implements ContentLister
         return $definition !== null && $definition->isSearchable
             ? new SortClause\Field($contentType, $field, Query::SORT_DESC)
             : new SortClause\DatePublished(Query::SORT_DESC);
+    }
+
+    private function settings(): SearchSettings
+    {
+        return $this->provider->search();
     }
 }

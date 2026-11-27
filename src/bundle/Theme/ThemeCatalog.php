@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Masilia\Bundle\IbexaBlocks\Theme;
 
+use Masilia\Bundle\IbexaBlocks\Site\SettingsProvider;
 use Ibexa\Contracts\Core\Repository\ContentTypeService;
 use Ibexa\Contracts\Core\Repository\Exceptions\NotFoundException;
 use Masilia\Contracts\IbexaBlocks\Themes;
@@ -21,7 +22,7 @@ final readonly class ThemeCatalog implements Themes
         private ThemeChecker $checker,
         private ThemeScaffold $scaffold,
         private ContentTypeService $types,
-        private Conventions $conventions,
+        private SettingsProvider $provider,
         #[Autowire('%ibexa.design.list%')]
         private array $designs,
         #[Autowire('%masilia_blocks.blocks.handled_by_project%')]
@@ -49,7 +50,7 @@ final readonly class ThemeCatalog implements Themes
         }
         $blockTypes = [];
         try {
-            foreach ($this->types->loadContentTypes($this->types->loadContentTypeGroupByIdentifier($this->conventions->blockGroup)) as $type) {
+            foreach ($this->types->loadContentTypes($this->types->loadContentTypeGroupByIdentifier($this->conventions()->blockGroup)) as $type) {
                 if (!in_array($type->identifier, $this->handledByProject, true)) {
                     $blockTypes[] = $type->identifier;
                 }
@@ -74,5 +75,10 @@ final readonly class ThemeCatalog implements Themes
         } catch (ThemeNotCreated $e) {
             throw new \InvalidArgumentException($e->getMessage(), 0, $e);
         }
+    }
+
+    private function conventions(): Conventions
+    {
+        return $this->provider->conventions();
     }
 }

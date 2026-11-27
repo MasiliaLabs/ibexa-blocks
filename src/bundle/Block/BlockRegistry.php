@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Masilia\Bundle\IbexaBlocks\Block;
 
+use Masilia\Bundle\IbexaBlocks\Site\SettingsProvider;
 use Ibexa\Contracts\Core\Repository\Values\ContentType\ContentType;
 use Masilia\Bundle\IbexaBlocks\Theme\DesignChain;
 use Masilia\Bundle\IbexaBlocks\Theme\ThemeRegistry;
@@ -49,14 +50,14 @@ final class BlockRegistry
         private readonly DesignChain $design,
         #[Autowire(service: 'twig.loader')]
         private readonly ?LoaderInterface $loader = null,
-        private readonly Conventions $conventions = new Conventions(),
+        private readonly ?SettingsProvider $provider = null,
     ) {
     }
 
     /** The view of a content, with what the convention needs to know of its type (does it hold blocks). */
     public function findFor(string $viewType, ContentType $type): ?ResolvedView
     {
-        return $this->find($viewType, $type->identifier, $type->getFieldDefinition($this->conventions->blocksField) !== null);
+        return $this->find($viewType, $type->identifier, $type->getFieldDefinition($this->conventions()->blocksField) !== null);
     }
 
     /**
@@ -124,5 +125,10 @@ final class BlockRegistry
     public function searched(): array
     {
         return $this->design->themes();
+    }
+
+    private function conventions(): Conventions
+    {
+        return $this->provider?->conventions() ?? new Conventions();
     }
 }

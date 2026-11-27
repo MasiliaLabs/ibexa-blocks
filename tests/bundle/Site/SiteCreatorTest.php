@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Masilia\Tests\IbexaBlocks\Bundle\Site;
 
+use Masilia\IbexaBlocks\Tests\Support\TestSettings;
 use Ibexa\Contracts\Core\Repository\ContentService;
 use Ibexa\Contracts\Core\Repository\ContentTypeService;
 use Ibexa\Contracts\Core\Repository\LocationService;
@@ -136,6 +137,6 @@ final class SiteCreatorTest extends TestCase
         $repository->method('getContentTypeService')->willReturn($types);
         $repository->method('getLocationService')->willReturn($locations);
 
-        return new SiteCreator(new SiteTreeInitializer($repository, $this->createStub(ConfigResolverInterface::class), new Conventions()), $registry);
+        return new SiteCreator(new SiteTreeInitializer($repository, $this->createStub(ConfigResolverInterface::class), TestSettings::fromParameters([])), $registry);
     }
 }

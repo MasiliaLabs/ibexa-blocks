@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Masilia\Bundle\IbexaBlocks\Command;
 
+use Masilia\Bundle\IbexaBlocks\Site\SettingsProvider;
 use Ibexa\Contracts\Core\Repository\ContentTypeService;
 use Ibexa\Contracts\Core\Repository\Exceptions\NotFoundException;
 use Ibexa\Contracts\Core\Repository\PermissionResolver;
@@ -30,7 +31,7 @@ final class ThemeCheckCommand extends Command
         private readonly ThemeChecker $checker,
         private readonly ContentTypeService $types,
         private readonly PermissionResolver $permissions,
-        private readonly Conventions $conventions,
+        private readonly SettingsProvider $provider,
         private readonly ThemeRegistry $registry,
         #[Autowire('%kernel.project_dir%')]
         private readonly string $projectDir,
@@ -58,13 +59,13 @@ final class ThemeCheckCommand extends Command
         $designs = $input->getArgument('design') !== null ? [(string) $input->getArgument('design')] : array_values(array_diff(array_keys($this->designs), ['admin']));
         $blockTypes = [];
         try {
-            foreach ($this->types->loadContentTypes($this->types->loadContentTypeGroupByIdentifier($this->conventions->blockGroup)) as $type) {
+            foreach ($this->types->loadContentTypes($this->types->loadContentTypeGroupByIdentifier($this->conventions()->blockGroup)) as $type) {
                 if (!in_array($type->identifier, $this->handledByProject, true)) {
                     $blockTypes[] = $type->identifier;
                 }
             }
         } catch (NotFoundException) {
-            $io->warning(sprintf('There is no group of content types "%s": the block types are not checked.', $this->conventions->blockGroup));
+            $io->warning(sprintf('There is no group of content types "%s": the block types are not checked.', $this->conventions()->blockGroup));
         }
         $contentTypes = [];
         foreach ($this->types->loadContentTypeGroups() as $group) {
@@ -143,5 +144,10 @@ final class ThemeCheckCommand extends Command
         }
 
         return $missing;
+    }
+
+    private function conventions(): Conventions
+    {
+        return $this->provider->conventions();
     }
 }

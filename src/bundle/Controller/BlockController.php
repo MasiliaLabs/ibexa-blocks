@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Masilia\Bundle\IbexaBlocks\Controller;
 
+use Masilia\Bundle\IbexaBlocks\Site\SettingsProvider;
 use Ibexa\Core\MVC\Symfony\View\ContentView;
 use Masilia\Bundle\IbexaBlocks\Block\BlockProviders;
 use Masilia\Bundle\IbexaBlocks\Block\BlockRegistry;
@@ -27,7 +28,7 @@ final readonly class BlockController
         private ContentFactory $factory,
         private BlockRegistry $registry,
         private BlockProviders $providers,
-        private Conventions $conventions,
+        private SettingsProvider $provider,
         #[Autowire('%masilia_blocks.blocks.flatten_fields%')]
         private bool $flattenFields = false,
     ) {
@@ -63,7 +64,7 @@ final readonly class BlockController
         }
 
         // A page also knows where it is (its breadcrumb) and what the editing toolbox needs; a block does not need them.
-        $page = $viewType === 'full' ? ['breadcrumb' => $block->breadcrumb(), 'link' => $block->link(), 'admin_meta' => $block->adminMeta(), 'blocks_field' => $this->conventions->blocksField] : [];
+        $page = $viewType === 'full' ? ['breadcrumb' => $block->breadcrumb(), 'link' => $block->link(), 'admin_meta' => $block->adminMeta(), 'blocks_field' => $this->conventions()->blocksField] : [];
 
         $view->addParameters(array_merge(
             $this->flattenFields ? $fields : [],
@@ -74,5 +75,10 @@ final readonly class BlockController
         $view->setTemplateIdentifier($state->template() !== null ? '@ibexadesign/' . ltrim($state->template(), '/') : $resolved->template);
 
         return $view;
+    }
+
+    private function conventions(): Conventions
+    {
+        return $this->provider->conventions();
     }
 }

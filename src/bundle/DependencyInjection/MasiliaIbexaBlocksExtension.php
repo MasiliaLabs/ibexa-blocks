@@ -16,6 +16,7 @@ use Masilia\Bundle\IbexaBlocks\MasiliaIbexaBlocksBundle;
 use Masilia\Bundle\IbexaBlocks\Search\LatestContents;
 use Masilia\Bundle\IbexaBlocks\Search\SearchService;
 use Masilia\Bundle\IbexaBlocks\Site\IbexaCacheTagger;
+use Masilia\Bundle\IbexaBlocks\Site\SettingsProvider;
 use Masilia\Bundle\IbexaBlocks\Site\NovactiveMenuProvider;
 use Masilia\Bundle\IbexaBlocks\Site\ToolboxAdminMetaProvider;
 use Masilia\Contracts\EditorialToolbox\Meta\AdminMetaBuilderInterface;
@@ -70,16 +71,11 @@ final class MasiliaIbexaBlocksExtension extends Extension implements PrependExte
     {
         $config = $this->processConfiguration(new Configuration(), $configs);
 
-        $container->setParameter('masilia_blocks.conventions', $config['conventions']);
         $container->setParameter('masilia_blocks.blocks.view_types', $config['blocks']['view_types']);
-        $container->setParameter('masilia_blocks.search', $config['search']);
         $container->setParameter('masilia_blocks.model.directories', array_values(array_unique(['%kernel.project_dir%/config/content_model', ...$config['model']['directories']])));
         $container->setParameter('masilia_blocks.themes.directories', $config['themes']['directories']);
         $container->setParameter('masilia_blocks.blocks.handled_by_project', $config['blocks']['handled_by_project']);
         $container->setParameter('masilia_blocks.blocks.flatten_fields', $config['blocks']['flatten_fields']);
-        $container->setParameter('masilia_blocks.fields.unknown_type', $config['fields']['unknown_type']);
-        $container->setParameter('masilia_blocks.fields.ignored_types', $config['fields']['ignored_types']);
-        $container->setParameter('masilia_blocks.fields.summary_types', $config['fields']['summary_types']);
 
         $loader = new YamlFileLoader($container, new FileLocator(__DIR__ . '/../Resources/config'));
         $loader->load('default_settings.yaml');
@@ -102,7 +98,7 @@ final class MasiliaIbexaBlocksExtension extends Extension implements PrependExte
         $processor->mapSetting('favicons', $config);
         // The sections read setting by setting, so that a site that says one leaves the others to its group or to "default".
         foreach ($scopes as $scope => $settings) {
-            foreach (['forms', 'newsletter'] as $section) {
+            foreach (['conventions', 'search', 'fields', 'forms', 'newsletter'] as $section) {
                 foreach (self::leaves((array) ($settings[$section] ?? []), $section) as $name => $value) {
                     $processor->getContextualizer()->setContextualParameter($name, $scope, $value);
                 }
@@ -152,7 +148,7 @@ final class MasiliaIbexaBlocksExtension extends Extension implements PrependExte
         };
 
         $auto = $lists['auto_items'];
-        $provide(AutoItemsParameters::class, [new Reference(LatestContents::class), ['items_field' => $config['conventions']['items_field'], 'items_field_by_type' => $config['conventions']['items_field_by_type']] + array_diff_key($auto, ['types' => 1])], $auto['types'], 10);
+        $provide(AutoItemsParameters::class, [new Reference(LatestContents::class), array_diff_key($auto, ['types' => 1]), new Reference(SettingsProvider::class)], $auto['types'], 10);
         $featured = $lists['featured'];
         $provide(FeaturedParameters::class, [array_diff_key($featured, ['types' => 1])], $featured['types'], 0);
         $provide(AllPostsParameters::class, [new Reference(SearchService::class), new Reference(UrlGeneratorInterface::class)], $lists['all_posts']['types'], 0);
@@ -202,7 +198,7 @@ final class MasiliaIbexaBlocksExtension extends Extension implements PrependExte
     {
         $leaves = [];
         foreach ($node as $key => $value) {
-            if (is_array($value) && !array_is_list($value)) {
+            if (is_array($value) && !array_is_list($value) && !in_array($prefix . '.' . $key, SettingsProvider::TABLES, true)) {
                 $leaves += self::leaves($value, $prefix . '.' . $key);
             } else {
                 $leaves[$prefix . '.' . $key] = $value;

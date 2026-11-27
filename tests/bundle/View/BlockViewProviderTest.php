@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Masilia\IbexaBlocks\Tests\bundle\View;
 
+use Masilia\IbexaBlocks\Tests\Support\TestSettings;
 use Ibexa\Contracts\Core\Repository\Values\Content\ContentInfo;
 use Ibexa\Contracts\Core\SiteAccess\ConfigResolverInterface;
 use Ibexa\Core\MVC\Symfony\View\ContentView;
@@ -26,7 +27,7 @@ final class BlockViewProviderTest extends TestCase
         $config = $this->createStub(ConfigResolverInterface::class);
         $config->method('getParameter')->willReturn('standard');
         $loader = new ArrayLoader(array_combine(array_map(static fn (string $t) => '@ibexadesign/' . $t, $templates), array_fill(0, count($templates), '')));
-        $registry = new BlockRegistry(new ThemeRegistry([]), new DesignChain($config, ['standard' => ['standard']]), $loader, new Conventions());
+        $registry = new BlockRegistry(new ThemeRegistry([]), new DesignChain($config, ['standard' => ['standard']]), $loader, TestSettings::fromParameters([]));
 
         return new BlockViewProvider($registry, ['blocks', 'block_item', 'line']);
     }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Masilia\IbexaBlocks\Tests\bundle\Controller;
 
+use Masilia\IbexaBlocks\Tests\Support\TestSettings;
 use Ibexa\Contracts\Core\Repository\ContentService;
 use Ibexa\Contracts\Core\Repository\LocationService;
 use Ibexa\Contracts\Core\Repository\Values\Content\Content;
@@ -85,7 +86,7 @@ final class BlockControllerTest extends TestCase
             $byType['grid'][] = ['id' => $id, 'viewTypes' => [], 'priority' => 0];
         }
 
-        return new BlockController($factory, $blocks, new BlockProviders($locator, $byType), new Conventions(), $flatten);
+        return new BlockController($factory, $blocks, new BlockProviders($locator, $byType), TestSettings::fromParameters([]), $flatten);
     }
 
     private function view(string $type, string $viewType = 'blocks', array $parameters = []): ContentView

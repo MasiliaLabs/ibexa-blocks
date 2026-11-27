@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Masilia\IbexaBlocks\Tests\bundle\Block;
 
+use Masilia\IbexaBlocks\Tests\Support\TestSettings;
 use Ibexa\Contracts\Core\SiteAccess\ConfigResolverInterface;
 use Masilia\Bundle\IbexaBlocks\Block\BlockRegistry;
 use Masilia\Bundle\IbexaBlocks\Theme\DesignChain;
@@ -41,7 +42,7 @@ final class BlockRegistryTest extends TestCase
     /**
      * @param list<string> $templates The templates of the design, as the design engine finds them ("blocks/hero.twig")
      */
-    private function registry(array $templates, string $manifest = '', ?Conventions $conventions = null): BlockRegistry
+    private function registry(array $templates, string $manifest = '', ?\Masilia\Bundle\IbexaBlocks\Site\SettingsProvider $conventions = null): BlockRegistry
     {
         if ($manifest !== '') {
             file_put_contents($this->dir . '/standard/theme.yaml', $manifest);
@@ -50,7 +51,7 @@ final class BlockRegistryTest extends TestCase
         $config->method('getParameter')->willReturn('standard');
         $loader = new ArrayLoader(array_combine(array_map(static fn (string $t) => '@ibexadesign/' . $t, $templates), array_fill(0, count($templates), '')));
 
-        return new BlockRegistry(new ThemeRegistry([$this->dir]), new DesignChain($config, ['standard' => ['standard']]), $loader, $conventions ?? new Conventions());
+        return new BlockRegistry(new ThemeRegistry([$this->dir]), new DesignChain($config, ['standard' => ['standard']]), $loader, $conventions ?? TestSettings::fromParameters([]));
     }
 
     public function testATemplateIsFoundByItsNameInTheFolderOfTheViewType(): void
@@ -111,7 +112,7 @@ final class BlockRegistryTest extends TestCase
 
     public function testTheBlocksFieldIsTheOneTheConventionsName(): void
     {
-        $registry = $this->registry([], '', new Conventions(blocksField: 'sections'));
+        $registry = $this->registry([], '', TestSettings::fromParameters(['masilia_ibexa_blocks:conventions.blocks_field' => 'sections']));
 
         self::assertNull($registry->findFor('full', $this->type('page', ['blocks' => ['type' => 'ibexa_object_relation_list']])));
         self::assertSame(BlockRegistry::BLOCKS_PAGE, $registry->findFor('full', $this->type('page', ['sections' => ['type' => 'ibexa_object_relation_list']]))?->template);

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Masilia\Bundle\IbexaBlocks\View;
 
+use Masilia\Bundle\IbexaBlocks\Site\SettingsProvider;
 use Ibexa\Contracts\Core\Repository\Repository;
 use Ibexa\Core\MVC\Symfony\View\ContentView;
 use Ibexa\Core\MVC\Symfony\View\View;
@@ -21,7 +22,7 @@ use Symfony\Component\HttpKernel\Controller\ControllerReference;
 final readonly class BlocksFolderViewProvider implements ViewProvider
 {
     public function __construct(
-        private Conventions $conventions,
+        private SettingsProvider $provider,
         private Repository $repository,
     ) {
     }
@@ -32,7 +33,7 @@ final readonly class BlocksFolderViewProvider implements ViewProvider
             return null;
         }
         $content = $view->getContent();
-        if ($content === null || $content->getContentType()->identifier !== $this->conventions->folderType) {
+        if ($content === null || $content->getContentType()->identifier !== $this->conventions()->folderType) {
             return null;
         }
         if (!BlocksFolder::isRemoteId((string) $content->contentInfo->remoteId) && !$this->namedLikeOneUnderAPage($view, (string) $content->getName())) {
@@ -48,15 +49,20 @@ final readonly class BlocksFolderViewProvider implements ViewProvider
     private function namedLikeOneUnderAPage(ContentView $view, string $name): bool
     {
         $location = $view->getLocation();
-        if ($location === null || !BlocksFolder::nameMatches($name, $this->conventions->blocksFolderSuffix)) {
+        if ($location === null || !BlocksFolder::nameMatches($name, $this->conventions()->blocksFolderSuffix)) {
             return false;
         }
         try {
             $parent = $this->repository->getLocationService()->loadLocation((int) $location->parentLocationId);
 
-            return in_array($parent->getContentInfo()->getContentType()->identifier, [$this->conventions->pageType, $this->conventions->homeType], true);
+            return in_array($parent->getContentInfo()->getContentType()->identifier, [$this->conventions()->pageType, $this->conventions()->homeType], true);
         } catch (\Ibexa\Contracts\Core\Repository\Exceptions\NotFoundException|\Ibexa\Contracts\Core\Repository\Exceptions\UnauthorizedException) {
             return false;
         }
+    }
+
+    private function conventions(): Conventions
+    {
+        return $this->provider->conventions();
     }
 }

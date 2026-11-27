@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Masilia\Bundle\IbexaBlocks\Search;
 
+use Masilia\Bundle\IbexaBlocks\Site\SettingsProvider;
 use Ibexa\Contracts\Core\Repository\ContentService;
 use Ibexa\Contracts\Core\Repository\Exceptions\InvalidArgumentException;
 use Ibexa\Contracts\Core\Repository\Exceptions\NotFoundException;
@@ -33,7 +34,7 @@ final readonly class SearchService
         private LocationService $locations,
         private ContentFactory $factory,
         private ConfigResolverInterface $config,
-        private SearchSettings $settings,
+        private SettingsProvider $provider,
     ) {
     }
 
@@ -52,7 +53,7 @@ final readonly class SearchService
         foreach ($result?->searchHits ?? [] as $hit) {
             $content = $this->factory->fromContent($hit->valueObject);
             $link = $content->link();
-            $posts[] = $content->fields()->all($this->settings->variations) + [
+            $posts[] = $content->fields()->all($this->settings()->variations) + [
                 'content_type' => $content->type(),
                 'link' => ['uri' => $link?->getUri(), 'name' => $link?->getName()],
                 'admin_meta' => $content->adminMeta(),
@@ -82,12 +83,12 @@ final readonly class SearchService
      */
     public function facets(array $contentTypes, string $parentSubtree = ''): array
     {
-        if ($this->settings->facets === []) {
+        if ($this->settings()->facets === []) {
             return [];
         }
 
         $aggregations = [];
-        foreach ($this->settings->facets as $name => $indexField) {
+        foreach ($this->settings()->facets as $name => $indexField) {
             $aggregation = new Aggregation\RawTermAggregation($name, $indexField);
             $aggregation->setLimit(50);
             $aggregation->setMinCount(1);
@@ -96,7 +97,7 @@ final readonly class SearchService
 
         $result = $this->search->findContent(new Query([
             'filter' => new Criterion\LogicalAnd([
-                new Criterion\ContentTypeIdentifier(array_values(array_intersect($contentTypes, $this->settings->allowedContentTypes)) ?: $this->settings->defaultContentTypes),
+                new Criterion\ContentTypeIdentifier(array_values(array_intersect($contentTypes, $this->settings()->allowedContentTypes)) ?: $this->settings()->defaultContentTypes),
                 new Criterion\Visibility(Criterion\Visibility::VISIBLE),
                 new Criterion\Subtree($this->subtree($parentSubtree)),
             ]),
@@ -105,7 +106,7 @@ final readonly class SearchService
         ]));
 
         $facets = [];
-        foreach (array_keys($this->settings->facets) as $name) {
+        foreach (array_keys($this->settings()->facets) as $name) {
             $facets[$name] = $this->values($result, $name);
         }
 
@@ -115,7 +116,7 @@ final readonly class SearchService
     /** What a page of posts needs to start with: its first results and the values of its filters. */
     public function initial(array $contentTypes, int $itemsPerPage, string $sort, string $parentSubtree = ''): array
     {
-        $request = new SearchRequest($contentTypes === [] ? $this->settings->defaultContentTypes : $contentTypes, limit: $itemsPerPage, sort: isset($this->settings->sorts[$sort]) ? $sort : $this->settings->defaultSort, parentSubtree: $parentSubtree);
+        $request = new SearchRequest($contentTypes === [] ? $this->settings()->defaultContentTypes : $contentTypes, limit: $itemsPerPage, sort: isset($this->settings()->sorts[$sort]) ? $sort : $this->settings()->defaultSort, parentSubtree: $parentSubtree);
         $posts = $this->search($request);
 
         return ['posts' => $posts['posts'], 'total' => $posts['total']] + $this->facets($contentTypes, $parentSubtree);
@@ -132,11 +133,11 @@ final readonly class SearchService
             $criteria[] = new Criterion\FullText($request->term);
         }
         if ($request->category !== '' && $request->category !== 'All') {
-            $criteria[] = new Criterion\Field($this->settings->categoryField, Criterion\Operator::EQ, $request->category);
+            $criteria[] = new Criterion\Field($this->settings()->categoryField, Criterion\Operator::EQ, $request->category);
         }
         if ($request->tags !== []) {
             $criteria[] = new Criterion\LogicalAnd(array_map(
-                fn (string $tag): Criterion => new Criterion\Field($this->settings->tagsField, Criterion\Operator::CONTAINS, $tag),
+                fn (string $tag): Criterion => new Criterion\Field($this->settings()->tagsField, Criterion\Operator::CONTAINS, $tag),
                 $request->tags,
             ));
         }
@@ -151,7 +152,7 @@ final readonly class SearchService
 
     private function sortClause(string $key): SortClause
     {
-        $sort = $this->settings->sort($key);
+        $sort = $this->settings()->sort($key);
         $direction = $sort->ascending ? Query::SORT_ASC : Query::SORT_DESC;
 
         return match (true) {
@@ -190,5 +191,10 @@ final readonly class SearchService
         }
 
         return array_unique($values);
+    }
+
+    private function settings(): SearchSettings
+    {
+        return $this->provider->search();
     }
 }

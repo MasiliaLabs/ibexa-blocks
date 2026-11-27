@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace Masilia\Bundle\IbexaBlocks\Site;
 
 use Ibexa\Contracts\Core\SiteAccess\ConfigResolverInterface;
+use Masilia\IbexaBlocks\Conventions;
 use Masilia\IbexaBlocks\Form\ContactSettings;
 use Masilia\IbexaBlocks\Form\FormSettings;
 use Masilia\IbexaBlocks\Newsletter\NewsletterSettings;
+use Masilia\IbexaBlocks\Search\SearchSettings;
 
 /**
  * The settings of the current site, read when they are used (a worker serves several sites: nothing is kept between two calls).
@@ -28,6 +30,53 @@ final readonly class SettingsProvider
     public function get(string $name, mixed $default = null): mixed
     {
         return $this->config->hasParameter($name, self::NAMESPACE) ? $this->config->getParameter($name, self::NAMESPACE) : $default;
+    }
+
+    /** The settings (dotted names) of the section "conventions", each one a leaf; the tables are leaves as a whole. */
+    public const CONVENTIONS = ['page_type', 'blocks_field', 'items_field', 'block_group', 'content_groups', 'items_field_by_type', 'home_type', 'site_type', 'blocks_folder_suffix', 'folder_type'];
+
+    public const SEARCH = [
+        'allowed_content_types', 'default_content_types', 'default_sort', 'sorts', 'variations', 'facets', 'category_field', 'tags_field',
+        'auto_item_sort_fields', 'auto_item_default_sort_field', 'page.content_types', 'page.items', 'page.popular_searches',
+        'api.default_items', 'api.max_items', 'api.max_term_length', 'api.max_tags', 'api.suggestions_cache_ttl',
+    ];
+
+    /** The tables of the sections: a scope that says one replaces the one of the scope below. */
+    public const TABLES = ['conventions.items_field_by_type', 'search.sorts', 'search.variations', 'search.facets', 'search.auto_item_sort_fields'];
+
+    public function conventions(): Conventions
+    {
+        return Conventions::fromSettings($this->section('conventions', self::CONVENTIONS));
+    }
+
+    public function search(): SearchSettings
+    {
+        return SearchSettings::fromSettings($this->section('search', self::SEARCH));
+    }
+
+    /**
+     * The nested array a value object reads, made of the settings of the current site: a key nobody says is absent.
+     *
+     * @param list<string> $names
+     *
+     * @return array<string, mixed>
+     */
+    private function section(string $section, array $names): array
+    {
+        $settings = [];
+        foreach ($names as $name) {
+            if (!$this->config->hasParameter($section . '.' . $name, self::NAMESPACE)) {
+                continue;
+            }
+            $target = &$settings;
+            foreach (explode('.', $name) as $part) {
+                $target = &$target[$part];
+            }
+            $target = $this->config->getParameter($section . '.' . $name, self::NAMESPACE);
+            unset($target);
+        }
+
+        return $settings;
     }
 
     public function forms(): FormSettings

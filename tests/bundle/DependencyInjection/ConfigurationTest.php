@@ -40,9 +40,10 @@ final class ConfigurationTest extends TestCase
     {
         $config = $this->process([]);
 
-        self::assertSame('page', $config['conventions']['page_type']);
-        self::assertSame('blocks', $config['conventions']['blocks_field']);
-        self::assertSame('items', $config['conventions']['items_field']);
+        // What a site does not say is left to the value objects (the defaults are theirs), so that its group or "default" can say it.
+        self::assertArrayNotHasKey('conventions', $config);
+        $conventions = \Masilia\IbexaBlocks\Tests\Support\TestSettings::fromParameters([])->conventions();
+        self::assertSame(['page', 'blocks', 'items'], [$conventions->pageType, $conventions->blocksField, $conventions->itemsField]);
         self::assertContains('blocks', $config['blocks']['view_types']);
     }
 
@@ -62,7 +63,30 @@ final class ConfigurationTest extends TestCase
     {
         $this->expectException(InvalidConfigurationException::class);
 
-        $this->process(['conventions' => ['page_typo' => 'page']]);
+        $this->process(['system' => ['default' => ['conventions' => ['page_typo' => 'page']]]]);
+    }
+
+    public function testASettingAtTheRootIsRefused(): void
+    {
+        $this->expectException(InvalidConfigurationException::class);
+
+        $this->process(['conventions' => ['page_type' => 'page']]);
+    }
+
+    public function testTheSectionsOfAScopeBecomeSettingsOfItByTheirDottedNames(): void
+    {
+        $container = $this->container();
+
+        (new MasiliaIbexaBlocksExtension())->load([['system' => [
+            'default' => ['conventions' => ['page_type' => 'landing', 'items_field_by_type' => ['cards' => 'cells']], 'search' => ['page' => ['items' => 12]]],
+            'site_group' => ['newsletter' => ['subject' => 'Hello']],
+        ]]], $container);
+
+        self::assertSame('landing', $container->getParameter('masilia_ibexa_blocks.default.conventions.page_type'));
+        self::assertSame(['cards' => 'cells'], $container->getParameter('masilia_ibexa_blocks.default.conventions.items_field_by_type'), 'a table is one setting');
+        self::assertSame(12, $container->getParameter('masilia_ibexa_blocks.default.search.page.items'));
+        self::assertSame('Hello', $container->getParameter('masilia_ibexa_blocks.site_group.newsletter.subject'));
+        self::assertFalse($container->hasParameter('masilia_ibexa_blocks.default.newsletter.subject'));
     }
 
     public function testTheSettingsOfASiteBecomeParametersOfItsScope(): void
@@ -85,7 +109,7 @@ final class ConfigurationTest extends TestCase
 
         (new MasiliaIbexaBlocksExtension())->load([[]], $container);
 
-        foreach (['masilia_blocks.conventions', 'masilia_blocks.search', 'masilia_blocks.themes.directories', 'masilia_blocks.fields.summary_types'] as $parameter) {
+        foreach (['masilia_blocks.themes.directories', 'masilia_blocks.blocks.view_types'] as $parameter) {
             self::assertTrue($container->hasParameter($parameter), $parameter);
         }
         self::assertTrue($container->has(\Masilia\Bundle\IbexaBlocks\Theme\ThemeSettings::class));
@@ -93,10 +117,10 @@ final class ConfigurationTest extends TestCase
 
     public function testTheLimitsOfThePublicSearchHaveSafeDefaultsAndAreChecked(): void
     {
-        $api = $this->process([])['search']['api'];
-        self::assertSame([200, 10, 0], [$api['max_term_length'], $api['max_tags'], $api['suggestions_cache_ttl']]);
+        $search = \Masilia\IbexaBlocks\Tests\Support\TestSettings::fromParameters([])->search();
+        self::assertSame([200, 10, 0], [$search->maxTermLength, $search->maxTags, $search->suggestionsCacheTtl]);
 
         $this->expectException(InvalidConfigurationException::class);
-        $this->process(['search' => ['api' => ['max_term_length' => 0]]]);
+        $this->process(['system' => ['default' => ['search' => ['api' => ['max_term_length' => 0]]]]]);
     }
 }

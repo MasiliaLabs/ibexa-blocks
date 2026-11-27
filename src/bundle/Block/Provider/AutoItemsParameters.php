@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Masilia\Bundle\IbexaBlocks\Block\Provider;
 
+use Masilia\Bundle\IbexaBlocks\Site\SettingsProvider;
 use Masilia\Bundle\IbexaBlocks\Content\RenderableContent;
 use Masilia\Bundle\IbexaBlocks\Search\ContentLister;
 use Masilia\Contracts\IbexaBlocks\BlockViewParameters;
@@ -17,18 +18,19 @@ use Masilia\IbexaBlocks\Block\ViewState;
 final readonly class AutoItemsParameters implements BlockViewParameters
 {
     /**
-     * @param array{items_field: string, items_field_by_type?: array<string, string>, source_field: string, source_value: string, type_field: string, count_field: string, default_count: int} $settings
+     * @param array{source_field: string, source_value: string, type_field: string, count_field: string, default_count: int} $settings
      */
     public function __construct(
         private ContentLister $latest,
         private array $settings,
+        private SettingsProvider $provider,
     ) {
     }
 
     public function parameters(RenderableContent $block, array $fields, ViewState $view): array
     {
-        $byType = $this->settings['items_field_by_type'] ?? [];
-        $itemsField = $byType === [] ? $this->settings['items_field'] : ($byType[$block->type()] ?? $this->settings['items_field']);
+        $conventions = $this->provider->conventions();
+        $itemsField = $conventions->itemsFieldByType === [] ? $conventions->itemsField : $conventions->itemsFieldFor($block->type());
         if (!empty($fields[$itemsField])) {
             return [];
         }

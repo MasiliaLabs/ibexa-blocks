@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Masilia\Bundle\IbexaBlocks\Controller;
 
+use Masilia\Bundle\IbexaBlocks\Site\SettingsProvider;
 use Masilia\Bundle\IbexaBlocks\Search\SearchService;
 use Masilia\IbexaBlocks\Search\SearchRequest;
 use Masilia\IbexaBlocks\Search\SearchSettings;
@@ -25,7 +26,7 @@ final readonly class SearchController
 {
     public function __construct(
         private SearchService $search,
-        private SearchSettings $settings,
+        private SettingsProvider $provider,
         private Environment $twig,
         private UrlGeneratorInterface $urls,
         private LoggerInterface $logger,
@@ -37,12 +38,12 @@ final readonly class SearchController
     public function page(Request $request): Response
     {
         $type = (string) $request->query->get('type', 'all');
-        $types = $type !== 'all' && in_array($type, $this->settings->pageContentTypes, true) ? [$type] : $this->settings->pageContentTypes;
+        $types = $type !== 'all' && in_array($type, $this->settings()->pageContentTypes, true) ? [$type] : $this->settings()->pageContentTypes;
         $page = max(1, (int) $request->query->get('page', 1));
         $term = (string) $request->query->get('q', '');
 
         try {
-            $result = $this->search->search(new SearchRequest($types, $term, page: $page, limit: $this->settings->pageItems, sort: 'published_desc'));
+            $result = $this->search->search(new SearchRequest($types, $term, page: $page, limit: $this->settings()->pageItems, sort: 'published_desc'));
         } catch (\Throwable $e) {
             $this->logger->warning('Search failed: {message}', ['message' => $e->getMessage(), 'exception' => $e]);
             $result = ['posts' => [], 'total' => 0, 'total_pages' => 1];
@@ -57,13 +58,13 @@ final readonly class SearchController
             'contentType' => $type,
             'search_config' => [
                 'apiEndpoint' => $this->urls->generate('api_posts_search'),
-                'contentTypes' => $this->settings->pageContentTypes,
-                'itemsPerPage' => $this->settings->pageItems,
+                'contentTypes' => $this->settings()->pageContentTypes,
+                'itemsPerPage' => $this->settings()->pageItems,
                 'totalPosts' => $result['total'],
                 'enableSearch' => true,
                 'enableTypeFilter' => true,
                 'enableSortFilter' => true,
-                'popularSearches' => $this->settings->popularSearches,
+                'popularSearches' => $this->settings()->popularSearches,
             ],
         ]));
     }
@@ -71,14 +72,14 @@ final readonly class SearchController
     #[Route('/api/posts/search', name: 'api_posts_search', methods: ['POST'])]
     public function posts(Request $request): JsonResponse
     {
-        return $this->json($request, fn (array $data): array => $this->search->search(SearchRequest::fromArray($data, $this->settings)));
+        return $this->json($request, fn (array $data): array => $this->search->search(SearchRequest::fromArray($data, $this->settings())));
     }
 
     #[Route('/api/posts/facets', name: 'api_posts_facets', methods: ['POST'])]
     public function facets(Request $request): JsonResponse
     {
         return $this->json($request, function (array $data): array {
-            $parsed = SearchRequest::fromArray($data, $this->settings);
+            $parsed = SearchRequest::fromArray($data, $this->settings());
 
             return $this->search->facets($parsed->contentTypes, $parsed->parentSubtree);
         });
@@ -87,7 +88,7 @@ final readonly class SearchController
     #[Route('/api/posts/suggestions', name: 'api_posts_suggestions', methods: ['GET'])]
     public function suggestions(Request $request): JsonResponse
     {
-        $term = mb_substr(trim((string) $request->query->get('q', '')), 0, $this->settings->maxTermLength);
+        $term = mb_substr(trim((string) $request->query->get('q', '')), 0, $this->settings()->maxTermLength);
         if (mb_strlen($term) < 2) {
             return new JsonResponse(['success' => true, 'data' => []]);
         }
@@ -97,14 +98,14 @@ final readonly class SearchController
                 'search' => $term,
                 'content_types' => explode(',', (string) $request->query->get('content_types', '')),
                 'limit' => 5,
-            ], $this->settings));
+            ], $this->settings()));
 
             return array_map(static fn (array $post): array => ['title' => $post['title'] ?? '', 'url' => $post['url'] ?? ($post['link']['uri'] ?? '')], $result['posts']);
         }, decode: false);
 
         // The answer to the same question is the same for everyone: when the site says so, it may be kept for a while.
-        if ($this->settings->suggestionsCacheTtl > 0 && $response->isSuccessful()) {
-            $response->setPublic()->setMaxAge($this->settings->suggestionsCacheTtl)->setSharedMaxAge($this->settings->suggestionsCacheTtl);
+        if ($this->settings()->suggestionsCacheTtl > 0 && $response->isSuccessful()) {
+            $response->setPublic()->setMaxAge($this->settings()->suggestionsCacheTtl)->setSharedMaxAge($this->settings()->suggestionsCacheTtl);
         }
 
         return $response;
@@ -130,5 +131,10 @@ final readonly class SearchController
 
             return new JsonResponse(['success' => false, 'error' => 'The search failed. Please try again.'], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
+    }
+
+    private function settings(): SearchSettings
+    {
+        return $this->provider->search();
     }
 }

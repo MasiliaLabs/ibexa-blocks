@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Masilia\IbexaBlocks\Tests\Bundle\Theme;
 
+use Masilia\IbexaBlocks\Tests\Support\TestSettings;
 use Ibexa\Contracts\Core\Repository\ContentTypeService;
 use Ibexa\Core\Base\Exceptions\NotFoundException;
 use Ibexa\Contracts\Core\SiteAccess\ConfigResolverInterface;
@@ -70,7 +71,7 @@ final class ThemeContractsTest extends TestCase
         $types->method('loadContentTypeGroups')->willReturn([]);
         $registry = $this->registry();
 
-        return new ThemeCatalog(new ThemeChecker($registry, $this->project), new ThemeScaffold($registry, $this->project), $types, new Conventions(), ['admin' => ['admin'], 'blog' => ['blog', 'standard'], 'standard' => ['standard']]);
+        return new ThemeCatalog(new ThemeChecker($registry, $this->project), new ThemeScaffold($registry, $this->project), $types, TestSettings::fromParameters([]), ['admin' => ['admin'], 'blog' => ['blog', 'standard'], 'standard' => ['standard']]);
     }
 
     public function testTheDesignsAreListedWithoutTheAdminAndCheckedByName(): void

@@ -4,10 +4,6 @@ services:
         autoconfigure: true
         public: false
 
-    Masilia\IbexaBlocks\Conventions:
-        factory: ['Masilia\IbexaBlocks\Conventions', 'fromSettings']
-        arguments: ['%masilia_blocks.conventions%']
-
     # The content model of the templates.
     Masilia\Bundle\IbexaBlocks\Content\:
         resource: '../../Content/'
@@ -21,10 +17,6 @@ services:
         arguments:
             $logger: '@logger'
 
-    # The search of a site: what it may search is the settings', not the code's.
-    Masilia\IbexaBlocks\Search\SearchSettings:
-        factory: ['Masilia\IbexaBlocks\Search\SearchSettings', 'fromSettings']
-        arguments: ['%masilia_blocks.search%']
     Masilia\Bundle\IbexaBlocks\Search\:
         resource: '../../Search/'
     Masilia\Bundle\IbexaBlocks\Controller\SearchController: ~

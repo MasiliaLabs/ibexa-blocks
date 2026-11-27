@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Masilia\IbexaBlocks\Tests\bundle\Search;
 
+use Masilia\IbexaBlocks\Tests\Support\TestSettings;
 use Ibexa\Contracts\Core\Repository\ContentTypeService;
 use Ibexa\Core\Base\Exceptions\NotFoundException;
 use Ibexa\Contracts\Core\Repository\LocationService;
@@ -44,7 +45,7 @@ final class LatestContentsTest extends TestCase
         $config->method('getParameter')->willReturn(2);
         $factory = (new \ReflectionClass(ContentFactory::class))->newInstanceWithoutConstructor();
 
-        (new LatestContents($search, $locations, $factory, $config, new SearchSettings(), $types))->of('partner', 6);
+        (new LatestContents($search, $locations, $factory, $config, TestSettings::fromParameters([]), $types))->of('partner', 6);
 
         return $query->sortClauses[0];
     }

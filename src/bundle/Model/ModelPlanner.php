@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Masilia\Bundle\IbexaBlocks\Model;
 
+use Masilia\Bundle\IbexaBlocks\Site\SettingsProvider;
 use Ibexa\Contracts\Core\Repository\ContentTypeService;
 use Ibexa\Contracts\Core\Repository\Exceptions\NotFoundException;
 use Ibexa\Contracts\Core\Repository\FieldTypeService;
@@ -17,7 +18,7 @@ final readonly class ModelPlanner
         private Repository $repository,
         private ContentTypeService $contentTypes,
         private FieldTypeService $fieldTypes,
-        private Conventions $conventions,
+        private SettingsProvider $provider,
     ) {
     }
 
@@ -109,7 +110,7 @@ final readonly class ModelPlanner
             }
             $add = array_values(array_diff(array_unique($blocks), $current));
             if ($add !== []) {
-                $selections[] = ['owner' => $owner, 'field' => $this->conventions->blocksField, 'add' => $add];
+                $selections[] = ['owner' => $owner, 'field' => $this->conventions()->blocksField, 'add' => $add];
             }
         }
 
@@ -120,7 +121,7 @@ final readonly class ModelPlanner
     public function allowed(string $owner): ?array
     {
         try {
-            $field = $this->contentTypes->loadContentTypeByIdentifier($owner)->getFieldDefinition($this->conventions->blocksField);
+            $field = $this->contentTypes->loadContentTypeByIdentifier($owner)->getFieldDefinition($this->conventions()->blocksField);
         } catch (NotFoundException) {
             return null;
         }
@@ -137,5 +138,10 @@ final readonly class ModelPlanner
         } catch (NotFoundException) {
             return false;
         }
+    }
+
+    private function conventions(): Conventions
+    {
+        return $this->provider->conventions();
     }
 }

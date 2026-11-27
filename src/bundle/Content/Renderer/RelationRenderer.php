@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Masilia\Bundle\IbexaBlocks\Content\Renderer;
 
+use Masilia\Bundle\IbexaBlocks\Site\SettingsProvider;
 use Ibexa\Contracts\Core\Repository\Values\Content\Content;
 use Ibexa\Contracts\Core\Repository\Values\ContentType\FieldDefinition;
 use Ibexa\Core\FieldType\RelationList\Value as RelationListValue;
@@ -13,7 +14,6 @@ use Masilia\Contracts\IbexaBlocks\AsFieldRenderer;
 use Masilia\Contracts\IbexaBlocks\FieldRenderer;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Throwable;
 
 /**
@@ -27,12 +27,11 @@ use Throwable;
 final readonly class RelationRenderer implements FieldRenderer
 {
     /**
-     * @param list<string> $summaryTypes
+     * @param SettingsProvider|null $settings fields.summary_types of the site
      */
     public function __construct(
         private ContentFactory $factory,
-        #[Autowire('%masilia_blocks.fields.summary_types%')]
-        private array $summaryTypes = [],
+        private ?SettingsProvider $settings = null,
         private LoggerInterface $logger = new NullLogger(),
     ) {
     }
@@ -58,7 +57,7 @@ final readonly class RelationRenderer implements FieldRenderer
             if ($related->isHidden() || $related->isTrashed()) {
                 return null;
             }
-            if (in_array($related->type(), $this->summaryTypes, true)) {
+            if (in_array($related->type(), $this->summaryTypes(), true)) {
                 return ['id' => $related->id(), 'name' => $related->name()];
             }
 
@@ -72,5 +71,11 @@ final readonly class RelationRenderer implements FieldRenderer
 
             return null;
         }
+    }
+
+    /** @return list<string> */
+    private function summaryTypes(): array
+    {
+        return array_values(array_map('strval', (array) ($this->settings?->get('fields.summary_types', []) ?? [])));
     }
 }

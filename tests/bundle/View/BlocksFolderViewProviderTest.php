@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Masilia\Tests\IbexaBlocks\Bundle\View;
 
+use Masilia\IbexaBlocks\Tests\Support\TestSettings;
 use Ibexa\Contracts\Core\Repository\LocationService;
 use Ibexa\Contracts\Core\Repository\Repository;
 use Ibexa\Core\MVC\Symfony\View\ContentView;
@@ -49,7 +50,7 @@ final class BlocksFolderViewProviderTest extends TestCase
         $repository = $this->createStub(Repository::class);
         $repository->method('getLocationService')->willReturn($locations);
 
-        return new BlocksFolderViewProvider(new Conventions(), $repository);
+        return new BlocksFolderViewProvider(TestSettings::fromParameters([]), $repository);
     }
 
     private function view(string $type, string $remoteId, string $name, string $viewType = 'full'): ContentView

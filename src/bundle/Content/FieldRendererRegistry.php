@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Masilia\Bundle\IbexaBlocks\Content;
 
+use Masilia\Bundle\IbexaBlocks\Site\SettingsProvider;
 use Ibexa\Contracts\Core\Repository\Values\Content\Content;
 use Masilia\Contracts\IbexaBlocks\FieldRenderer;
 use Psr\Container\ContainerInterface;
@@ -20,15 +21,11 @@ final class FieldRendererRegistry
 {
     /**
      * @param ContainerInterface $renderers   The renderers by field type, built when first used (set by FieldRendererPass)
-     * @param string             $unknownType "error", "null" or "auto" (error in debug)
-     * @param list<string>       $ignoredTypes
+     * @param SettingsProvider|null $settings fields.unknown_type ("error", "null" or "auto": error in debug) and fields.ignored_types of the site
      */
     public function __construct(
         private readonly ContainerInterface $renderers,
-        #[Autowire('%masilia_blocks.fields.unknown_type%')]
-        private readonly string $unknownType = 'auto',
-        #[Autowire('%masilia_blocks.fields.ignored_types%')]
-        private readonly array $ignoredTypes = [],
+        private readonly ?SettingsProvider $settings = null,
         #[Autowire('%kernel.debug%')]
         private readonly bool $debug = false,
         private readonly LoggerInterface $logger = new NullLogger(),
@@ -52,11 +49,11 @@ final class FieldRendererRegistry
         }
 
         $type = $definition->fieldTypeIdentifier;
-        if (in_array($type, $this->ignoredTypes, true)) {
+        if (in_array($type, $this->ignoredTypes(), true)) {
             return null;
         }
         if (!$this->renderers->has($type)) {
-            if ($this->unknownType === 'error' || ($this->unknownType === 'auto' && $this->debug)) {
+            if ($this->unknownType() === 'error' || ($this->unknownType() === 'auto' && $this->debug)) {
                 throw UnsupportedFieldType::of($type, $contentType->identifier, $identifier);
             }
             $this->logger->warning('No renderer for the field type "{type}" (field "{field}" of "{content_type}")', ['type' => $type, 'field' => $identifier, 'content_type' => $contentType->identifier]);
@@ -68,5 +65,16 @@ final class FieldRendererRegistry
         $renderer = $this->renderers->get($type);
 
         return $renderer->render($content, $identifier, $definition);
+    }
+
+    private function unknownType(): string
+    {
+        return (string) ($this->settings?->get('fields.unknown_type', 'auto') ?? 'auto');
+    }
+
+    /** @return list<string> */
+    private function ignoredTypes(): array
+    {
+        return array_values(array_map('strval', (array) ($this->settings?->get('fields.ignored_types', []) ?? [])));
     }
 }
